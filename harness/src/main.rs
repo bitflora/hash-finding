@@ -25,7 +25,7 @@ USAGE:
   mixlab scale  (--list FILE.csv | --bits 24 --random N) [--widths 12,16,20,24] [--maps offset:low,prop:high] [--truth]
                 [--baseline] [--seed S] --out F.csv   # exact small-width projections vs 32-bit exact
   mixlab race   --bits B --start SPEC [--iters N] [--neighbors K] [--n0 p14] [--cap p28] [--z 3]
-                [--verify-samples p31] [--candidates FILE] [--seed S] --out F.csv  # sequential racing search
+                [--verify-samples p31] [--candidates FILE] [--patience P] [--seed S] --out F.csv  # sequential racing search
   mixlab paired --bits B --base SPEC [--others FILE | --neighbours K | --random K] [--samples p20]
                 [--reps 32] [--truth] [--seed S] [--out F.csv]  # variance of A-B with/without common inputs
 
@@ -681,7 +681,7 @@ incumbent {start} ms={:.6e}", inc);
     let mut w = BufWriter::new(File::create(out).expect("create output"));
     writeln!(w, "# {cfg:?}").unwrap();
     writeln!(w, "iter,event,config,score,detail").unwrap();
-    let (best, score) = race_search(&cfg, start, a.num("iters", 20) as usize, a.num("neighbors", 96) as usize, |line| {
+    let (best, score) = race_search(&cfg, start, a.num("iters", 20) as usize, a.num("neighbors", 96) as usize, a.num("patience", 1000) as usize, |line| {
         writeln!(w, "{line}").unwrap();
         w.flush().unwrap();
         eprintln!("[{:>6.0}s] {line}", t.elapsed().as_secs_f64());

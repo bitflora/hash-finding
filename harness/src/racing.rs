@@ -298,6 +298,7 @@ pub fn race_search(
     start: Xmx,
     iters: usize,
     neighbors: usize,
+    patience: usize,
     mut log: impl FnMut(&str),
 ) -> (Xmx, f64) {
     use crate::rng::Xoshiro256;
@@ -316,7 +317,12 @@ pub fn race_search(
     log(&format!("0,start,{cur},{:.10},sd={:.3e}", ms_to_score(cur_ms), cur_var.sqrt()));
     let mut total_inputs = 0u64;
     let mut total_exact = 0usize;
+    let mut stale = 0usize;
     for it in 1..=iters {
+        if stale >= patience {
+            log(&format!("{it},patience,{cur},{:.10},no improvement in {patience} iterations", ms_to_score(cur_ms)));
+            break;
+        }
         let mut cands = Vec::new();
         let mut tries = 0;
         while cands.len() < neighbors && tries < neighbors * 50 {
@@ -359,7 +365,9 @@ pub fn race_search(
                 cur_ms = m;
             }
             log(&format!("{it},improved,{cur},{:.10},{detail}", ms_to_score(cur_ms)));
+            stale = 0;
         } else {
+            stale += 1;
             log(&format!("{it},iter,{cur},{:.10},{detail}", ms_to_score(cur_ms)));
         }
     }

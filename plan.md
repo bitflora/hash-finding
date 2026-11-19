@@ -329,15 +329,56 @@ the comparison is indicative, not conclusive.
 
 **Assessment.** Racing is now the default way to search: it decides most
 neighbours at 2^20–2^24 and spends exact evaluations only on genuinely close
-calls. Neither run gets near the record. Improving lowbias32's family is not
-a record: hash-prospector's list already has many configs ≤ 0.11. Beating
+calls. Neither run gets near the record. *(Corrected 2026-11-19.)* 0.14182 beats every
+entry in the hash-prospector README list, whose best is
+[15 d168aaad 15 af723597 15] at 0.15984. It does not beat the issue #19
+families: the record family at 0.10704, 450c2d35/caf649a9 at 0.12243 and
+d30332d3/c865c965 at 0.12786. Beating
 0.10704 would need either other families or larger neighbourhoods, for
 example simultaneous shift and multiplier moves.
 
+### 2026-11-19: Long racing runs from distinct families (`analysis/run_family_races.sh`)
+Setup: 25 iterations, 96 neighbours per iteration, stop after 6 iterations
+without improvement, z = 3, cap 2^28. The script is resumable. Total wall time
+about 2.3 h. All scores are exact; the two headline results were re-checked
+with `mixlab eval --exact`.
+
+| family (start) | start bias | result | iterations / time |
+|---|---|---|---|
+| README best [15 d168aaad 15 af723597 15] | 0.15984 | **[16 7870aaad 15 be523597 15] 0.11527** | 25 / 73 min, **still improving at the iteration cap** |
+| #19 [16 450c2d35 15 caf649a9 16] | 0.12243 | [16 450c2d35 15 8af649a9 16] 0.12122 | 8 / 14 min (stopped by patience) |
+| #19 [16 d30332d3 15 c865c965 15] | 0.12786 | no improvement | 7 / 13 min (stopped by patience) |
+| README [17 9e485565 16 ef1d6b47 16] | 0.16143 | [17 19085565 16 af1d6b47 16] 0.14014 | 12 / 20 min (stopped by patience) |
+| our lowbias32 descendant | 0.14182 | [16 81e3352d 15 042cb68b 16] 0.13873 | 10 / 18 min (stopped by patience) |
+
+**Findings:**
+1. **[16 7870aaad 15 be523597 15] = 0.11527 is the best 2-round 32-bit mixer
+   we know of outside the record's own `21f0aaad/735a2d97` lineage.** That
+   lineage holds 0.10704–0.1133. This mixer beats the best other published
+   families: 450c at 0.1224 and d303 at 0.1279.
+   - Extra metrics: structured avalanche counter 0.90, RRC 1.05, low-weight
+     1.05 (all ideal).
+   - BIC max |z| = 86.64, at input 17 → outputs (2, 17), corr +0.3384.
+     This is *identical* to the record's and to 0.1076's worst entry (same
+     sampling seed), which supports the low-bit-core idea below.
+     *(Corrected: an earlier note said the record has 256; that value belongs
+     to lowbias32 and others.)*
+2. **The search converged on familiar low bits.** It started from d168aaad,
+   which already ends in `aaad` like the record's 21f0aaad, and the second
+   multiplier drifted to end in `…3597`, close to the record's `…2d97`.
+   Because the mixer is a T-function, the low bits of the multipliers fix the
+   low output bits. This suggests a shared "good low-bit core" that the high
+   bits then tune. Worth testing directly: fix the low 16 bits and search the
+   high bits.
+3. The 450c and d303 families are tight local optima under 1–3-bit moves, like
+   the record. The search makes big gains only from starting points that
+   weren't already locally optimised: README entries, which came from
+   hash-prospector's own noisy search.
+
 ### Next candidates (not started)
-- Racing search seeded from the best *distinct* published families (different
-  shift triples and multiplier lineages), with longer runs, aimed at the
-  32-bit record.
+- Continue the d168 → 7870aaad run (it was still improving), then a
+  low-bit-core experiment: fix the low 16 bits of both multipliers to
+  aaad/…97 patterns and race over the high bits.
 - 64-bit racing search (verification by a 2^32 fresh sample; hours per run).
 - Spectral-test and NAF-weight features versus exact bias over a large
   random 16-bit sweep.
