@@ -1,0 +1,14 @@
+[    29s] 0,start,[16 7feb352d 15 846ca68b 16],0.1735335600,sd=0.000e0
+[    60s] 1,improved,[16 7feb352d 15 046ca68b 16],0.1723047770,k=96 worse=4 rejected=0 unraced=91 median_n_drop=2^19.0 inputs=2^25.6 exact=1 cum_inputs=2^25.6 cum_exact=1
+[   100s] 2,improved,[16 7feb352d 15 042cb68b 16],0.1544149964,k=96 worse=46 rejected=0 unraced=49 median_n_drop=2^21.0 inputs=2^28.3 exact=1 cum_inputs=2^28.5 cum_exact=2
+[   224s] 3,improved,[16 7beb352d 15 042cb68b 16],0.1496286664,k=96 worse=78 rejected=0 unraced=17 median_n_drop=2^23.0 inputs=2^31.7 exact=1 cum_inputs=2^31.8 cum_exact=3
+[   524s] 4,iter,[16 7beb352d 15 042cb68b 16],0.1496286664,k=96 worse=90 rejected=6 unraced=0 median_n_drop=2^23.0 inputs=2^31.8 exact=6 cum_inputs=2^32.8 cum_exact=9
+[   626s] 5,improved,[16 7be3352d 15 042cb68b 16],0.1486168567,k=96 worse=94 rejected=1 unraced=0 median_n_drop=2^22.0 inputs=2^30.5 exact=2 cum_inputs=2^33.1 cum_exact=11
+[   813s] 6,improved,[16 7bf3352d 15 042cb68b 16],0.1470275284,k=96 worse=91 rejected=2 unraced=2 median_n_drop=2^23.0 inputs=2^31.6 exact=3 cum_inputs=2^33.5 cum_exact=14
+[   988s] 7,improved,[16 6bf3352d 15 042cb68b 16],0.1459892138,k=96 worse=88 rejected=1 unraced=6 median_n_drop=2^22.0 inputs=2^31.9 exact=2 cum_inputs=2^33.9 cum_exact=16
+[  1183s] 8,improved,[16 ebf3352d 15 042cb68b 16],0.1455942064,k=96 worse=88 rejected=2 unraced=5 median_n_drop=2^23.0 inputs=2^31.6 exact=3 cum_inputs=2^34.2 cum_exact=19
+[  1429s] 9,iter,[16 ebf3352d 15 042cb68b 16],0.1455942064,k=96 worse=91 rejected=5 unraced=0 median_n_drop=2^23.0 inputs=2^31.4 exact=5 cum_inputs=2^34.4 cum_exact=24
+[  1528s] 10,iter,[16 ebf3352d 15 042cb68b 16],0.1455942064,k=96 worse=95 rejected=1 unraced=0 median_n_drop=2^23.0 inputs=2^31.0 exact=1 cum_inputs=2^34.5 cum_exact=25
+[  1611s] 11,improved,[16 8bf3352d 15 042cb68b 16],0.1422932006,k=96 worse=94 rejected=0 unraced=1 median_n_drop=2^22.0 inputs=2^30.7 exact=1 cum_inputs=2^34.6 cum_exact=26
+[  1850s] 12,improved,[16 93f3352d 15 042cb68b 16],0.1418202679,k=96 worse=88 rejected=3 unraced=4 median_n_drop=2^23.0 inputs=2^31.8 exact=4 cum_inputs=2^34.8 cum_exact=30
+best [16 93f3352d 15 042cb68b 16]  score 0.1418202679

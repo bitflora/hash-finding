@@ -1,0 +1,3 @@
+# Research binary for this machine: enable AVX2 etc. for the fast32 path.
+[build]
+rustflags = ["-C", "target-cpu=native"]
