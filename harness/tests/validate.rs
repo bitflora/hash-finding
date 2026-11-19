@@ -94,7 +94,7 @@ fn sampled_estimator_converges_to_exact() {
     let (x, published) = reference("lowbias32");
     let e = with_mixer!(x, f => estimate_sampled(&f, 32, 1 << 26, 3, 16));
     eprintln!("lowbias32 sampled: {e:?}");
-    assert!((e.debiased - published).abs() < 4.0 * e.se + 1e-3, "{e:?}");
+    assert!((e.ms - (published / 1000.0).powi(2)).abs() < 4.0 * e.se_ms, "{e:?}");
 }
 
 #[test]
@@ -123,4 +123,39 @@ fn surrogate_one_round_matches_exact() {
         let r = mixlab::surrogate::pearson(&ex, &pr);
         assert!(r > 0.97, "{x}: per-entry pearson {r}");
     }
+}
+
+#[test]
+fn parity_claim_has_correct_shift_conditions() {
+    use mixlab::mixers::unxorshift;
+    // Exhaust all shifts and inputs at a small width, across several constants.
+    let bits = 5;
+    for s0 in 1..bits {
+        for s1 in 1..bits {
+            for s2 in 1..bits {
+                for (m0, m1) in [(3, 5), (13, 23), (31, 1)] {
+                    let f = Xmx::new(bits, vec![s0,s1,s2], vec![m0,m1]).unwrap();
+                    let out_mask: u64 = (0..bits).step_by(s2 as usize).map(|k| 1u64 << k).sum();
+                    let mut differences = vec![unxorshift(1 << s1, s0, bits)];
+                    if s1 < s0 { differences.push(1 << s1); }
+                    if s0+s1 < bits { differences.push(1 << (s0+s1)); }
+                    for d in differences {
+                        for x in 0..1u64 << bits {
+                            assert_eq!(((f.apply(x)^f.apply(x^d)) & out_mask).count_ones()%2, 1, "{f} x={x} d={d}");
+                        }
+                    }
+                }
+            }
+        }
+    }
+    let f = Xmx::parse(8, "[2 03 3 05 4]").unwrap();
+    let failures = (0..256).filter(|&x| ((f.apply(x)^f.apply(x^8)) & 0x11).count_ones()%2 == 0).count();
+    assert_eq!(failures, 192);
+}
+
+#[test]
+fn fixed_low_multiplier_bits_do_not_fix_low_output_bits() {
+    let a = Xmx::parse(32, "[16 21f0aaad 15 735a2d97 15]").unwrap();
+    let b = Xmx::parse(32, "[16 21f1aaad 15 735a2d97 15]").unwrap();
+    assert_ne!(a.apply(1) & 1, b.apply(1) & 1);
 }

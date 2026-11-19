@@ -77,7 +77,8 @@ impl Counts {
 
     /// diff = (count - n/2) / (n/2), as in prospector.c.
     pub fn diffs(&self) -> impl Iterator<Item = f64> + '_ {
-        let half = (self.n / 2) as f64;
+        assert!(self.n > 0, "counts require at least one input");
+        let half = self.n as f64 / 2.0;
         self.bins.iter().map(move |&c| (c as f64 - half) / half)
     }
 
@@ -92,10 +93,12 @@ impl Counts {
         1000.0 * self.ms().sqrt()
     }
 
-    /// Mean squared diff minus the expected sampling-noise contribution (1/n)
-    /// for *randomly sampled* inputs: an unbiased estimate of the exact ms.
+    /// Unbiased mean-square estimate for i.i.d. sampled inputs (may be negative).
+    /// E[raw_ms] = true_ms + (1 - true_ms)/n.
     pub fn ms_debiased(&self) -> f64 {
-        self.ms() - 1.0 / self.n as f64
+        assert!(self.n > 1, "debiased ms requires at least two inputs");
+        let n = self.n as f64;
+        (n * self.ms() - 1.0) / (n - 1.0)
     }
 
     pub fn max_abs(&self) -> f64 {
@@ -244,10 +247,13 @@ pub struct Estimate {
     pub n: u64,
     /// Raw hash-prospector score (includes sampling noise if sampled).
     pub score: f64,
-    /// Noise-corrected score: 1000*sqrt(max(0, ms - 1/n)); equals `score` if exact.
+    /// Display score: 1000*sqrt(max(0, ms)); equals `score` if exact.
     pub debiased: f64,
-    /// Conservative standard error of `debiased` (0 if exact).
-    pub se: f64,
+    /// Signed unbiased mean-square estimate, or exact mean square.
+    pub ms: f64,
+    /// Approximate standard error of the pooled mean-square estimate.
+    /// Uses a Gaussian batch approximation with covariance between entries.
+    pub se_ms: f64,
     /// Largest |diff| over the matrix.
     pub max_abs: f64,
 }
@@ -255,10 +261,35 @@ pub struct Estimate {
 pub fn estimate_exact<F: Fn(u64) -> u64 + Sync>(f: &F, bits: u32) -> Estimate {
     let c = exact(f, bits);
     let s = c.score();
-    Estimate { exact: true, n: c.n, score: s, debiased: s, se: 0.0, max_abs: c.max_abs() }
+    Estimate { exact: true, n: c.n, score: s, debiased: s, ms: c.ms(), se_ms: 0.0, max_abs: c.max_abs() }
 }
 
-/// Sampled estimate; `batches` independent sub-samples give the standard error.
+/// Approximate variance of the pooled squared mean, retaining correlations
+/// between SAC entries. Batch means are approximately Gaussian. Weighted
+/// residuals estimate per-input covariance S with df = batches - 1.
+/// Var(ms) ~= (4 mu' Sigma mu / n + 2 tr(Sigma^2)/n^2) / entries^2.
+/// Wishart corrections remove finite-batch noise from tr(S^2) and mu'Smu.
+/// This is not an always-valid confidence bound, especially for tiny batches.
+fn pooled_se_ms(parts: &[Counts], total: &Counts) -> f64 {
+    let n = total.n as f64;
+    let df = (parts.len() - 1) as f64;
+    let mean: Vec<f64> = total.diffs().collect();
+    let residuals: Vec<Vec<f64>> = parts.iter().map(|p| {
+        let scale = (p.n as f64).sqrt();
+        p.diffs().zip(&mean).map(|(v, m)| scale * (v - m)).collect()
+    }).collect();
+    let dot = |a: &[f64], b: &[f64]| a.iter().zip(b).map(|(x, y)| x * y).sum::<f64>();
+    let trace = residuals.iter().map(|r| dot(r, r)).sum::<f64>() / df;
+    let trace_square = residuals.iter().flat_map(|a| residuals.iter().map(move |b| dot(a, b).powi(2))).sum::<f64>() / df.powi(2);
+    let sigma_square = (df * (df * trace_square - trace * trace) / ((df - 1.0) * (df + 2.0))).max(0.0);
+    let mean_s_mean = residuals.iter().map(|r| dot(r, &mean).powi(2)).sum::<f64>() / df;
+    let signal = (mean_s_mean - sigma_square / n).max(0.0);
+    let variance = (4.0 * signal / n + 2.0 * sigma_square / n.powi(2)) / (mean.len() as f64).powi(2);
+    variance.sqrt() * n / (n - 1.0)
+}
+
+/// Pooled point estimate and covariance-aware approximate uncertainty.
+/// Uses exactly n inputs, including any remainder when splitting batches.
 pub fn estimate_sampled<F: Fn(u64) -> u64 + Sync>(
     f: &F,
     bits: u32,
@@ -266,22 +297,74 @@ pub fn estimate_sampled<F: Fn(u64) -> u64 + Sync>(
     seed: u64,
     batches: u64,
 ) -> Estimate {
-    let per = (n / batches).max(1);
-    let parts: Vec<Counts> =
-        (0..batches).map(|b| sampled(f, bits, per, stream_seed(seed ^ 0xb47c4, b))).collect();
-    let batch_ms: Vec<f64> = parts.iter().map(|c| c.ms_debiased()).collect();
-    let total = parts.into_iter().reduce(Counts::merge).unwrap();
-    let d = total.ms_debiased();
-    let k = batch_ms.len() as f64;
-    let mean = batch_ms.iter().sum::<f64>() / k;
-    let var = batch_ms.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / (k - 1.0).max(1.0);
-    let se_ms = (var / k).sqrt();
-    let deb = 1000.0 * d.max(0.0).sqrt();
-    // delta method; if d is ~0, report the ms-scale bound instead
-    let se = if d > 0.0 {
-        1000.0 * se_ms / (2.0 * d.sqrt())
-    } else {
-        1000.0 * se_ms.sqrt()
-    };
-    Estimate { exact: false, n: total.n, score: total.score(), debiased: deb, se, max_abs: total.max_abs() }
+    assert!(batches >= 4 && n >= 2 * batches, "need >=4 batches and >=2 inputs per batch");
+    let parts: Vec<Counts> = (0..batches).map(|b| {
+        let len = n / batches + u64::from(b < n % batches);
+        sampled(f, bits, len, stream_seed(seed ^ 0xb47c4, b))
+    }).collect();
+    let total = parts.iter().cloned().reduce(Counts::merge).unwrap();
+    let ms = total.ms_debiased();
+    let se_ms = pooled_se_ms(&parts, &total);
+    Estimate {
+        exact: false, n: total.n, score: total.score(),
+        debiased: 1000.0 * ms.max(0.0).sqrt(), ms, se_ms,
+        max_abs: total.max_abs(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn odd_counts_and_exact_unbiasing() {
+        let c = Counts { bits: 1, n: 3, bins: vec![1] };
+        assert!((c.diffs().next().unwrap() + 1.0 / 3.0).abs() < 1e-14);
+        // Enumerate all Bernoulli samples: E[estimate] = (2p-1)^2.
+        for p in [0.25f64, 0.5, 0.75] {
+            let mut expectation = 0.0;
+            for sample in 0u32..8 {
+                let ones = sample.count_ones();
+                let c = Counts { bits: 1, n: 3, bins: vec![ones as u64] };
+                expectation += p.powi(ones as i32) * (1.0-p).powi(3-ones as i32) * c.ms_debiased();
+            }
+            assert!((expectation - (2.0*p-1.0).powi(2)).abs() < 1e-14);
+        }
+    }
+
+    #[test]
+    fn pooled_uncertainty_tracks_correlated_replicates() {
+        // Every table entry shares the same Bernoulli observation. An entry-
+        // independence formula would underestimate variance by a factor of 16.
+        for p in [0.5, 0.75] {
+            let mut rng = Xoshiro256::new(123);
+            let mut estimates = Vec::new();
+            let mut predicted = 0.0;
+            for _ in 0..400 {
+                let parts: Vec<Counts> = (0..16).map(|b| {
+                    let n = 128 + u64::from(b < 3);
+                    let ones = (0..n).filter(|_| rng.unit() < p).count() as u64;
+                    Counts { bits: 4, n, bins: vec![ones; 16] }
+                }).collect();
+                let total = parts.iter().cloned().reduce(Counts::merge).unwrap();
+                estimates.push(total.ms_debiased());
+                predicted += pooled_se_ms(&parts, &total).powi(2);
+            }
+            let mean = estimates.iter().sum::<f64>() / estimates.len() as f64;
+            let variance = estimates.iter().map(|v| (v-mean).powi(2)).sum::<f64>() / (estimates.len()-1) as f64;
+            let ratio = predicted / estimates.len() as f64 / variance;
+            // At the null, clamping the signal component is deliberately
+            // conservative. Away from the null the variance should calibrate.
+            let upper = if p == 0.5 { 3.0 } else { 1.8 };
+            assert!((0.65..upper).contains(&ratio), "p={p} variance ratio={ratio}");
+        }
+    }
+
+    #[test]
+    fn sampled_estimate_uses_requested_remainder() {
+        let e = estimate_sampled(&|x| x, 4, 103, 1, 16);
+        assert_eq!(e.n, 103);
+        assert_eq!(e.ms, 1.0);
+        assert_eq!(e.se_ms, 0.0);
+    }
 }

@@ -136,10 +136,25 @@ pub fn ms_design(x: &Xmx, n: u64, seed: u64, design: Design) -> f64 {
 use crate::bias::{sampled, Counts};
 
 /// Standard deviation of a debiased ms estimate from n i.i.d. inputs
-/// (verified noise law: Var ~= (4 ms/n + 2/n^2) / N, N = bits^2).
+/// (approximate noise law: Var ~= (4 ms/n + 2/n^2) / N, N = bits^2).
 pub fn sd_ms(ms: f64, n: u64, bits: u32) -> f64 {
     let n = n as f64;
     ((4.0 * ms.max(0.0) / n + 2.0 / (n * n)) / (bits * bits) as f64).sqrt()
+}
+
+/// Gaussian-tail multiple-look adjustment within one race. For z >= 0,
+/// Q(sqrt(z^2 + 2 ln M)) <= Q(z)/M. The union bound needs no independence
+/// between looks, but Gaussian tails and the variance model remain approximate.
+/// This does not provide a search-wide or distribution-free error guarantee.
+fn race_threshold(cfg: &RaceCfg, candidates: usize) -> f64 {
+    let mut looks = 1usize;
+    let mut n = cfg.n0;
+    while n < cfg.cap {
+        n = n.saturating_mul(2).min(cfg.cap);
+        looks += 1;
+    }
+    let tests = candidates.max(1) as f64 * (looks + 1) as f64;
+    (cfg.z * cfg.z + 2.0 * tests.ln()).sqrt()
 }
 
 #[derive(Clone, Debug)]
@@ -149,7 +164,7 @@ pub struct RaceCfg {
     pub n0: u64,
     /// max samples per candidate before the fallback decision
     pub cap: u64,
-    /// decision threshold in standard deviations
+    /// nominal Gaussian z before within-race multiple-look adjustment
     pub z: f64,
     /// None => exact verification (bits <= 32); Some(n) => fresh n-sample verification
     pub verify_samples: Option<u64>,
@@ -189,7 +204,8 @@ pub struct RaceResult {
 /// Verified ms of a candidate: exact, or a fresh sample.
 fn verify(x: &Xmx, cfg: &RaceCfg, salt: u64) -> (f64, u64) {
     match cfg.verify_samples {
-        None => (crate::fast32::exact_xmx(x, true).ms(), 0),
+        None if x.bits >= 3 => (crate::fast32::exact_xmx(x, true).ms(), 0),
+        None => (with_mixer!(x, f => crate::bias::exact(&f, x.bits).ms()), 0),
         Some(n) => {
             let s = stream_seed(cfg.seed ^ 0x7e51f1, salt);
             (with_mixer!(x, f => sampled(&f, x.bits, n, s).ms_debiased()), n)
@@ -200,7 +216,12 @@ fn verify(x: &Xmx, cfg: &RaceCfg, salt: u64) -> (f64, u64) {
 /// Race `cands` against an incumbent whose ms is `inc_ms` with variance
 /// `inc_var` (0 if exact). First verified improvement wins.
 pub fn race(cfg: &RaceCfg, inc_ms: f64, inc_var: f64, cands: Vec<Xmx>, salt: u64) -> RaceResult {
+    assert!(cfg.n0 >= 2 && cfg.cap >= cfg.n0, "need 2 <= n0 <= cap");
+    assert!(cfg.z.is_finite() && cfg.z > 0.0, "z must be positive and finite");
+    assert!(cfg.verify_samples.map_or(cfg.bits <= 32, |n| n >= 2));
+    assert!(cands.iter().all(|c| c.bits == cfg.bits));
     let bits = cfg.bits;
+    let z = race_threshold(cfg, cands.len());
     let mut alive: Vec<(usize, Counts)> = (0..cands.len()).map(|i| (i, Counts::new(bits))).collect();
     let mut dec: Vec<Option<Decision>> = vec![None; cands.len()];
     let mut inputs = 0u64;
@@ -221,10 +242,10 @@ pub fn race(cfg: &RaceCfg, inc_ms: f64, inc_var: f64, cands: Vec<Xmx>, salt: u64
             if used == 0 {
                 *exact_evals += 1;
             }
-            // sampled verification must itself be convincing at z
+            // Sampled verification uses the same adjusted threshold.
             let better = match cfg.verify_samples {
                 None => vm < inc_ms,
-                Some(vn) => inc_ms - vm > cfg.z * (sd_ms(vm, vn, bits).powi(2) + inc_var).sqrt(),
+                Some(vn) => inc_ms - vm > z * (sd_ms(vm, vn, bits).powi(2) + inc_var).sqrt(),
             };
             dec[i] = Some(Decision {
                 cand: cands[i].clone(),
@@ -257,9 +278,9 @@ pub fn race(cfg: &RaceCfg, inc_ms: f64, inc_var: f64, cands: Vec<Xmx>, salt: u64
             let mh = c.ms_debiased();
             let sd = (sd_ms(mh, n, bits).powi(2) + inc_var).sqrt();
             let d = mh - inc_ms;
-            if d > cfg.z * sd {
+            if d > z * sd {
                 dec[i] = Some(Decision { cand: cands[i].clone(), verdict: Verdict::Worse, n, ms_hat: mh, verified_ms: None });
-            } else if d < -cfg.z * sd {
+            } else if d < -z * sd {
                 promising.push((i, mh));
             } else {
                 still.push((i, c));
@@ -279,7 +300,7 @@ pub fn race(cfg: &RaceCfg, inc_ms: f64, inc_var: f64, cands: Vec<Xmx>, salt: u64
             let r = try_verify(rest, &mut dec, &mut inputs, &mut exact_evals, n);
             break r;
         }
-        inc = n; // cumulative doubling
+        inc = n.min(cfg.cap - n); // cumulative doubling, respecting non-power-of-two caps
     };
     let decisions = dec
         .into_iter()
@@ -338,6 +359,8 @@ pub fn race_search(
         }
         let k = cands.len();
         let r = race(cfg, cur_ms, cur_var, cands, it as u64);
+        // Early acceptance is not evidence against unfinished candidates.
+        release_unraced(&mut seen, &r.decisions);
         total_inputs += r.inputs;
         total_exact += r.exact_evals;
         let cnt = |v: Verdict| r.decisions.iter().filter(|d| d.verdict == v).count();
@@ -372,4 +395,45 @@ pub fn race_search(
         }
     }
     (cur, ms_to_score(cur_ms))
+}
+
+/// Keep candidates abandoned by early acceptance eligible for later iterations.
+fn release_unraced(seen: &mut std::collections::HashSet<String>, decisions: &[Decision]) {
+    for d in decisions {
+        if d.verdict == Verdict::Unraced {
+            seen.remove(&d.cand.to_string());
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn multiple_looks_raise_threshold_and_cap_is_respected() {
+        let x = Xmx::parse(8, "[4 ad 3 97 4]").unwrap();
+        let cfg = RaceCfg { bits: 8, n0: 16, cap: 37, z: 100.0, verify_samples: None, seed: 2 };
+        assert!(race_threshold(&cfg, 96) > race_threshold(&cfg, 1));
+        let ms = crate::fast32::exact_xmx(&x, false).ms();
+        let result = race(&cfg, ms, 0.0, vec![x], 1);
+        assert_eq!(result.inputs, 37);
+        assert_eq!(result.decisions[0].n, 37);
+        assert_eq!(result.decisions[0].verdict, Verdict::Rejected);
+    }
+
+    #[test]
+    fn early_acceptance_does_not_blacklist_unfinished_candidates() {
+        let x = Xmx::parse(8, "[4 ad 3 97 4]").unwrap();
+        let cfg = RaceCfg { bits: 8, n0: 32, cap: 32, z: 100.0, verify_samples: None, seed: 1 };
+        // All candidates beat the deliberately poor incumbent; only one is verified.
+        let y = Xmx::parse(8, "[4 b5 3 2d 4]").unwrap();
+        let result = race(&cfg, 1.0, 0.0, vec![x.clone(), y.clone()], 1);
+        assert!(result.accepted.is_some());
+        let unfinished = result.decisions.iter().find(|d| d.verdict == Verdict::Unraced).unwrap();
+        let accepted = result.accepted.as_ref().unwrap().0.to_string();
+        let mut seen = std::collections::HashSet::from([x.to_string(), y.to_string()]);
+        release_unraced(&mut seen, &result.decisions);
+        assert!(seen.insert(unfinished.cand.to_string()), "candidate must be eligible again");
+        assert!(seen.contains(&accepted));
+    }
 }

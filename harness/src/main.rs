@@ -72,7 +72,7 @@ impl Args {
 
 fn parse_num(v: &str) -> Option<u64> {
     if let Some(p) = v.strip_prefix('p') {
-        p.parse::<u32>().ok().map(|k| 1u64 << k)
+        p.parse::<u32>().ok().and_then(|k| 1u64.checked_shl(k))
     } else if let Some(h) = v.strip_prefix("0x") {
         u64::from_str_radix(h, 16).ok()
     } else {
@@ -90,11 +90,12 @@ fn fmt_est(e: &Estimate) -> String {
         format!("exact  bias={:.17}  max|diff|={:.3e}", e.score, e.max_abs)
     } else {
         format!(
-            "n=2^{:.1}  bias={:.5} ± {:.5} (debiased; raw {:.5})  max|diff|={:.3e}",
+            "n=2^{:.1}  bias={:.5} (display; raw {:.5})  ms={:.6e} ± {:.3e} (approx SE)  max|diff|={:.3e}",
             (e.n as f64).log2(),
             e.debiased,
-            e.se,
             e.score,
+            e.ms,
+            e.se_ms,
             e.max_abs
         )
     }
@@ -108,7 +109,9 @@ fn evaluate<F: Fn(u64) -> u64 + Sync>(f: &F, bits: u32, a: &Args, force_exact: b
         estimate_exact(f, bits)
     } else {
         let default = if bits <= 16 { 1 << 20 } else { 1 << 24 };
-        estimate_sampled(f, bits, a.num("samples", default), seed, 16)
+        let n = a.num("samples", default);
+        if n < 32 { die("--samples must be at least 32 for uncertainty estimation"); }
+        estimate_sampled(f, bits, n, seed, 16)
     };
     let mut s = format!("{}  [{:.1}s]", fmt_est(&e), t.elapsed().as_secs_f64());
     if a.has("extra") {
@@ -141,7 +144,7 @@ fn eval_xmx(x: &Xmx, a: &Args, force_exact: bool) -> String {
     if (force_exact || a.has("exact")) && (3..=32).contains(&x.bits) {
         let t = Instant::now();
         let c = mixlab::fast32::exact_xmx(x, true);
-        let e = Estimate { exact: true, n: c.n, score: c.score(), debiased: c.score(), se: 0.0, max_abs: c.max_abs() };
+        let e = Estimate { exact: true, n: c.n, score: c.score(), debiased: c.score(), ms: c.ms(), se_ms: 0.0, max_abs: c.max_abs() };
         let mut s = format!("{}  [{:.1}s]", fmt_est(&e), t.elapsed().as_secs_f64());
         if a.has("extra") {
             let mut b = Args { cmd: a.cmd.clone(), kv: a.kv.clone() };
@@ -252,10 +255,10 @@ fn main() {
     }
 }
 
-fn sampled_debiased(x: &Xmx, n: u64, seed: u64) -> f64 {
+fn sampled_ms(x: &Xmx, n: u64, seed: u64) -> f64 {
     with_mixer!(x, f => {
         let c = mixlab::bias::sampled_serial(&f, x.bits, n, seed);
-        1000.0 * c.ms_debiased().max(0.0).sqrt()
+        c.ms_debiased()
     })
 }
 
@@ -321,7 +324,7 @@ fn surrogate_cmd(a: &Args) {
             .filter(|l| !l.trim().is_empty())
             .map(|l| {
                 let mut it = l.split(',');
-                let spec = it.next().unwrap();
+                let spec = it.next().unwrap().trim_matches('"');
                 let v: f64 = it.next().unwrap().parse().expect("bias");
                 (Xmx::parse(bits, spec).unwrap_or_else(|e| die(&e)), v)
             })
@@ -347,7 +350,7 @@ fn surrogate_cmd(a: &Args) {
     report_rank("surrogate vs exact (all)", &truth, &pred);
     let base: Option<Vec<f64>> = baseline.map(|n| {
         let t = Instant::now();
-        let v: Vec<f64> = configs.par_iter().enumerate().map(|(i, x)| sampled_debiased(x, n, seed ^ i as u64)).collect();
+        let v: Vec<f64> = configs.par_iter().enumerate().map(|(i, x)| sampled_ms(x, n, seed ^ i as u64)).collect();
         println!(
             "sampling baseline n=2^{:.0}: {:.3} ms/config",
             (n as f64).log2(),
@@ -370,9 +373,9 @@ fn surrogate_cmd(a: &Args) {
     }
     if let Some(out) = a.get("out") {
         let mut w = BufWriter::new(File::create(out).expect("create"));
-        writeln!(w, "config,exact,surrogate{}", if base.is_some() { ",sampled" } else { "" }).unwrap();
+        writeln!(w, "config,exact,surrogate{}", if base.is_some() { ",sampled_ms" } else { "" }).unwrap();
         for i in 0..configs.len() {
-            let b = base.as_ref().map(|b| format!(",{:.8}", b[i])).unwrap_or_default();
+            let b = base.as_ref().map(|b| format!(",{:.17e}", b[i])).unwrap_or_default();
             writeln!(w, "\"{}\",{:.10},{:.6e}{}", configs[i], truth[i], pred[i], b).unwrap();
         }
     }
@@ -460,9 +463,9 @@ fn scale_cmd(a: &Args) {
             let n = (((w as u64 + 1) << w) / (bits as u64 + 1)).max(64);
             let t = Instant::now();
             let v: Vec<f64> =
-                rows.par_iter().enumerate().map(|(i, r)| sampled_debiased(&r.0, n, seed ^ (i as u64 * 7919))).collect();
+                rows.par_iter().enumerate().map(|(i, r)| sampled_ms(&r.0, n, seed ^ (i as u64 * 7919))).collect();
             let ms = t.elapsed().as_secs_f64() * 1e3 / rows.len() as f64;
-            cols.push((format!("sampled{bits}_eqcost_w{w}"), v, ms));
+            cols.push((format!("sampled_ms{bits}_eqcost_w{w}"), v, ms));
         }
     }
     // groups: each distinct group label, everything, the best half and best tenth overall
@@ -560,7 +563,7 @@ fn paired_cmd(a: &Args) {
         (tb, to)
     });
     println!(
-        "base {base}  n=2^{:.0}  reps={reps}   (ms values x1e9; ratio = var_ind/var_crn = sample-count saving)",
+        "base {base}  n=2^{:.0}  reps={reps}   (ms values x1e9; ratio = var_ind/var_crn; noise-dominated sample saving ~sqrt(ratio))",
         (n as f64).log2()
     );
     println!("{:<34} {:>10} {:>10} {:>10} {:>10} {:>8}", "move", "mean dms", "true dms", "sd_ind", "sd_crn", "ratio");
@@ -687,4 +690,17 @@ incumbent {start} ms={:.6e}", inc);
         eprintln!("[{:>6.0}s] {line}", t.elapsed().as_secs_f64());
     });
     println!("best {best}  score {score:.10}");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn baseline_keeps_negative_estimates_distinct() {
+        let x = Xmx::parse(16, "[8 a3d3 7 4b2d 9]").unwrap();
+        let estimates: Vec<f64> = (0..32).map(|seed| sampled_ms(&x, 1025, seed)).collect();
+        let negative: Vec<f64> = estimates.into_iter().filter(|v| *v < 0.0).collect();
+        assert!(negative.len() >= 2);
+        assert!(negative.windows(2).any(|p| p[0] != p[1]));
+    }
 }

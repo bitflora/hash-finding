@@ -1,3 +1,10 @@
+> **Review correction (2026-11-19):** This is a historical experiment log.
+> Exact scores remain valid, but old baseline correlations, uncertainty bars,
+> search timings and categorical conclusions are superseded by the corrections
+> in `FINDINGS.md` and `results/REVIEW_STATUS.md`. The universal single-bit parity
+> claim needs shift conditions; the entire mixer is not a T-function; tested
+> surrogate failures do not rule out every Markov model.
+
 # Plan: Searching for better integer mixer constants (`mixing-functions/`)
 
 ## Context
@@ -174,7 +181,7 @@ mean-square, with scores in brackets. A used 2¹⁸ samples per row and B1 used
 
 **Conclusions:**
 1. Keeping all correlations *across the round boundary* (A) recovers almost
-   none of the bias. A pairwise cross-round surrogate can't work. The bias
+   none of the bias. This tested cross-round approximation failed on the two examined mixers. The bias
    depends on the joint bit structure of the signed sum D (a sum of about n/2
    signed shifted copies of m), which takes ~2^{n/2} sign patterns to
    represent exactly.
@@ -185,8 +192,8 @@ mean-square, with scores in brackets. A used 2¹⁸ samples per row and B1 used
    variance is about 0.21, against 0.25 for plain sampling. So it is no
    shortcut for 64-bit evaluation either.
 4. **Overall:** the avalanche bias of good 2-round xmx mixers is a "global"
-   property. Markov / differential-trail style models, first- or second-order,
-   can't predict it quantitatively. For quantitative work at 64 bits, sampling
+   property. The tested Markov approximations did not predict it quantitatively;
+   broader impossibility claims are not supported by these experiments. For quantitative work at 64 bits, sampling
    (with noise control) or exact evaluation at reduced width are the remaining
    options. The first-order surrogate is still useful as a cheap family-level
    screen.
@@ -317,7 +324,7 @@ incumbent:
 
 | start | result | time | notes |
 |---|---|---|---|
-| record [16 21f0aaad 15 735a2d97 15] 0.10704 | no improvement | 20 min | 1,152 random 1–3-step neighbours raced; 1,132 dropped by sampling (median at 2^23), 20 exact checks. A robust local optimum. |
+| record [16 21f0aaad 15 735a2d97 15] 0.10704 | no improvement | 20 min | 1,152 random 1–3-step neighbours raced; 1,132 dropped by sampling (median at 2^23), 20 exact checks. No improvement found in this sampled neighborhood. |
 | lowbias32 [16 7feb352d 15 846ca68b 16] 0.17353 | **[16 93f3352d 15 042cb68b 16] 0.14182** | 31 min | 10 of 12 iterations improved |
 | arbitrary [16 2b9e1a3f 15 9d2c5689 16] 1.7233 | [16 3d9e1b2d 14 8d0c9299 16] 0.15338 | 16.5 min | every iteration improved |
 | *old fixed-halving `search` from lowbias32* (20 iterations) | [16 7f8f352d 15 dc6ca64b 16] 0.14919 | 27.5 min | stalled from iteration 7 to 15 at 0.1495 |
@@ -366,8 +373,8 @@ with `mixlab eval --exact`.
 2. **The search converged on familiar low bits.** It started from d168aaad,
    which already ends in `aaad` like the record's 21f0aaad, and the second
    multiplier drifted to end in `…3597`, close to the record's `…2d97`.
-   Because the mixer is a T-function, the low bits of the multipliers fix the
-   low output bits. This suggests a shared "good low-bit core" that the high
+   Multiplication is a T-function, but right shifts make this inference
+   invalid for the full mixer; fixed low multiplier bits do not fix low outputs. This suggests a shared "good low-bit core" that the high
    bits then tune. Worth testing directly: fix the low 16 bits and search the
    high bits.
 3. The 450c and d303 families are tight local optima under 1–3-bit moves, like

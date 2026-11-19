@@ -31,10 +31,15 @@ mixlab search --bits 64 --rounds 2 --iters 100 --final-samples 26 --seed 1 --out
   32 bits or fewer. This reproduces the published 32-bit values to 17 digits.
   hash-prospector's *16-bit* figures leave out the ×1000; this tool always
   includes it.
-- **sampled bias** (64-bit, or when `--exact` is not given): over n random
-  inputs (xoshiro256**). Sampling noise adds 1/n to the mean square, so the
-  tool reports the *debiased* `1000·sqrt(ms − 1/n)` with a conservative
-  standard error from 16 independent batches.
+- **sampled bias**: the unbiased mean-square estimate is
+  `(n*raw_ms - 1)/(n-1)`, which can legitimately be negative. Rankings and
+  baseline CSV columns (`sampled_ms`, `sampled_ms32_eqcost_w...`) retain that
+  signed value. Only the displayed bias uses `1000*sqrt(max(0, ms))`.
+  Uncertainty is reported on the mean-square scale. Weighted batch residuals
+  estimate the covariance of SAC entries; a Gaussian batch approximation
+  estimates the variance of the **pooled** point estimate. All requested
+  inputs are used, including batch remainders. This is approximate, not an
+  always-valid confidence bound; `eval` needs at least 32 inputs.
 - `--extra`:
   - **structured avalanche** reports `ms·n` on counter inputs, on RRC-style
     inputs (reversed, rotated and complemented counters) and on
@@ -56,11 +61,11 @@ mixlab surrogate --bits 16 --random 5000 --baseline p12 --top 0.1
   per 32-bit configuration.
 - It is near-exact for one multiply. For 2-round mixers its absolute values
   collapse to about 10⁻¹¹, so use it **only for ranking**.
-- It ranks families of constants better than sampling at equal cost, but it is
-  weak within a family. See the experiment log in `../plan.md`.
+- Family-screening performance is tentative. Historical sampling baselines
+  clipped negative estimates before ranking and must be recomputed.
 - `--hybrid A|B1|B --samples p24` runs the ablation estimators (exact
-  difference up to the last multiply, modelled after it). They were used to show
-  that 2-round bias can't be captured by Markov-style models.
+  difference up to the last multiply, modelled after it). They showed that these approximations missed substantial bias on two
+  mixers; they do not rule out every Markov-style model.
 
 ## Width scaling (`scale.rs`)
 
@@ -93,7 +98,9 @@ python ../analysis/racing_cost.py F.csv 32 1.1458e-8 3
 - `design` compares i.i.d., low-bit-stratified and affine-subspace input
   designs.
 - **Result:** sd(mŝ) ≈ √(2/N)/n for good mixers (N = bits²). Common inputs and
-  input designs give no real saving. Sequential stopping saves about ×11. See
+  the tested input designs gave little saving. The historical cost model
+  predicted about ×11 from adaptive budgets; this is not a calibrated
+  sequential-testing guarantee. See
   `../plan.md`.
 
 ## Racing search (`race`, recommended)
@@ -107,21 +114,26 @@ mixlab race --bits 64 --start SPEC --verify-samples p32 --cap p31 --out F.csv
 Each iteration races K fresh neighbours against the incumbent:
 1. Every candidate that is still undecided gets its sample count doubled,
    starting at 2^14.
-2. A z-test uses the verified noise law: sd ≈ √((4·ms/n + 2/n²)/N).
-   - A candidate worse by more than z·sd (default z = 3) is dropped.
-   - A candidate better by more than z·sd is verified.
+2. A z-test uses the approximate noise law: sd ≈ √((4·ms/n + 2/n²)/N).
+   The nominal `--z` (default 3) becomes `sqrt(z² + 2*ln(K*(L+1)))`,
+   allocating Gaussian tail probability across K candidates, L possible
+   sampling looks and one verification per candidate. This corrects peeking
+   within a race under the model; correlated entries, non-Gaussian tails and
+   repeated search iterations still prevent a rigorous overall guarantee.
+   Candidates worse by this threshold are dropped; better ones are verified.
 3. Candidates still undecided at the cap (2^28 by default) are verified in
    order of their estimate, best first.
-4. The first verified improvement is accepted.
+4. The first verified improvement is accepted. Unfinished candidates remain
+   eligible for later iterations rather than being permanently blacklisted.
 
 Verification is exact for 32 bits or fewer. For 64 bits it is a fresh sample
-of `--verify-samples` inputs that must itself win at z, and the new incumbent
+of `--verify-samples` inputs that must itself win at the adjusted threshold, and the new incumbent
 is then re-estimated from another fresh sample.
 
 The log's `detail` column shows how many candidates were dropped and at what
 sample count, plus the inputs and exact evaluations spent.
 
-**Validation:**
+**Historical validation (before review fixes; timings need rerunning):**
 - Against the record's 24 known-worse neighbours, all were dropped correctly
   using 2^29.7 inputs, in 54 s (exact scoring takes about 12 min).
 - Starting from 0.1076, racing the 57 issue #19 constants found a verified

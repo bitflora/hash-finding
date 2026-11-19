@@ -6,8 +6,8 @@ avalanche bias, with additional statistical yardsticks.
 
 - `sources.md` — annotated bibliography
 - `plan.md` — research plan and experiment log
-- `harness/` — (to be built) Rust evaluation and search tool
-- `results/`, `analysis/` — (to be created) raw results and analysis scripts
+- `harness/` — Rust evaluation and search tool
+- `results/`, `analysis/` — raw results and analysis scripts
 
 ## Plain-language primer
 
@@ -77,30 +77,39 @@ approaches:
    differentials, linear correlations) to *predict* quality instead of only
    measuring it.
 
-## Finding so far: every 2-round mixer has a parity that always flips
+## Structural parity relation in 2-round mixers
 
-For any `[s0 m0 s1 m1 s2]` mixer, **whatever the multipliers**:
-- Flipping input bit `s1` (and also input bit `s0+s1`, when that is inside the
-  word) flips the XOR of output bits `0, s2, 2·s2, …` **every time**.
-- Why: multiplication only moves information upward, and the top bit of each
-  "window" passes through it linearly. So output word bit 0 of the last multiply
-  equals `z_0 ⊕ z_{s1}`, and the last xorshift spreads that bit over output
-  bits `0, s2, 2·s2, …`.
-- Confirmed empirically (100.00% over 20k trials) for lowbias32, TheIronBorn's
-  record and random constants.
-- The avalanche bias score can't see this, because it looks at one output bit
-  at a time. When `s2 ≥ bits/2` the parity covers only two output bits, so it
-  shows up as a pairwise BIC correlation of exactly ±1. That holds for lowbias32,
-  Murmur3 fmix32 and SplitMix64/Mix13.
-- **Consequence:** searching 2-round constants can lower avalanche bias but can
-  never remove this weakness. Applications that need generator-quality output
-  need ≥3 rounds or rotations (mx3, NASAM).
+Let the shifts be `s0, s1, s2`. The XOR of output bits
+`{0, s2, 2*s2, ...}` recovers bit 0 immediately before the last xorshift.
+For any odd multipliers, this parity always flips under:
+
+- input bit `s1`, **provided `s1 < s0`**;
+- input bit `s0+s1`, whenever that bit is inside the word;
+- more generally, the input difference obtained by applying the inverse of
+  the first xorshift to `1 << s1`. This may involve multiple input bits.
+
+An odd multiply is triangular in the input bits and preserves bit 0.
+Flipping only intermediate bit `s1` flips bit `s1` of the first product,
+without changing lower bits. The middle xorshift therefore flips bit 0,
+which the second multiply preserves.
+
+The earlier unconditional single-bit claim was false: for the 8-bit mixer
+`[2 03 3 05 4]`, flipping input bit 3 fails to flip the parity of output bits
+0 and 4 on 192 of 256 inputs. Exhaustive small-width regression tests now
+cover both the corrected conditions and this counterexample.
+
+SAC cannot detect all such parity relations. When the output parity contains
+two bits and a single input flip triggers it, BIC can expose it. This is a
+structural limitation, not a universal proof that two-round generators are
+unsuitable or that three rounds are sufficient. Stream quality needs separate
+testing.
 
 ## Reference measurements (`results/refs.txt`)
 
 The 32-bit and 16-bit figures are exact and match the published values to 17
-digits. The 64-bit figures use 2³⁰ random inputs and are debiased, ± one
-standard error. "BIC max|z|" should be about 4.5–5 for an ideal mixer; 256
+digits. The historical 64-bit figures use 2³⁰ random inputs. Their displayed ±
+values used the old batch uncertainty calculation and are not calibrated
+standard errors for the pooled estimator; they need rerunning. "BIC max|z|" should be about 4.5–5 for an ideal mixer; 256
 means a perfectly correlated output-bit pair.
 
 | Width | Function | Rounds | Bias | BIC max\|z\| | Source |
@@ -118,6 +127,6 @@ means a perfectly correlated output-bit pair.
 | 64 | rrmxmx | 2 + rotations | 0.000 ± 0.009 | 57 | Evensen 2018 |
 | 64 | mx3 | 3 | 0.001 ± 0.080 | 4.5 | Maiga |
 
-Even at 2³⁰ samples, only fmix64 and Moremur are measurably biased. The other
-64-bit mixers can't be told apart by avalanche bias alone. This is why the
-64-bit work needs either analytic surrogates or other yardsticks.
+The historical 64-bit significance/ranking conclusions are provisional until
+these measurements are rerun with the corrected pooled uncertainty estimate.
+See `results/REVIEW_STATUS.md` for the status of saved experiments.

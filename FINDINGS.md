@@ -1,5 +1,10 @@
 # Mixing functions: findings for review (2026-11-19)
 
+> **Review correction (2026-11-19):** Exact scores remain valid. Historical
+> sampled comparisons, uncertainty estimates, and search timings below predate
+> evaluator/search fixes; see [results/REVIEW_STATUS.md](results/REVIEW_STATUS.md).
+> F3 and F10 have been corrected, and F5 narrowed.
+
 **Audience:** agents or people reviewing this line of research. This is a
 self-contained summary; the full chronological log is in [plan.md](plan.md)
 (section "Experiment log") and the harness is documented in
@@ -13,7 +18,7 @@ hash-prospector notation `[s0 m0 s1 m1 s2]`:
 **Metric:** hash-prospector avalanche bias, 1000·sqrt(mean_jk diff²), where
 diff = (count_jk − n/2)/(n/2) over the bits×bits table of "flip input bit j →
 output bit k flips". It is exact over all 2^32 inputs at 32 bits and sampled
-(debiased by −1/n) at 64 bits.
+(unbiased mean square `(n*raw_ms - 1)/(n-1)` in current code) at 64 bits.
 
 Each finding below is labelled with a confidence:
 - **Solid**: reproduced or exact.
@@ -49,7 +54,7 @@ cargo test --release          # 8 fast tests; `-- --ignored` adds the slow 32-bi
   about 29 s on the AVX2 path (`src/fast32.rs`). It is bit-identical to the
   generic path, and a test checks this.
 
-### F2. Reference table (solid; `results/refs.txt`)
+### F2. Historical reference table (uncertainty needs rerun; `results/refs.txt`)
 - At 2^30 samples, only fmix64 (0.0183 ± 0.0024) and Moremur
   (0.0139 ± 0.0041) are measurably biased among the 64-bit references. Mix13,
   mx3, rrmxmx and NASAM are consistent with 0. **Sampled avalanche bias
@@ -59,21 +64,19 @@ cargo test --release          # 8 fast tests; `-- --ignored` adds the slow 32-bi
   both 16-bit references and Stafford Mix13. TheIronBorn's constants have
   max |z| = 86.6. triple32, mx3, NASAM and Moremur are clean (max |z| ≤ 9.2).
 
-### F3. A structural parity weakness of every 2-round xmx mixer (solid)
-Flipping input bit s1 always flips the XOR of output bits {0, s2, 2·s2, …},
-whatever the constants. If s1 < s0, flipping input bit s0 + s1 does the same.
+### F3. Structural parity relation with conditional single-bit triggers (solid)
+The XOR of output bits `{0, s2, 2*s2, ...}` always flips when input bit
+`s1` flips **if `s1 < s0`**, or when input bit `s0+s1` flips if that position
+is inside the word. For arbitrary shifts, applying the inverse first xorshift
+to `1 << s1` gives a possibly multi-bit input difference that always flips
+this parity. Odd multiplication is triangular and preserves bit 0.
 
-**Why:** multiply is a T-function; an odd multiply preserves bit 0; xorshift
-is linear.
+The original unconditional claim is false: `[2 03 3 05 4]` at 8 bits has
+192/256 counterexamples for input bit 3. Exhaustive small-width tests cover
+the corrected relation. This limitation is invisible to SAC when the parity
+involves multiple output bits; it is not a blanket verdict on PRNG suitability.
 
-**Verified** at 100.00% over 20k random inputs for lowbias32, TheIronBorn
-and random constants.
-
-**Consequence:** no choice of constants removes it. Anyone who wants
-PRNG-grade quality needs at least 3 rounds or rotations. This is a
-qualitative argument for why 2-round bias records only matter for hashing.
-
-### F4. A first-order analytic surrogate works only as a family screen (solid)
+### F4. A first-order analytic surrogate shows family-screening potential (indicative)
 **Model.** A carry-chain differential model (`src/surrogate.rs`) with a
 Markov/independence assumption between rounds, costing about 0.05 ms per
 config.
@@ -83,8 +86,8 @@ config.
 - For 2 rounds its absolute value collapses to about 10⁻¹¹, against an exact
   0.107.
 - Rank correlation (Spearman ρ) against the exact bias:
-  - all 116 published 32-bit configs: 0.44
-  - best half: 0.68 (sampling at about 600× the cost: 0.35 / 0.26)
+  - all 116 published 32-bit configs: 0.4403
+  - best half: 0.6814 (corrected signed-ms sampling at 2^20: 0.3574 / 0.2413)
   - within one family: 0.25 and −0.29, i.e. useless
 
 **Method error caught and fixed:** printing values with 10 fixed decimals
@@ -92,7 +95,7 @@ created ties, which were broken by row order, and that order was sorted by
 the true answer. This inflated the within-family ρ. The analysis now uses
 `%e` output and averaged ranks for ties.
 
-### F5. 2-round bias can't be predicted by Markov-style models, even second-order ones (solid, negative)
+### F5. Tested Markov approximations miss substantial bias (limited negative result)
 **Method.** An ablation (`hybrid_matrix`) keeps the difference *exact* up to
 the last multiply and models only the rest. Share of the exact mean-square
 recovered:
@@ -107,11 +110,12 @@ recovered:
 - The bias lives in the joint bit structure of D (a signed sum of about n/2
   shifted copies of m).
 - It also lives in the dependence between values and differences, which
-  every differential/trail model assumes away.
+  the tested approximations assume away. Two ablated mixers do not rule out
+  all Markov-style or higher-order models.
 - The hybrid also gives no variance reduction (per-sample variance 0.21
   against 0.25), so it is not a faster estimator either.
 
-### F6. Small-width proxies don't predict full-width ranking (solid, negative)
+### F6. Tested small-width proxies rank poorly (historical baselines need rerun)
 **Method.** Each mixer was projected to 12/16/20/24 bits (shifts
 proportionally or by offset from half-width; multipliers by their low or
 high bits) and scored exactly at that width (`src/scale.rs`).
@@ -128,7 +132,7 @@ high bits) and scored exactly at that width (`src/scale.rs`).
 They have strong defects of their own that don't track the full-width
 mixer's defects.
 
-### F7. A noise law for sampled bias, and which variance-reduction tricks fail (solid)
+### F7. Approximate sampled-bias noise law and tested variance-reduction methods
 **The law.** For N = bits² entries and n i.i.d. inputs:
 
   Var(mŝ_debiased) ≈ (4·ms/n + 2/n²)/N.
@@ -153,7 +157,7 @@ neighbours range from 2^17.2 to 2^29.0. Sequential stopping costs 2^30.2 in
 total, against 2^33.6 for a fixed budget: ×10.9 (`analysis/racing_cost.py`).
 Moremur needs about 2^29 samples just to show its own bias is nonzero at 3σ.
 
-### F8. Sequential racing search: validated, and beats the old search in one comparison (solid / indicative)
+### F8. Historical racing validation and one search comparison (indicative)
 **Method** (`src/racing.rs`, `mixlab race`). K = 96 neighbours per iteration
 (1–3 bit flips in a multiplier, or a shift ±1):
 - Each undecided candidate's sample count doubles from 2^14.
@@ -204,10 +208,12 @@ record's `…2d97`.
 digits: input 17 → outputs (2, 17), corr +0.3384, |z| = 86.64. TheIronBorn's
 0.1076 constant shows the same entry.
 
-**Why that would follow.** Multiplication is a T-function: output bits below
-k depend only on the multiplier bits below k. So low output-bit behaviour is
-fixed by the multipliers' low bits (and the shifts), and the high bits only
-tune the rest.
+**Correction to the proposed mechanism.** Multiplication alone is a
+T-function; the complete mixer is not, because right shifts move high bits
+downward. Keeping the low 16 bits of both multipliers does not fix low output
+bits: at input 1, changing the record's m0 from `21f0aaad` to `21f1aaad`
+changes output bit 0. Shared low bits remain an empirical hypothesis, not a
+consequence of triangular multiplication.
 
 **Untested:** whether fixing a known-good low-bit core and searching only the
 high bits beats the record, and whether the core explains most of the gap
@@ -218,7 +224,7 @@ between families.
    (F9) are one seed each. The search improvements are exact values, but the
    claim that racing is *better than* the old search is n = 1.
 2. **Racing statistics.**
-   - About 10 sequential looks per candidate at z = 3 with no peeking
+   - The historical runs used about 10 sequential looks per candidate at z = 3 with no peeking
      correction. Many false "worse" drops of truly better neighbours are
      possible across about 1,000 candidates per run.
    - The noise law assumes the N table entries are roughly independent;
@@ -248,17 +254,24 @@ between families.
   overstated, given that only two mixers were ablated?
 
 ## 5. Desired next steps (in priority order)
+
+**Revised priority:** validate false-elimination rates with exact truths and
+multiple seeds, rerun affected statistical comparisons, then compare
+unrestricted, fixed-low-bit and larger-move searches at equal wall time.
+The ideas below are experimental options, not established improvements.
+
 1. **Test the low-bit-core hypothesis (F10).**
    - Fix the low 16 bits of both multipliers to the record's / 7870aaad's
      values and race over the high bits plus the shifts.
    - Re-run BIC with several seeds at 2^20.
-   - If the core holds, it turns a 2^62 search into roughly 2^30 and is the
-     most plausible route past 0.10704.
+   - If the core holds, fixing both low 16-bit portions leaves 2^32 multiplier
+     combinations at fixed shifts. This restriction may also exclude better mixers.
 2. **Continue the 7870aaad run.** It was still improving at iteration 25.
    Then try larger moves: combined shift and multiplier moves, and
    4–6-bit flips.
 3. **Harden the racing statistics.**
-   - Add an alpha-spending or always-valid boundary.
+   - Validate the new within-race Gaussian multiple-look adjustment; it is
+     approximate and does not give a search-wide error guarantee.
    - Switch to best-improvement within a race.
    - Repeat the racing-versus-old comparison over about 5 seeds to turn F8's
      comparison into a solid claim.
