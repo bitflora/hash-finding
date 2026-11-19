@@ -218,56 +218,61 @@ impl std::str::FromStr for Hybrid {
     }
 }
 
-/// Carry-chain transition for (z + D) with z uniform: P(c' = 1 | c) for bit d.
-#[inline]
-fn carry_step(d: u64, c: usize) -> f64 {
-    match (d, c) {
-        (1, 1) => 1.0,
-        (1, 0) | (0, 1) => 0.5,
-        _ => 0.0,
-    }
-}
-
 /// Correlations of out_k = Δw_k ^ Δw_{k+s} (or Δw_k when k+s >= n) where
 /// Δw = (w + D) ^ w, w uniform, D known. Joint over the carry chain.
 fn pair_flip_exact(d: u64, n: usize, s: usize, out: &mut [f64]) {
-    // forward marginals P(c_k = 1)
-    let mut pc = vec![0.0f64; n + 1];
+    // Forward marginals P(c_k = 1). Width is at most 64, so keep these
+    // on the stack: this function is called once per sampled input pair.
+    let mut pc = [0.0f64; 65];
     for k in 0..n {
-        let dk = (d >> k) & 1;
-        pc[k + 1] = pc[k] * carry_step(dk, 1) + (1.0 - pc[k]) * carry_step(dk, 0);
+        pc[k + 1] = (pc[k] + ((d >> k) & 1) as f64) * 0.5;
     }
+    // Each transition has conditional slope 1/2, hence
+    // Cov(c_k, c_{k+s}) = 2^-s * Var(c_k). This gives the joint sign
+    // expectation directly, without replaying s transitions for each bit.
+    let decay = 2.0f64.powi(-(s as i32));
     for k in 0..n {
-        let dk = ((d >> k) & 1) as usize;
+        let ck = 1.0 - 2.0 * pc[k];
         if k + s >= n {
-            // P(Δw_k = 1) = P(c_k != d_k)
-            let p1 = if dk == 1 { 1.0 - pc[k] } else { pc[k] };
-            out[k] += 1.0 - 2.0 * p1;
+            out[k] += if (d >> k) & 1 == 0 { ck } else { -ck };
             continue;
         }
-        let ds = ((d >> (k + s)) & 1) as usize;
-        let mut p_par1 = 0.0;
-        for c0 in 0..2usize {
-            let w0 = if c0 == 1 { pc[k] } else { 1.0 - pc[k] };
-            if w0 == 0.0 {
-                continue;
-            }
-            // propagate a point mass at c_k = c0 for s steps
-            let mut v = [0.0f64; 2];
-            v[c0] = 1.0;
-            for t in k..k + s {
-                let dt = (d >> t) & 1;
-                let p1 = v[1] * carry_step(dt, 1) + v[0] * carry_step(dt, 0);
-                v = [1.0 - p1, p1];
-            }
-            for (c1, &pv) in v.iter().enumerate() {
-                let par = (dk ^ c0) ^ (ds ^ c1);
-                if par == 1 {
-                    p_par1 += w0 * pv;
+        let joint = ck * (1.0 - 2.0 * pc[k + s])
+            + 4.0 * decay * pc[k] * (1.0 - pc[k]);
+        let parity = ((d >> k) ^ (d >> (k + s))) & 1;
+        out[k] += if parity == 0 { joint } else { -joint };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::pair_flip_exact;
+
+    #[test]
+    fn joint_carry_correlations_match_exhaustive_addition() {
+        for n in 2..=8 {
+            let size = 1u64 << n;
+            for d in 0..size {
+                for s in 0..=n + 1 {
+                    // Nonzero initial values also check the additive contract.
+                    let mut got = vec![0.25; n];
+                    pair_flip_exact(d, n, s, &mut got);
+                    let mut expected = vec![0.25; n];
+                    for w in 0..size {
+                        let delta = ((w + d) ^ w) & (size - 1);
+                        let shifted = delta ^ (delta >> s);
+                        for (k, value) in expected.iter_mut().enumerate() {
+                            *value += if (shifted >> k) & 1 == 0 {
+                                1.0 / size as f64
+                            } else {
+                                -1.0 / size as f64
+                            };
+                        }
+                    }
+                    assert_eq!(got, expected, "n={n}, d={d}, s={s}");
                 }
             }
         }
-        out[k] += 1.0 - 2.0 * p_par1;
     }
 }
 

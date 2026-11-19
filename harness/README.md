@@ -160,3 +160,15 @@ samples before claiming anything.
 - Exact 16-bit sweep: about 3,800 configurations per second (20,000 random
   2-round configurations in 5.2 s, parallel across configurations).
 - 64-bit sampled, 2³⁰ inputs: about 80–120 s per mixer.
+
+The hybrid B estimator computes joint carry correlations in O(bits) per
+sample using `Cov(c_k, c_{k+s}) = 2^-s Var(c_k)`, with stack storage for carry
+marginals. Previously it replayed the carry chain per output bit and allocated
+a vector per sample. In a local release-build comparison (three runs each),
+the command below improved from a median 1.07 s to 0.12 s (about 9×), with
+identical displayed scores. Timings depend on the machine; floating-point
+rounding can differ. Exhaustive 2–8-bit addition validates the joint model.
+
+```
+mixlab surrogate --bits 32 --spec "[16 21f0aaad 15 735a2d97 15]" --hybrid B --samples p16
+```
