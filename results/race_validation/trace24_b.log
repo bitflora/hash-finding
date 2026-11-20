@@ -1,0 +1,19 @@
+[    6s] base 0: [12 eb352d 11 6ca68b 12] bias=2.77641 better=40/96
+[   40s] base 5: [12 fb152d 11 e6a29b 12] bias=1.18305 better=1/96
+climb stalled at step 7
+[  288s] base 0 rep 0: 96 candidates, inputs=2^28.7
+[  294s] base 0 rep 1: 96 candidates, inputs=2^28.8
+[  299s] base 0 rep 2: 96 candidates, inputs=2^28.7
+[  305s] base 0 rep 3: 96 candidates, inputs=2^28.7
+[  311s] base 0 rep 4: 96 candidates, inputs=2^28.7
+[  316s] base 0 rep 5: 96 candidates, inputs=2^28.7
+[  322s] base 0 rep 6: 96 candidates, inputs=2^28.7
+[  328s] base 0 rep 7: 96 candidates, inputs=2^28.7
+[  331s] base 1 rep 0: 96 candidates, inputs=2^27.7
+[  333s] base 1 rep 1: 96 candidates, inputs=2^27.7
+[  336s] base 1 rep 2: 96 candidates, inputs=2^27.6
+[  339s] base 1 rep 3: 96 candidates, inputs=2^27.7
+[  342s] base 1 rep 4: 96 candidates, inputs=2^27.7
+[  344s] base 1 rep 5: 96 candidates, inputs=2^27.6
+[  347s] base 1 rep 6: 96 candidates, inputs=2^27.7
+[  350s] base 1 rep 7: 96 candidates, inputs=2^27.6

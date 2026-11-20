@@ -169,6 +169,12 @@ pub struct RaceCfg {
     /// None => exact verification (bits <= 32); Some(n) => fresh n-sample verification
     pub verify_samples: Option<u64>,
     pub seed: u64,
+    /// race_search only: skip neighbours whose final shift is >= this.
+    /// `Some(bits/2)` avoids the exact output-pair correlation of FINDINGS F11.
+    pub max_last_shift: Option<u32>,
+    /// race_search only: keep the low K bits of every multiplier fixed
+    /// (FINDINGS F10 "low-bit core" test). Shift moves are still allowed.
+    pub fix_low_bits: Option<u32>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -349,6 +355,15 @@ pub fn race_search(
         while cands.len() < neighbors && tries < neighbors * 50 {
             tries += 1;
             let y = neighbor(&cur, &mut rng);
+            if cfg.max_last_shift.is_some_and(|m| y.shifts.last().is_some_and(|&s| s >= m)) {
+                continue;
+            }
+            if let Some(k) = cfg.fix_low_bits {
+                let lo = (1u64 << k) - 1;
+                if y.mults.iter().zip(&cur.mults).any(|(a, b)| (a ^ b) & lo != 0) {
+                    continue;
+                }
+            }
             if seen.insert(y.to_string()) {
                 cands.push(y);
             }
@@ -412,7 +427,7 @@ mod tests {
     #[test]
     fn multiple_looks_raise_threshold_and_cap_is_respected() {
         let x = Xmx::parse(8, "[4 ad 3 97 4]").unwrap();
-        let cfg = RaceCfg { bits: 8, n0: 16, cap: 37, z: 100.0, verify_samples: None, seed: 2 };
+        let cfg = RaceCfg { bits: 8, n0: 16, cap: 37, z: 100.0, verify_samples: None, seed: 2, max_last_shift: None, fix_low_bits: None };
         assert!(race_threshold(&cfg, 96) > race_threshold(&cfg, 1));
         let ms = crate::fast32::exact_xmx(&x, false).ms();
         let result = race(&cfg, ms, 0.0, vec![x], 1);
@@ -424,7 +439,7 @@ mod tests {
     #[test]
     fn early_acceptance_does_not_blacklist_unfinished_candidates() {
         let x = Xmx::parse(8, "[4 ad 3 97 4]").unwrap();
-        let cfg = RaceCfg { bits: 8, n0: 32, cap: 32, z: 100.0, verify_samples: None, seed: 1 };
+        let cfg = RaceCfg { bits: 8, n0: 32, cap: 32, z: 100.0, verify_samples: None, seed: 1, max_last_shift: None, fix_low_bits: None };
         // All candidates beat the deliberately poor incumbent; only one is verified.
         let y = Xmx::parse(8, "[4 b5 3 2d 4]").unwrap();
         let result = race(&cfg, 1.0, 0.0, vec![x.clone(), y.clone()], 1);
@@ -436,4 +451,52 @@ mod tests {
         assert!(seen.insert(unfinished.cand.to_string()), "candidate must be eligible again");
         assert!(seen.contains(&accepted));
     }
+}
+
+// ---------------------------------------------------------------------------
+// Validation traces: record each candidate's estimate after every doubling so
+// that drop/promote threshold policies can be scored offline against truth.
+// ---------------------------------------------------------------------------
+
+/// One look at one candidate: cumulative samples `n` and debiased estimate.
+#[derive(Clone, Debug)]
+pub struct TracePoint {
+    pub cand: usize,
+    pub n: u64,
+    pub ms_hat: f64,
+}
+
+/// Sample every candidate on the race's doubling schedule (independent
+/// streams per candidate, as in `race`), stopping a candidate only once
+/// |ms_hat - inc_ms| > zmax * sd (model) or n reaches `cap`. Any policy whose
+/// thresholds are <= zmax therefore makes the same decisions on this trace as
+/// a real race with the same seeds would.
+pub fn trace(bits: u32, inc_ms: f64, cands: &[Xmx], n0: u64, cap: u64, zmax: f64, seed: u64, salt: u64) -> Vec<TracePoint> {
+    assert!(n0 >= 2 && cap >= n0);
+    let mut alive: Vec<(usize, Counts)> = (0..cands.len()).map(|i| (i, Counts::new(bits))).collect();
+    let mut out = Vec::new();
+    let (mut n, mut inc, mut round) = (0u64, n0, 0u64);
+    while !alive.is_empty() {
+        let cseed = |i: usize| stream_seed(stream_seed(seed, (salt << 24) ^ i as u64), round);
+        alive = alive
+            .into_par_iter()
+            .map(|(i, c)| {
+                let more = with_mixer!(&cands[i], f => sampled(&f, bits, inc, cseed(i)));
+                (i, c.merge(more))
+            })
+            .collect();
+        n += inc;
+        round += 1;
+        let mut still = Vec::new();
+        for (i, c) in alive {
+            let mh = c.ms_debiased();
+            out.push(TracePoint { cand: i, n, ms_hat: mh });
+            if (mh - inc_ms).abs() <= zmax * sd_ms(mh, n, bits) && n < cap {
+                still.push((i, c));
+            }
+        }
+        alive = still;
+        inc = n.min(cap.saturating_sub(n));
+    }
+    out
 }

@@ -1,0 +1,9 @@
+[    32s] 0,start,[16 7870aaad 15 be523597 15],0.1152742257,sd=0.000e0
+[   431s] 1,iter,[16 7870aaad 15 be523597 15],0.1152742257,k=96 worse=88 rejected=8 unraced=0 median_n_drop=2^24.0 inputs=2^32.6 exact=8 cum_inputs=2^32.6 cum_exact=8
+[   643s] 2,iter,[16 7870aaad 15 be523597 15],0.1152742257,k=96 worse=92 rejected=4 unraced=0 median_n_drop=2^24.0 inputs=2^32.0 exact=4 cum_inputs=2^33.3 cum_exact=12
+[   750s] 3,iter,[16 7870aaad 15 be523597 15],0.1152742257,k=96 worse=95 rejected=1 unraced=0 median_n_drop=2^24.0 inputs=2^31.6 exact=1 cum_inputs=2^33.7 cum_exact=13
+[  1038s] 4,iter,[16 7870aaad 15 be523597 15],0.1152742257,k=96 worse=90 rejected=6 unraced=0 median_n_drop=2^24.0 inputs=2^32.3 exact=6 cum_inputs=2^34.2 cum_exact=19
+[  1196s] 5,iter,[16 7870aaad 15 be523597 15],0.1152742257,k=96 worse=93 rejected=3 unraced=0 median_n_drop=2^24.0 inputs=2^31.5 exact=3 cum_inputs=2^34.4 cum_exact=22
+[  1318s] 6,iter,[16 7870aaad 15 be523597 15],0.1152742257,k=96 worse=95 rejected=1 unraced=0 median_n_drop=2^24.0 inputs=2^31.9 exact=1 cum_inputs=2^34.6 cum_exact=23
+[  1318s] 7,patience,[16 7870aaad 15 be523597 15],0.1152742257,no improvement in 6 iterations
+best [16 7870aaad 15 be523597 15]  score 0.1152742257

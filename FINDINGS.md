@@ -289,9 +289,107 @@ replacement multiplier. "Within" is the Spearman correlation inside one shift tr
 - Top-bit flips change bias by a median of 0.3–0.6%, which confirms that high
   multiplier bits only fine-tune.
 
+**Follow-up race (2026-11-19, `results/negation_races/negrec_m0.*`).** A race from
+`[16 de0f5553 15 735a2d97 15]` (0.11123) with `--max-s2 16` improved in its first
+iteration to **`[16 5e0f5553 15 735a2d97 15]` = 0.10935989** (exact), 2.2% above
+the record. It then stalled for 6 iterations (576 neighbours, 33 exact checks;
+31 min). Caveat: −`5e0f5553` = `a1f0aaad`, the record's m0 with only its top bit
+flipped. So this point is a negation plus one top-bit flip away from the record,
+not an independent family.
+
 **Limits:** the 16-bit sample is 1,500 configs at one shift triple, and its best
 is 10.07 (TheIronBorn's best 16-bit 2-round is 7.25). At 32 bits there are only two
 mixers.
+
+### F13. Racing thresholds validated against exact truth (solid for these sets; few hard cases at 32 bits)
+**Method.** `mixlab trace` follows each candidate on the race's doubling
+schedule. It records the estimate at every look and stops only at |gap| > 6 sd
+or at the cap. `analysis/race_validation.py` then scores any (z_drop,
+z_promote) policy offline, with first-improvement acceptance and exact
+verification. Data are in `results/race_validation/`:
+- **24 bits:** 32 races of 96 neighbours, from bases on two exact hill-climbs.
+  Looks run from 2^10 to 2^24.
+- **32 bits, issue #19 set:** 12 races. The incumbents sit at the 25/50/75%
+  ranks of the 57 constants (0.128, 0.135, 0.147), raced against the other 56.
+  Looks run from 2^14 to 2^28.
+- **32 bits, de0f5553 (0.11123):** 4 races of 64 fresh s2 ≤ 15 neighbours.
+  Exactly one of them is better: 5e0f5553, at 0.10936.
+
+**Results.**
+- **The noise model is calibrated.** At the first look, (ms_hat − true)/sd_model
+  has sd 1.02 (issue #19), 1.08 (de0f5553) and 1.04–1.08 (24-bit), with mean
+  ≈ 0. The share with |z| > 3 is 0–0.6%, so the tails are slightly heavy at
+  24 bits.
+- **False drops of truly better candidates:** 0 at the adjusted threshold
+  (z ≈ 4.75–4.87) in every set. There is 1 at plain z = 3, in one 24-bit
+  set (0.7% of that set's better candidates). No race dropped its best
+  candidate or missed an available improvement, for s2 < 16 and s2 = 16 alike.
+- **The hardest gaps are not decided by sampling.** The tightest truly
+  better candidates were only 0.2–0.9 sd apart even at 2^28. Those reach the cap
+  and are verified exactly, so near the record the cost is exact checks, and
+  racing cannot cause losses there.
+- **Lowering the promote bar is harmful.** With z_promote ≤ 2, races spend 2–15
+  exact checks instead of about 1–2, and they accept smaller improvements.
+  The accepted share of the best available gain falls to 0.26–0.59, against
+  0.86–0.95 at the adjusted symmetric threshold. A strict promote bar works
+  like a cheap best-improvement rule.
+- **Cost.** Plain z = 3 needs 1.4–2.8× fewer inputs than the adjusted
+  threshold, but it accepts smaller gains (0.71–0.75 of the best).
+
+**Recommendation.** Keep the current symmetric adjusted threshold.
+
+**Limits.**
+- At 32 bits only 4 + 12 races were run, and only a handful of candidates had
+  gaps below 1 sd at the cap.
+- The 24-bit climbs stalled at bias ≈ 1.15, so their gaps were large.
+- None of this bounds search-wide error over many iterations.
+
+### F14. Overnight 2026-11-20: escapes via negation, and the low-bit core (indicative; one run each)
+All scores are exact over 2^32 inputs, with shifts [16 _ 15 _ 15] and `--max-s2 16`.
+Logs: `results/negation_races/` (`queue.log` has the timeline; scripts are
+`analysis/overnight_queue*.sh` and `gen_topbit_cands.py`). The *sweep* step races
+66 candidates: every top-3-bit combination of both multipliers, plus the three negations.
+
+**Escape from stalled local optima (F12 follow-up).**
+
+| start | sweep | then race | earlier status |
+|---|---|---|---|
+| record 0.10704 | none of 66 better (33 exact checks) | — | local optimum |
+| 7870aaad 0.11527 | none of 66 better (35 exact) | — | stalled (F9) |
+| d303 `[16 d30332d3 15 c865c965 15]` 0.12786 | **−m1 → 0.12510** | **0.12015** `[16 d70332d3 15 379a369b 15]` | stalled in `famd303` |
+| d303 second round, from 0.12015 | none of 66 better (31 exact) | — | — |
+| negated record `de0f5553` 0.11123 | (race first) 0.10936 → sweep → a1f0aaad 0.10847 → record | — | — |
+| both negated 0.11271 | — | 0.11214 `[16 5e0f5553 15 8ca5d269 15]` | — |
+| 7870 −m1 0.11677 | — | no improvement | — |
+
+Negation escaped one of two stalled family optima (d303, −6% overall). From
+the record's neighbourhood, every negation path led back to the record. With
+top-bit flips and negations added to the move set, the record and 7870aaad are
+still local optima.
+
+**Low-bit core test (F10, first direct test).**
+- *Direct:* 20 mixers with the record's low 16 bits (`..aaad`, `..2d97`) and
+  random high halves, against 20 fully random mixers (`core_exact.csv`).
+  - Core: min 0.173, median 0.239, max 0.437.
+  - Random: min 0.543, median 3.16, max 16.1.
+  - All 400 core-vs-random pairs favour the core.
+  - The best core start, with random high halves, already equals lowbias32.
+  - Caveat: random cores are the only control. Other good mixers' cores were
+    not tested.
+- *Races from that best core start* (0.1734, same seed and budget):
+  - `--fix-low-bits 16`: 0.12069 `[16 68f0aaad 15 cd852d97 15]` after 15
+    iterations (68 min), still improving.
+  - Unrestricted: 0.11994 `[16 68f0aaad 15 ed21ad97 15]` in 29 min. It changed
+    only one low bit (bit 15 of m1).
+  - Both converged on m0 = `68f0aaad`, next to the `21f0aaad`/`7870aaad` family.
+  - A sweep from the unrestricted result then improved it to **0.11813**
+    `[16 88f0aaad 15 ed21ad97 15]` (one top-bit change in m0). A second sweep
+    round found nothing better (31 exact checks).
+- *Reading:* the low halves carry most of the quality and make excellent seeds.
+  Locking them gave no search advantage in this one comparison. A
+  random-high-half start climbed in about 50 minutes (race plus sweep) to
+  0.11813, behind only the record lineage and 7870aaad. It is not independent
+  of the record, because it shares the record's core.
 
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
@@ -302,7 +400,9 @@ mixers.
      correction. Many false "worse" drops of truly better neighbours are
      possible across about 1,000 candidates per run.
    - The noise law assumes the N table entries are roughly independent;
-     entries are in fact correlated, as F3 shows.
+     entries are in fact correlated, as F3 shows. (F13: empirically calibrated
+     anyway, sd of standardized error 1.02–1.08, with zero false drops at the
+     adjusted threshold over 48 truth-labelled races.)
    - Acceptance is first-improvement, not best-improvement.
 3. **Neighbourhood bias.** Only 1–3-bit multiplier flips and ±1 shifts.
    "Local optimum" claims (the record, d303) are relative to this move set

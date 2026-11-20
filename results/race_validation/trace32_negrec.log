@@ -1,0 +1,5 @@
+[ 1845s] base 0: [16 de0f5553 15 735a2d97 15] bias=0.11123 better=1/64
+[ 2004s] base 0 rep 0: 64 candidates, inputs=2^32.6
+[ 2140s] base 0 rep 1: 64 candidates, inputs=2^32.5
+[ 2267s] base 0 rep 2: 64 candidates, inputs=2^32.6
+[ 2390s] base 0 rep 3: 64 candidates, inputs=2^32.6

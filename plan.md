@@ -391,3 +391,56 @@ with `mixlab eval --exact`.
   random 16-bit sweep.
 - Automatic structural screen (T-function window analysis) for any
   candidate design.
+
+### 2026-11-19: Continuation of the 7870aaad run (corrected racing code)
+- Start: [16 7870aaad 15 be523597 15], 0.11527.
+- Settings: 96 neighbours per iteration, nominal z = 3, adjusted for multiple
+  looks to about 4.9; cap 2^28; patience 6; seed 124.
+- **Result: no improvement.** Over 6 iterations (22 min), 576 random
+  1–3-step neighbours were raced. 553 were dropped by sampling, with the
+  median drop at 2^24 (one doubling later than the uncorrected runs' 2^23,
+  as expected from the stricter threshold). 23 needed exact checks, and all
+  were worse. Log: `results/family_races/famd168_cont.log`.
+- **Interpretation (exploratory):** the earlier run's last gains were large
+  (0.1236 → 0.1187 → 0.1153 in iterations 22–25), but no further 1–3-bit move
+  in this sample improves on it. This is *not* proof of a local optimum:
+  only a random subset of the neighbourhood was tried, and the
+  false-elimination rate is still unmeasured. Larger moves (4–6-bit flips,
+  combined shift and multiplier moves) and the racing validation are the
+  next tests.
+
+### 2026-11-20: Racing validation against exact truth (`mixlab trace`, `analysis/race_validation.py`)
+- New `trace` command. It records every candidate's estimate after each
+  doubling and stops a candidate only at |gap| > 6 sd or at the cap. Policies
+  can then be scored offline.
+  - `--resume B:R` gives byte-identical output to an uninterrupted run
+    (tested).
+  - `--max-s2` filters generated neighbours.
+  - A `.cands.csv` sidecar records each candidate's spec.
+- **24 bits** (`trace24_{a,b}`): 32 races × 96 neighbours, looks from 2^10 to
+  2^24.
+  - The exact climbs stalled after 7–8 steps at bias about 1.15, giving 2
+    bases each. The gaps were large, so this is the easy case.
+- **32 bits, issue #19** (`trace32_issue19`): incumbents ranked 25%, 50% and
+  75% (0.128, 0.135, 0.147) against the other 56, with 4 replicates each.
+  - The run was interrupted and resumed with `--resume 0:4`.
+  - Two copies of the script ran at once by accident: an orphaned queue
+    script. Their output was byte-identical, which I checked: no duplicate
+    keys, and 56 candidates in each of the 12 blocks.
+- **32 bits, de0f5553** (`trace32_negrec`): 64 fresh neighbours with
+  s2 ≤ 15, exact truth (31 min), 4 replicates. Only one neighbour is truly
+  better: 5e0f5553, at 0.10936.
+- **Results** (see FINDINGS F13):
+  - The noise model is calibrated: sd 1.02–1.08.
+  - There were zero false drops at the adjusted threshold in every set, and
+    one at plain z = 3 (24-bit).
+  - The tightest true gaps (0.2–0.9 sd at 2^28) always reach the cap and get
+    an exact check.
+  - Promoting at z ≤ 2 wastes exact checks and accepts smaller gains.
+  - Plain z = 3 saves 1.4–2.8× inputs, but captures about 0.7 of the best
+    gain against about 0.9.
+  - Decision: keep the current threshold.
+- Coordination: these runs were scheduled around the other session's
+  negation races, so they did not share the CPU with them. The `target-trace/`
+  build directory at the repo root was only needed while that race held
+  target/release/mixlab.exe.

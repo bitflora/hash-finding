@@ -1,0 +1,6 @@
+[  238s] base 0 rep 0: 56 candidates, inputs=2^33.5
+[  480s] base 0 rep 1: 56 candidates, inputs=2^33.5
+[  753s] base 0 rep 2: 56 candidates, inputs=2^33.6
+[ 1025s] base 0 rep 3: 56 candidates, inputs=2^33.5
+resuming at base 0 rep 4
+[  631s] base 1 rep 0: 56[  668s] base 1 rep 0: 56 c[ 1278s] base 1 rep 1: 56[ 1315s] base 1 rep 1: 56 c[ 1938s] base 1 rep 2: 56[ 1975s] base 1 rep 2: 56 c[ 2575s] base 1 rep 3: 56[ 2613s] base 1 rep 3: 56 c[ 3156s] base 2 rep 0: 56[ 3194s] base 2 rep 0: 56 c[ 3742s] base 2 rep 1: 56[ 3781s] base 2 rep 1: 56 c[ 4330s] base 2 rep 2: 56[ 4370s] base 2 rep 2: 56 c[ 4930s] base 2 rep 3: 56[ 4970s] base 2 rep 3: 56 candidates, inputs=2^33.5

@@ -1,0 +1,40 @@
+[2026-11-19 22:07:38] queue start
+[2026-11-20 01:12:36] negrec_m0 best: [16 5e0f5553 15 735a2d97 15]
+[2026-11-20 01:13:37] sweep sw1 round 1 from [16 5e0f5553 15 735a2d97 15]
+[2026-11-20 01:21:45] sweep sw1 round 1: accepted: [16 a1f0aaad 15 735a2d97 15] ms=1.176647e-8  inputs=2^34.03  exact evals=6  [487s]
+[2026-11-20 01:22:46] sweep sw1 round 2 from [16 a1f0aaad 15 735a2d97 15]
+[2026-11-20 01:26:46] sweep sw1 round 2: accepted: [16 21f0aaad 15 735a2d97 15] ms=1.145822e-8  inputs=2^33.29  exact evals=1  [240s]
+[2026-11-20 01:27:41] queue2 start
+[2026-11-20 01:28:42] sweep swrecord round 1 from [16 21f0aaad 15 735a2d97 15]
+[2026-11-20 01:44:45] sweep swrecord round 1: accepted: none  inputs=2^33.28  exact evals=33  [962s]
+[2026-11-20 01:45:46] sweep sw_7870 round 1 from [16 7870aaad 15 be523597 15]
+[2026-11-20 02:03:56] sweep sw_7870 round 1: accepted: none  inputs=2^33.85  exact evals=35  [1090s]
+[2026-11-20 02:03:56] escape 7870: [16 7870aaad 15 be523597 15] -> [16 7870aaad 15 be523597 15]
+[2026-11-20 02:04:57] sweep sw_d303 round 1 from [16 d30332d3 15 c865c965 15]
+[2026-11-20 02:11:48] sweep sw_d303 round 1: accepted: [16 d30332d3 15 379a369b 15] ms=1.565104e-8  inputs=2^33.96  exact evals=2  [411s]
+[2026-11-20 02:12:50] sweep sw_d303 round 2 from [16 d30332d3 15 379a369b 15]
+[2026-11-20 02:40:07] sweep sw_d303 round 2: accepted: none  inputs=2^34.04  exact evals=56  [1637s]
+[2026-11-20 02:40:07] escape d303: [16 d30332d3 15 c865c965 15] -> [16 d30332d3 15 379a369b 15]
+[2026-11-20 02:41:08] race esc_d303 from [16 d30332d3 15 379a369b 15]
+[2026-11-20 02:57:38] race esc_d303 done: best [16 d70332d3 15 379a369b 15]  score 0.1201454443
+[2026-11-20 02:58:40] race negrec_both from [16 de0f5553 15 8ca5d269 15]
+[2026-11-20 03:40:04] race negrec_both done: best [16 5e0f5553 15 8ca5d269 15]  score 0.1121449481
+[2026-11-20 03:41:05] race neg7870_m1 from [16 7870aaad 15 41adca69 15]
+[2026-11-20 03:55:49] race neg7870_m1 done: best [16 7870aaad 15 41adca69 15]  score 0.1167734005
+[2026-11-20 03:55:49] queue2 done
+[2026-11-20 03:56:01] queue3 start
+[2026-11-20 04:09:02] queue3 start
+[2026-11-20 04:11:18] core exact evals done
+[2026-11-20 04:11:18] core race start: [16 d8f1aaad 15 cd612d97 15]
+[2026-11-20 05:27:55] core_fixed done: best [16 68f0aaad 15 cd852d97 15]  score 0.1206947582
+[2026-11-20 06:10:33] core_free done: best [16 68f0aaad 15 ed21ad97 15]  score 0.1199437628
+[2026-11-20 06:10:33] queue3 done
+[2026-11-20 06:10:37] queue4 start
+[2026-11-20 06:11:38] sweep sw_d303b round 1 from [16 d70332d3 15 379a369b 15]
+[2026-11-20 06:27:29] sweep sw_d303b round 1: accepted: none  inputs=2^33.60  exact evals=31  [951s]
+[2026-11-20 06:27:29] escape d303b: [16 d70332d3 15 379a369b 15] -> [16 d70332d3 15 379a369b 15]
+[2026-11-20 06:27:29] queue4 done
+[2026-11-20 06:27:39] sweep sw_core round 1 from [16 68f0aaad 15 ed21ad97 15]
+[2026-11-20 06:33:47] sweep sw_core round 1: accepted: [16 88f0aaad 15 ed21ad97 15] ms=1.395384e-8  inputs=2^33.89  exact evals=1  [368s]
+[2026-11-20 06:33:56] sweep sw_core round 2 from [16 88f0aaad 15 ed21ad97 15]
+[2026-11-20 06:51:05] sweep sw_core round 2: accepted: none  inputs=2^33.81  exact evals=31  [1029s]

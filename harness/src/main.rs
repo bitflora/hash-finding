@@ -24,8 +24,10 @@ USAGE:
   mixlab surrogate --bits 16 --random N [--top 0.1] [--baseline p12] [--seed S] [--out F.csv]
   mixlab scale  (--list FILE.csv | --bits 24 --random N) [--widths 12,16,20,24] [--maps offset:low,prop:high] [--truth]
                 [--baseline] [--seed S] --out F.csv   # exact small-width projections vs 32-bit exact
-  mixlab race   --bits B --start SPEC [--iters N] [--neighbors K] [--n0 p14] [--cap p28] [--z 3]
+  mixlab race   --bits B --start SPEC [--iters N] [--neighbors K] [--n0 p14] [--cap p28] [--z 3] [--patience P] [--max-s2 S] [--fix-low-bits K]
                 [--verify-samples p31] [--candidates FILE] [--patience P] [--seed S] --out F.csv  # sequential racing search
+  mixlab trace  --bits B (--start SPEC --path L | --list FILE.csv --bases N) [--neighbours K] [--reps R]
+                [--n0 p14] [--cap p28] [--zmax 6] [--max-s2 S] [--seed S] [--resume B:R] --out F.csv  # racing trajectories vs exact truth
   mixlab paired --bits B --base SPEC [--others FILE | --neighbours K | --random K] [--samples p20]
                 [--reps 32] [--truth] [--seed S] [--out F.csv]  # variance of A-B with/without common inputs
 
@@ -249,6 +251,7 @@ fn main() {
         "paired" => paired_cmd(&a),
         "design" => design_cmd(&a),
         "race" => race_cmd(&a),
+        "trace" => trace_cmd(&a),
         _ => {
             println!("{USAGE}");
         }
@@ -645,6 +648,8 @@ fn race_cmd(a: &Args) {
             None => Some(1 << 32),
         },
         seed: a.num("seed", 1),
+        max_last_shift: a.get("max-s2").map(|v| v.parse().unwrap_or_else(|_| die("bad --max-s2"))),
+        fix_low_bits: a.get("fix-low-bits").map(|v| v.parse().unwrap_or_else(|_| die("bad --fix-low-bits"))),
     };
     let t = Instant::now();
     if let Some(path) = a.get("candidates") {
@@ -690,6 +695,182 @@ incumbent {start} ms={:.6e}", inc);
         eprintln!("[{:>6.0}s] {line}", t.elapsed().as_secs_f64());
     });
     println!("best {best}  score {score:.10}");
+}
+
+fn exact_ms(x: &Xmx) -> f64 {
+    mixlab::fast32::exact_xmx(x, true).ms()
+}
+
+/// Racing trajectories against exact truth, for offline threshold validation.
+/// Bases come either from an exact first-improvement climb (`--path L`,
+/// generated neighbours, exact truth computed here) or from a list with
+/// exact_bias (`--list`, `--bases N` incumbents spread over the ranking,
+/// candidates = every other list entry).
+fn trace_cmd(a: &Args) {
+    use mixlab::racing::trace;
+    use mixlab::search::neighbor;
+    use rayon::prelude::*;
+    let bits = a.num("bits", 24) as u32;
+    if bits > 32 { die("trace needs bits <= 32 (exact truth)"); }
+    let seed = a.num("seed", 1);
+    let k = a.num("neighbours", 96) as usize;
+    let reps = a.num("reps", 8);
+    let n0 = a.num("n0", 1 << 14);
+    let cap = a.num("cap", 1 << 28);
+    let zmax: f64 = a.get("zmax").map(|z| z.parse().unwrap_or_else(|_| die("bad --zmax"))).unwrap_or(6.0);
+    let max_s2: Option<u32> = a.get("max-s2").map(|v| v.parse().unwrap_or_else(|_| die("bad --max-s2")));
+    let t = Instant::now();
+    // (base, base_ms, candidates with true ms)
+    let mut sets: Vec<(Xmx, f64, Vec<(Xmx, f64)>)> = Vec::new();
+    let mut rng = Xoshiro256::new(seed ^ 0x7ace);
+    let fresh_neighbours = |x: &Xmx, rng: &mut Xoshiro256| -> Vec<Xmx> {
+        let mut seen = std::collections::HashSet::from([x.to_string()]);
+        let mut v = Vec::new();
+        let mut tries = 0usize;
+        while v.len() < k {
+            tries += 1;
+            if tries > k * 1000 {
+                die(&format!("only {} distinct neighbours of {x} satisfy --max-s2", v.len()));
+            }
+            let y = neighbor(x, rng);
+            if max_s2.is_some_and(|m| *y.shifts.last().unwrap() > m) { continue; }
+            if seen.insert(y.to_string()) { v.push(y); }
+        }
+        v
+    };
+    if let Some(path) = a.get("list") {
+        let rows: Vec<(Xmx, f64)> = std::fs::read_to_string(path).expect("read list").lines()
+            .filter(|l| !l.starts_with('#') && !l.starts_with("spec") && !l.trim().is_empty())
+            .map(|l| {
+                let mut f = l.split(',');
+                let x = Xmx::parse(bits, f.next().unwrap().trim_matches('"')).unwrap_or_else(|e| die(&e));
+                let b: f64 = f.next().and_then(|v| v.parse().ok()).unwrap_or_else(|| die("list needs exact_bias"));
+                (x, (b / 1000.0).powi(2))
+            })
+            .collect();
+        let mut order: Vec<usize> = (0..rows.len()).collect();
+        order.sort_by(|&p, &q| rows[p].1.partial_cmp(&rows[q].1).unwrap());
+        let nb = a.num("bases", 3) as usize;
+        for j in 0..nb {
+            // incumbents at evenly spaced ranks (excluding the extremes)
+            let bi = order[(j + 1) * rows.len() / (nb + 1)];
+            let cands = rows.iter().enumerate().filter(|(i, _)| *i != bi).map(|(_, r)| r.clone()).collect();
+            sets.push((rows[bi].0.clone(), rows[bi].1, cands));
+        }
+    } else {
+        let mut cur = Xmx::parse(bits, a.get("start").unwrap_or_else(|| die("need --start or --list"))).unwrap_or_else(|e| die(&e));
+        let mut cur_ms = exact_ms(&cur);
+        let steps = a.num("path", 4) as usize;
+        let every = a.num("every", 1).max(1) as usize;
+        for step in 0..=steps {
+            if step % every == 0 || step == steps {
+                let cands = fresh_neighbours(&cur, &mut rng);
+                let truth: Vec<f64> = cands.par_iter().map(exact_ms).collect();
+                let better = truth.iter().filter(|&&m| m < cur_ms).count();
+                eprintln!("[{:>5.0}s] base {step}: {cur} bias={:.5} better={better}/{k}", t.elapsed().as_secs_f64(), 1000.0 * cur_ms.sqrt());
+                sets.push((cur.clone(), cur_ms, cands.into_iter().zip(truth).collect()));
+            }
+            if step == steps { break; }
+            // exact first-improvement climb to the next base
+            let mut moved = false;
+            for _ in 0..40 {
+                let cands = fresh_neighbours(&cur, &mut rng);
+                let truth: Vec<f64> = cands.par_iter().map(exact_ms).collect();
+                if let Some((i, &m)) = truth.iter().enumerate().filter(|(_, &m)| m < cur_ms).min_by(|p, q| p.1.partial_cmp(q.1).unwrap()) {
+                    cur = cands[i].clone();
+                    cur_ms = m;
+                    moved = true;
+                    break;
+                }
+            }
+            if !moved { eprintln!("climb stalled at step {step}"); break; }
+        }
+    }
+    let out = a.get("out").unwrap_or_else(|| die("need --out"));
+    // --resume B:R keeps every row of (base, rep) < (B, R) from an earlier
+    // run with identical settings and continues from there. Seeds depend only
+    // on (seed, base, rep), so the result matches an uninterrupted run.
+    let resume: Option<(usize, u64)> = a.get("resume").map(|v| {
+        let (b, r) = v.split_once(':').unwrap_or_else(|| die("--resume needs BASE:REP"));
+        (b.parse().unwrap_or_else(|_| die("bad --resume base")), r.parse().unwrap_or_else(|_| die("bad --resume rep")))
+    });
+    let header = format!("# trace bits={bits} n0={n0} cap={cap} zmax={zmax} reps={reps} seed={seed}");
+    let mut kept = String::new();
+    if let Some((rb, rr)) = resume {
+        let old = std::fs::read_to_string(out).unwrap_or_else(|_| die("--resume: cannot read existing --out"));
+        let mut lines = old.lines();
+        if lines.next() != Some(header.as_str()) {
+            die("--resume: existing file was made with different settings");
+        }
+        for l in lines {
+            let keep = if l.starts_with('#') || l.starts_with("base,") {
+                // base headers / done markers: keep those that belong to kept reps
+                match l.strip_prefix("# done base ").or_else(|| l.strip_prefix("# base ")) {
+                    Some(rest) => {
+                        let mut f = rest.split_whitespace();
+                        let b: usize = f.next().and_then(|v| v.parse().ok()).unwrap_or(usize::MAX);
+                        if l.starts_with("# done") {
+                            let r: u64 = f.nth(1).and_then(|v| v.parse().ok()).unwrap_or(u64::MAX);
+                            (b, r) < (rb, rr)
+                        } else {
+                            b < rb || (b == rb && rr > 0)
+                        }
+                    }
+                    None => true,
+                }
+            } else {
+                let mut f = l.split(',');
+                let b: usize = f.next().and_then(|v| v.parse().ok()).unwrap_or(usize::MAX);
+                let r: u64 = f.next().and_then(|v| v.parse().ok()).unwrap_or(u64::MAX);
+                (b, r) < (rb, rr)
+            };
+            if keep {
+                kept.push_str(l);
+                kept.push_str("\n");
+            }
+        }
+        eprintln!("resuming at base {rb} rep {rr}");
+    }
+    // sidecar: every candidate's spec and truth (always rewritten in full)
+    {
+        let mut sc = BufWriter::new(File::create(format!("{out}.cands.csv")).expect("create sidecar"));
+        writeln!(sc, "base,cand,spec,true_ms,inc_spec,inc_ms").unwrap();
+        for (b, (base, bms, cands)) in sets.iter().enumerate() {
+            for (i, (x, m)) in cands.iter().enumerate() {
+                writeln!(sc, "{b},{i},\"{x}\",{m:.6e},\"{base}\",{bms:.6e}").unwrap();
+            }
+        }
+    }
+    let mut w = BufWriter::new(File::create(out).expect("create output"));
+    writeln!(w, "{header}").unwrap();
+    if resume.is_some() {
+        w.write_all(kept.as_bytes()).unwrap();
+    } else {
+        writeln!(w, "base,rep,cand,true_ms,inc_ms,n,ms_hat").unwrap();
+    }
+    for (b, (base, bms, cands)) in sets.iter().enumerate() {
+        let xs: Vec<Xmx> = cands.iter().map(|c| c.0.clone()).collect();
+        for r in 0..reps {
+            if resume.is_some_and(|start| (b, r) < start) {
+                continue;
+            }
+            if r == 0 {
+                writeln!(w, "# base {b} {base} ms={bms:.6e}").unwrap();
+            }
+            let tr = trace(bits, *bms, &xs, n0, cap, zmax, stream_seed2(seed, b as u64, r), r);
+            for p in &tr {
+                writeln!(w, "{b},{r},{},{:.6e},{bms:.6e},{},{:.6e}", p.cand, cands[p.cand].1, p.n, p.ms_hat).unwrap();
+            }
+            writeln!(w, "# done base {b} rep {r}").unwrap();
+            w.flush().unwrap();
+            let inputs: u64 = tr.iter().fold(std::collections::HashMap::new(), |mut m, p| { m.insert(p.cand, p.n); m }).values().sum();
+            eprintln!("[{:>5.0}s] base {b} rep {r}: {} candidates, inputs=2^{:.1}", t.elapsed().as_secs_f64(), xs.len(), (inputs as f64).log2());
+        }
+    }
+}
+
+fn stream_seed2(seed: u64, a: u64, b: u64) -> u64 {
+    mixlab::rng::stream_seed(mixlab::rng::stream_seed(seed, a), b)
 }
 
 #[cfg(test)]

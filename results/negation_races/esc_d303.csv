@@ -1,0 +1,11 @@
+# RaceCfg { bits: 32, n0: 16384, cap: 268435456, z: 3.0, verify_samples: None, seed: 52, max_last_shift: Some(16) }
+iter,event,config,score,detail
+0,start,[16 d30332d3 15 379a369b 15],0.1251041195,sd=0.000e0
+1,improved,[16 d70332d3 15 379a369b 15],0.1201454443,k=96 worse=83 rejected=0 unraced=12 median_n_drop=2^23.0 inputs=2^32.5 exact=1 cum_inputs=2^32.5 cum_exact=1
+2,iter,[16 d70332d3 15 379a369b 15],0.1201454443,k=96 worse=87 rejected=9 unraced=0 median_n_drop=2^24.0 inputs=2^32.4 exact=9 cum_inputs=2^33.5 cum_exact=10
+3,iter,[16 d70332d3 15 379a369b 15],0.1201454443,k=96 worse=94 rejected=2 unraced=0 median_n_drop=2^24.0 inputs=2^31.6 exact=2 cum_inputs=2^33.8 cum_exact=12
+4,iter,[16 d70332d3 15 379a369b 15],0.1201454443,k=96 worse=95 rejected=1 unraced=0 median_n_drop=2^23.0 inputs=2^31.0 exact=1 cum_inputs=2^34.0 cum_exact=13
+5,iter,[16 d70332d3 15 379a369b 15],0.1201454443,k=96 worse=93 rejected=3 unraced=0 median_n_drop=2^23.0 inputs=2^31.5 exact=3 cum_inputs=2^34.3 cum_exact=16
+6,iter,[16 d70332d3 15 379a369b 15],0.1201454443,k=96 worse=92 rejected=4 unraced=0 median_n_drop=2^23.0 inputs=2^31.9 exact=4 cum_inputs=2^34.5 cum_exact=20
+7,iter,[16 d70332d3 15 379a369b 15],0.1201454443,k=96 worse=95 rejected=1 unraced=0 median_n_drop=2^23.0 inputs=2^30.8 exact=1 cum_inputs=2^34.6 cum_exact=21
+8,patience,[16 d70332d3 15 379a369b 15],0.1201454443,no improvement in 6 iterations

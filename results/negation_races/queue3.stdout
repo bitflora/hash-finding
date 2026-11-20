@@ -1,0 +1,6 @@
+[2026-11-20 04:09:02] queue3 start
+[2026-11-20 04:11:18] core exact evals done
+[2026-11-20 04:11:18] core race start: [16 d8f1aaad 15 cd612d97 15]
+[2026-11-20 05:27:55] core_fixed done: best [16 68f0aaad 15 cd852d97 15]  score 0.1206947582
+[2026-11-20 06:10:33] core_free done: best [16 68f0aaad 15 ed21ad97 15]  score 0.1199437628
+[2026-11-20 06:10:33] queue3 done
