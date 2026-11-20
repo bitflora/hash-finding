@@ -216,6 +216,16 @@ pub struct RaceResult {
     pub exact_evals: usize,
 }
 
+/// `bias::sampled` counts for an xmx mixer; the SIMD path (identical inputs
+/// and counts) for widths 3..=32.
+pub fn sample_counts(x: &Xmx, n: u64, seed: u64) -> Counts {
+    if (3..=32).contains(&x.bits) {
+        crate::fast32::sampled_xmx(x, n, seed)
+    } else {
+        with_mixer!(x, f => sampled(&f, x.bits, n, seed))
+    }
+}
+
 /// Verified ms of a candidate: exact, or a fresh sample.
 fn verify(x: &Xmx, cfg: &RaceCfg, salt: u64) -> (f64, u64) {
     match cfg.verify_samples {
@@ -223,7 +233,7 @@ fn verify(x: &Xmx, cfg: &RaceCfg, salt: u64) -> (f64, u64) {
         None => (with_mixer!(x, f => crate::bias::exact(&f, x.bits).ms()), 0),
         Some(n) => {
             let s = stream_seed(cfg.seed ^ 0x7e51f1, salt);
-            (with_mixer!(x, f => sampled(&f, x.bits, n, s).ms_debiased()), n)
+            (sample_counts(x, n, s).ms_debiased(), n)
         }
     }
 }
@@ -280,7 +290,7 @@ pub fn race(cfg: &RaceCfg, inc_ms: f64, inc_var: f64, cands: Vec<Xmx>, salt: u64
         alive = alive
             .into_par_iter()
             .map(|(i, c)| {
-                let more = with_mixer!(&cands[i], f => sampled(&f, bits, inc, cseed(i)));
+                let more = sample_counts(&cands[i], inc, cseed(i));
                 (i, c.merge(more))
             })
             .collect();
@@ -503,7 +513,7 @@ pub fn trace(bits: u32, inc_ms: f64, cands: &[Xmx], n0: u64, cap: u64, zmax: f64
         alive = alive
             .into_par_iter()
             .map(|(i, c)| {
-                let more = with_mixer!(&cands[i], f => sampled(&f, bits, inc, cseed(i)));
+                let more = sample_counts(&cands[i], inc, cseed(i));
                 (i, c.merge(more))
             })
             .collect();

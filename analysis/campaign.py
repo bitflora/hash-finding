@@ -219,8 +219,11 @@ def run(hours, max_jobs):
                 start, b = screen_core(j)
                 rec["core_best_draw"], rec["core_best_draw_bias"] = start, b
             rec["start"] = start
-            rec["start_bias"] = rec.get("core_best_draw_bias") or exact(start)
             rec["best"], rec["bias"], rec["parts"] = race_job(j, start)
+            # the race logs its start score (exact); the first part has the original start
+            first = D / (rec["parts"][0] if rec["parts"] else f"{j['id']}.log")
+            m0 = LINE.search(first.read_text())
+            rec["start_bias"] = float(m0.group(4)) if m0 else exact(start)
             rec["seconds"] = round(time.time() - t)
             (D / f"{j['id']}.done.json").write_text(json.dumps(rec, indent=1))
             n += 1

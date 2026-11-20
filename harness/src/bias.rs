@@ -213,7 +213,7 @@ pub fn exact<F: Fn(u64) -> u64 + Sync>(f: &F, bits: u32) -> Counts {
         .unwrap()
 }
 
-const SAMPLE_CHUNK: u64 = 1 << 14;
+pub const SAMPLE_CHUNK: u64 = 1 << 14;
 
 /// Counts over `n` uniformly random inputs, serial. Deterministic in `seed`.
 pub fn sampled_serial<F: Fn(u64) -> u64>(f: &F, bits: u32, n: u64, seed: u64) -> Counts {

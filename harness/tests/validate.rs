@@ -111,6 +111,47 @@ fn fast32_matches_generic_exact() {
     }
 }
 
+/// The Harley-Seal counter must give bit-identical counts to the ripple
+/// counter, including ragged tails and the top of the 32-bit input range.
+#[test]
+fn fast32_harley_seal_matches_ripple() {
+    let mut rng = Xoshiro256::new(29);
+    for bits in [7u32, 9, 12, 17] {
+        for rounds in 1..=3 {
+            let x = random_config(bits, rounds, &mut rng);
+            let a = mixlab::fast32::exact_xmx_ripple(&x, true);
+            let b = mixlab::fast32::exact_xmx(&x, true);
+            assert_eq!((a.n, &a.bins), (b.n, &b.bins), "{x}");
+        }
+    }
+    let top = 1u64 << 32;
+    for (lo, hi) in [(0u64, 1 << 18), (12_345, 12_345 + 3 * 128 + 40), (top - (1 << 16) - 8, top)] {
+        for rounds in 1..=3 {
+            let x = random_config(32, rounds, &mut rng);
+            let a = mixlab::fast32::counts_range(&x, lo, hi, false);
+            let b = mixlab::fast32::counts_range(&x, lo, hi, true);
+            assert_eq!((a.n, &a.bins), (b.n, &b.bins), "{x} [{lo}, {hi})");
+        }
+    }
+}
+
+/// The SIMD sampler must consume the same RNG stream and give identical
+/// counts to the generic sampler, including ragged chunk and group tails.
+#[test]
+fn fast32_sampled_matches_generic() {
+    let mut rng = Xoshiro256::new(31);
+    for bits in [3u32, 8, 20, 32] {
+        for rounds in 1..=3 {
+            let x = random_config(bits, rounds, &mut rng);
+            for n in [37u64, 1000, (1 << 14) + 77, 3 << 14] {
+                let a = with_mixer!(x, f => mixlab::bias::sampled(&f, bits, n, 99));
+                let b = mixlab::fast32::sampled_xmx(&x, n, 99);
+                assert_eq!((a.n, &a.bins), (b.n, &b.bins), "{x} n={n}");
+            }
+        }
+    }
+}
+
 /// The surrogate's single-multiply carry-chain model should be near-exact for
 /// 1-round mixers (its only approximation there is z ⟂ sign pattern).
 #[test]
