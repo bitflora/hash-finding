@@ -104,15 +104,16 @@ structural limitation, not a universal proof that two-round generators are
 unsuitable or that three rounds are sufficient. Stream quality needs separate
 testing.
 
-## Reference measurements (`results/refs.txt`)
+## Reference measurements (`results/refs_corrected.txt`)
 
 The 32-bit and 16-bit figures are exact and match the published values to 17
-digits. The historical 64-bit figures use 2³⁰ random inputs. Their displayed ±
-values used the old batch uncertainty calculation and are not calibrated
-standard errors for the pooled estimator; they need rerunning. "BIC max|z|" should be about 4.5–5 for an ideal mixer; 256
+digits. The 64-bit figures use 2³⁰ random inputs (seed 1) and were rerun on
+2026-11-20 with the corrected pooled estimator. Their column is the signed
+mean square ms ± approximate SE, in units of 10⁻¹¹; the score-scale bias
+cannot carry a symmetric error bar near zero. "BIC max|z|" should be about 4.5–5 for an ideal mixer; 256
 means a perfectly correlated output-bit pair.
 
-| Width | Function | Rounds | Bias | BIC max\|z\| | Source |
+| Width | Function | Rounds | Bias (64-bit: ms ×10⁻¹¹) | BIC max\|z\| | Source |
 |---|---|---|---|---|---|
 | 32 | prospector32 | 2 | 0.34968 | 256 | hash-prospector |
 | 32 | Murmur3 fmix32 | 2 | 0.26399 | 256 | MurmurHash3 |
@@ -120,13 +121,13 @@ means a perfectly correlated output-bit pair.
 | 32 | TheIronBorn `[16 21f0aaad 15 d35a2d97 15]` | 2 | 0.10760 | 87 | hash-prospector #19 |
 | 32 | TheIronBorn `[16 21f0aaad 15 735a2d97 15]` (record) | 2 | 0.10704 | 87 | hash-prospector #19 |
 | 32 | triple32 | 3 | 0.02089 | 4.0 | hash-prospector |
-| 64 | Murmur3 fmix64 | 2 | 0.0183 ± 0.0024 | 247 | MurmurHash3 |
-| 64 | Moremur | 2 | 0.0139 ± 0.0041 | 9.2 | Evensen 2019 |
-| 64 | NASAM | 2 + rotations | 0.002 ± 0.018 | 4.6 | Evensen 2020 |
-| 64 | Stafford Mix13 (SplitMix64) | 2 | 0.005 ± 0.007 | 256 | Stafford 2011 |
-| 64 | rrmxmx | 2 + rotations | 0.000 ± 0.009 | 57 | Evensen 2018 |
-| 64 | mx3 | 3 | 0.001 ± 0.080 | 4.5 | Maiga |
+| 64 | Murmur3 fmix64 | 2 | 33.5 ± 2.7 (bias 0.0183) | 247 | MurmurHash3 |
+| 64 | Moremur | 2 | 19.2 ± 2.0 (bias 0.0139) | 9.2 | Evensen 2019 |
+| 64 | NASAM | 2 + rotations | 0.6 ± 2.1 | 4.6 | Evensen 2020 |
+| 64 | Stafford Mix13 (SplitMix64) | 2 | 2.3 ± 2.1 | 256 | Stafford 2011 |
+| 64 | rrmxmx | 2 + rotations | −1.0 ± 2.2 | 57 | Evensen 2018 |
+| 64 | mx3 | 3 | 0.04 ± 2.0 | 4.5 | Maiga |
 
-The historical 64-bit significance/ranking conclusions are provisional until
-these measurements are rerun with the corrected pooled uncertainty estimate.
+Only fmix64 (z = 12.4) and Moremur (z = 9.7) are measurably biased; the
+other four are consistent with zero, so sampled bias cannot rank them.
 See `results/REVIEW_STATUS.md` for the status of saved experiments.

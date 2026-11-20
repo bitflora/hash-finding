@@ -37,7 +37,10 @@ independently reproduced during review.
 
 - `refs.txt`: point scores use the old small finite-n approximation; the
   displayed score-scale uncertainties do not estimate pooled uncertainty.
-  Do not reuse the old significance conclusions without a rerun.
+  **Rerun 2026-11-20 as `refs_corrected.txt`**: same seed and 2^30 samples,
+  corrected estimator and pooled SE. Only fmix64 (z = 12.4) and Moremur
+  (z = 9.7) are measurably biased, so the old conclusion holds; the
+  exact and BIC rows are unchanged (see FINDINGS F2).
 - `surrogate_*.csv`, `neighbours_record32_surrogate.csv`, and `scale_*.csv`:
   clipped baseline rankings; scaling may also use odd sample counts.
 - `race*.csv` and `family_races/`: exact accepted scores remain valid, but

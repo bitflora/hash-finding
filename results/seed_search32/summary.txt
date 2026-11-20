@@ -1,0 +1,10 @@
+32-bit seed search, 64 candidates x 3 seeds per source, screened at 2^22, best 4 exact
+source    median bias  q10 bias               best exact (3 seeds)  distinct mults  same m0=m1
+spectral        9.512     1.262             0.9411, 0.9269, 0.9269               2    98/192
+matched         3.815     1.012             0.3614, 0.4528, 0.4844             384     0/192
+random          3.667     1.105             0.3760, 0.7822, 0.5562             384     0/192
+mixer           0.555     0.304             0.2104, 0.2104, 0.2024               4    52/192
+
+Extended pool (--min-mult-bits 1), 256 candidates, seed 1, screened at 2^20, best 4 exact
+spectral  n=256 median bias 26.490  q10 1.902  best exact 0.5753 [17 0001e92d 15 93d765dd 15]  distinct mults 11  lengths [15, 16, 17, 18, 24, 32]
+matched   n=256 median bias 24.320  q10 2.125  best exact 0.2576 [16 00032a9d 15 bb8e4d95 15]  distinct mults 511  lengths [15, 16, 17, 18, 24, 32]

@@ -54,11 +54,26 @@ cargo test --release          # 8 fast tests; `-- --ignored` adds the slow 32-bi
   about 29 s on the AVX2 path (`src/fast32.rs`). It is bit-identical to the
   generic path, and a test checks this.
 
-### F2. Historical reference table (uncertainty needs rerun; `results/refs.txt`)
-- At 2^30 samples, only fmix64 (0.0183 ± 0.0024) and Moremur
-  (0.0139 ± 0.0041) are measurably biased among the 64-bit references. Mix13,
-  mx3, rrmxmx and NASAM are consistent with 0. **Sampled avalanche bias
-  cannot rank good 64-bit mixers at affordable sample counts.**
+### F2. Reference table (solid; rerun 2026-11-20, `results/refs_corrected.txt`)
+- Rerun with the corrected estimator and pooled SE at 2^30 samples, seed 1.
+  Signed mean square ms (× 10⁻¹¹) ± SE, with z = ms/SE:
+
+  | mixer | ms ± SE | z |
+  |---|---|---|
+  | fmix64 | 33.5 ± 2.7 | 12.4 |
+  | Moremur | 19.2 ± 2.0 | 9.7 |
+  | Stafford Mix13 | 2.3 ± 2.1 | 1.1 |
+  | NASAM | 0.6 ± 2.1 | 0.3 |
+  | mx3 | 0.04 ± 2.0 | 0.0 |
+  | rrmxmx | −1.0 ± 2.2 | −0.5 |
+
+  The conclusion stands: only fmix64 and Moremur are measurably biased.
+  The other four are consistent with 0. The old per-row "±" values (for
+  example mx3 ± 0.080 on the score scale) were not valid uncertainties; the
+  pooled SE is ≈ 2·10⁻¹¹ in ms for every mixer, as the F7 noise law
+  predicts. **Sampled avalanche bias cannot rank good 64-bit mixers at
+  affordable sample counts.** The exact 16/32-bit rows and all BIC lines are
+  byte-identical to the old run.
 - Pairwise output-flip correlation (BIC, 2^16 samples) shows a perfectly
   correlated pair (max |z| = 256 = √n) in fmix32, prospector32, lowbias32,
   both 16-bit references and Stafford Mix13. TheIronBorn's constants have
@@ -193,9 +208,17 @@ independent `mixlab eval --exact`.
   1,152 random 1–3-step neighbours were raced and all were worse.
 - The #19 family d30332d3/c865c965 (0.12786) also did not improve.
 - **Novelty claim:** 0.11527 is the best value we know of outside the
-  record's own `21f0aaad` lineage, which covers 0.10704–0.1133. This rests
-  only on the hash-prospector README list and issue #19. Other forks, issues
-  and blog posts were **not** searched exhaustively.
+  record's own `21f0aaad` lineage, which covers 0.10704–0.1133.
+  *Prior-art search (2026-11-20):* all 32 hash-prospector issues and PRs,
+  including every comment through Jul 2026, the current README, and web
+  searches for the constants and for newer 2-round 32-bit work. No pure
+  xmx 2-round 32-bit constant below 0.1153 outside the `21f0aaad` lineage
+  was found; the best other published family is still 450c2d35 (0.12243).
+  The only lower 2-step functions use hardware CRC32C (0.0511; see
+  `sources.md`), a different operation set. Node.js/V8's 2026 integer hash
+  is 24-bit with random multipliers. Not searched: other people's forks,
+  non-English sources, and private code. The claim is now well supported,
+  but not proven.
 - Extra metrics for 0.11527: structured-input avalanche counter 0.90, RRC
   1.05, low-weight 1.05 (all ideal ≈ 1).
 
@@ -374,8 +397,8 @@ still local optima.
   - Random: min 0.543, median 3.16, max 16.1.
   - All 400 core-vs-random pairs favour the core.
   - The best core start, with random high halves, already equals lowbias32.
-  - Caveat: random cores are the only control. Other good mixers' cores were
-    not tested.
+  - Caveat: random cores are the only control here. *F16 now tests six
+    other good mixers' cores: none is special; all are good.*
 - *Races from that best core start* (0.1734, same seed and budget):
   - `--fix-low-bits 16`: 0.12069 `[16 68f0aaad 15 cd852d97 15]` after 15
     iterations (68 min), still improving.
@@ -390,6 +413,123 @@ still local optima.
   random-high-half start climbed in about 50 minutes (race plus sweep) to
   0.11813, behind only the record lineage and 7870aaad. It is not independent
   of the record, because it shares the record's core.
+
+### F15. BIC at 2^20 over 5 seeds: the worst output pair is set by the low-bit core (solid)
+**Method.** New `mixlab bic --samples p20 --seeds 1,2,3,4,5` (its 2^16 seed-1
+output reproduces the earlier `--extra` line exactly). 13 mixers.
+Data: `results/bic20/bic20_seeds1-5.txt`.
+
+| mixer | exact bias | rms z | worst pair | corr |
+|---|---|---|---|---|
+| record 21f0aaad/735a2d97 | 0.10704 | 7.80 | (2,17) | ±0.334 |
+| 21f0aaad/d35a2d97 (0.1076) | 0.10760 | 7.80 | (2,17) | ±0.334 |
+| 7870aaad/be523597 | 0.11527 | 7.63 | (2,17) | ±0.334 |
+| 88f0aaad/ed21ad97 | 0.11813 | 7.61 | (2,17) | ±0.334 |
+| 5e0f5553/735a2d97 (−m0 family) | 0.10936 | 8.40 | (2,17) | ±0.334 |
+| 5e0f5553/8ca5d269 | 0.11214 | 17.39 | (2,17) | −0.62 |
+| d30332d3/c865c965 | 0.12786 | 15.12 | (2,17) | +0.50 |
+| d70332d3/379a369b | 0.12015 | 11.97 | (2,17) | −0.60 |
+| 450c, 81e3352d, 19085565, lowbias32 (s2 = 16) | 0.121–0.174 | 28–37 | (0,16) | −1 (exact) |
+| triple32 (3 rounds, control) | 0.02089 | 1.00 | random | ≈0 |
+
+**Results.**
+- For the four mixers that share m0's low 16 bits `aaad` (the record, the
+  0.1076 constant, 7870aaad, 88f0aaad), the worst entry is **bit-identical
+  at every seed** (for example seed 2: max|z| = 342.79, corr −0.3348), even
+  though their m1 differs in 5–16 bits. At a common seed the counted events
+  must be the same, so the (2, 17) pair statistic depends only on bits these
+  mixers share. The magnitude is ≈ 1/3 (0.3335–0.3348 across seeds).
+- The negated-m0 point 5e0f5553/735a2d97 has the same ≈ 1/3 magnitude, but
+  different per-seed values: the same defect reached through another
+  multiplier. Its sibling with a different m1 jumps to 0.62.
+- The d303 family has a *stronger* (2, 17) defect (0.50); the negation escape
+  d70332d3 trades it for 0.60 while lowering bias. Lower bias does not mean
+  lower worst-pair correlation.
+- Every s2 = 16 mixer has the exact F11 pair (in 15 or 16 → out 0, 16),
+  with rms z 4× that of the s2 = 15 mixers.
+- **rms z ranks the s2 = 15 aaad-core mixers slightly differently from bias:**
+  88f0aaad (7.61) and 7870aaad (7.63) are below the record (7.80).
+
+**Consequence.** This resolves threat #6: the identical worst entries are
+not a seed artifact. The (2, 17) defect at ≈ 1/3 is a property of the
+`aaad`-core lineage. Every s2 = 15 two-round mixer tested has a (2, 17)
+defect of at least 0.33, so a BIC objective is a real second axis for
+search, not a re-scaling of bias.
+
+### F16. Every good mixer's low-16-bit core carries most of its quality (solid for 7 cores)
+**Method.** F14 compared only the record's core against random mixers.
+Here, 7 source mixers (record, 7870aaad, 450c, d303, 19085565, lowbias32,
+fmix32) each keep their shifts and the low 16 bits of both multipliers. The
+**same** 16 random high-half pairs are attached to every core (paired
+design, 112 exact evaluations). Scripts: `analysis/gen_core_controls.py`,
+`run_core_controls.sh`, `core_controls.py`; data:
+`results/core_controls/core_controls_exact.csv`.
+
+| core | source bias | min | median | max | beats record core (paired) |
+|---|---|---|---|---|---|
+| record | 0.10704 | 0.167 | 0.269 | 1.04 | — |
+| 7870aaad | 0.11527 | 0.188 | 0.277 | 0.48 | 10/16 |
+| 450c | 0.12243 | 0.198 | 0.304 | 1.07 | 5/16 |
+| d303 | 0.12786 | 0.191 | 0.299 | 0.78 | 7/16 |
+| 19085565 | 0.14014 | 0.157 | 0.360 | 1.18 | 6/16 |
+| lowbias32 | 0.17353 | 0.208 | 0.276 | 1.82 | 8/16 |
+| fmix32 | 0.26399 | 0.285 | 0.345 | 1.08 | 4/16 |
+| *fully random (F14)* | — | 0.543 | 3.16 | 16.1 | — |
+
+**Results.**
+- **The record's core is not special.** Every good mixer's core with random
+  high halves gives a median of 0.27–0.36, roughly 10× better than fully
+  random mixers. lowbias32's core (median 0.276) is as good as the record's
+  (0.269), and no core beats the record's core consistently in paired
+  comparisons (4–10 wins out of 16).
+- The source mixer's own score predicts its core's quality only weakly
+  (Spearman 0.54 for medians, 0.61 for minima, n = 7). Even fmix32's core
+  (source 0.264) does far better than random.
+- No random draw beats its own source, but the best of 16 comes within
+  8–56% of it (fmix32 0.285 vs 0.264; 19085565 0.157 vs 0.140; the record
+  0.167 vs 0.107). One draw for 19085565 (0.157) is below lowbias32.
+
+**Reading.** "A good low-16-bit core" is a property that published mixers
+share in general, not a signature of the record lineage. This supports
+seeding searches from any good core with random high halves (F14 did that
+once and reached 0.118). The low halves fix the coarse structure; the high
+halves do the final tuning that separates 0.107 from 0.17.
+
+### F17. Spectrally good LCG multipliers are not good mixer seeds (indicative; small pool)
+**Method.** `seed-search` at 32 bits with four populations: Steele–Vigna
+spectral multipliers, `matched` (random odd multipliers with the same
+lengths), uniform `random`, and `mixer` (recombined constants from published
+mixers). Each run uses 64 candidates, screening at 2^22, and exact checks of
+the best 4, over 3 seeds. A second run uses the extended pool
+(`--min-mult-bits 1`) with 256 candidates at 2^20, seed 1, spectral against
+matched. Script: `analysis/run_seed_search.sh`; data and table:
+`results/seed_search32/` (`summary.txt`).
+
+| population | median bias | 10th pct | best exact (per seed) |
+|---|---|---|---|
+| spectral (default: only **2** 32-bit multipliers) | 9.51 | 1.26 | 0.941, 0.927, 0.927 |
+| matched | 3.82 | 1.01 | 0.361, 0.453, 0.484 |
+| random | 3.67 | 1.11 | 0.376, 0.782, 0.556 |
+| mixer recombinations | 0.555 | 0.304 | 0.210, 0.210, 0.202 |
+| spectral, extended (11 multipliers) | 26.5 | 1.90 | 0.575 |
+| matched, extended (511 multipliers) | 24.3 | 2.13 | 0.258 |
+
+**Results.**
+- At 32 bits the default spectral pool is degenerate: two multipliers, so
+  half its configurations use m0 = m1. It is worse than random at every
+  quantile.
+- With the extended pool, spectral selection is no better than random
+  multipliers of the same lengths (median 26.5 vs 24.3; best 0.575 vs 0.258).
+- Recombining published mixer constants is the best seed pool by about 7×
+  in median, consistent with F16: those constants already carry good cores.
+- Curiosity: the best `matched` candidate, `[16 00032a9d 15 bb8e4d95 15]`
+  (exact 0.2576), uses an 18-bit first multiplier.
+
+**Reading.** LCG spectral quality does not transfer to finalizer avalanche
+here. Seed searches should start from good cores (F16) or recombined
+published constants, not from spectral tables. Caveat: the 32-bit spectral
+pool is tiny (11 constants), so this is a weak test of the idea; 64 bits
+has a larger pool and is untested.
 
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
@@ -407,13 +547,13 @@ still local optima.
 3. **Neighbourhood bias.** Only 1–3-bit multiplier flips and ±1 shifts.
    "Local optimum" claims (the record, d303) are relative to this move set
    and to a random subset of about 1,000 moves.
-4. **Novelty of F9** relies on two sources (see F9).
+4. **Novelty of F9**: searched all hash-prospector issues and the web
+   (2026-11-20; see F9); forks and private code are not covered.
 5. **Bias is not overall quality.** hash-prospector issue #28 notes the
    lowest-bias function is not always best on PractRand or RRC. No
    PractRand/RRC runs have been done; no C compiler is installed.
-6. **BIC is sampled at 2^16** with a fixed seed. Identical worst entries
-   across mixers (F10) could partly reflect shared seeds. It needs a re-run
-   with other seeds and more samples.
+6. ~~**BIC is sampled at 2^16** with a fixed seed.~~ Resolved by F15:
+   5 seeds at 2^20; the identical worst entries are structural.
 7. **The F6 projection maps are ad hoc.** A better map (for example, one
    preserving the multiplier's spectral properties) is not excluded.
 
@@ -458,16 +598,14 @@ The ideas below are experimental options, not established improvements.
      64 bits.
    - The alternative is to target 3-round mixers on structured-input and BIC
      metrics.
-6. Spectral-test and NAF-weight features of multipliers against exact bias.
-   This is cheap, but expected to work only as a coarse screen, like the
-   surrogate.
+6. ~~Spectral-test features~~: done as F17 (spectral seeds do not help at
+   32 bits). NAF-weight features remain untested.
+
+**Status 2026-11-20:** prior-art search (F9), refs rerun (F2), BIC at 2^20
+(F15), core controls (F16) and the seed-search run (F17) are done. Items
+2, 3, 5 and the PractRand check (4) remain.
 
 ## 6. State of the repository
-- Commit `8bdeb0d` contains everything up to and including F8's validation
-  and first runs.
-- **Not yet committed:**
-  - the `--patience` option
-  - `analysis/run_family_races.sh`
-  - `results/family_races/`
-  - the F9/F10 updates to `plan.md`
-  - this file
+- Everything through F14 is committed (latest: `e15fe16`). Later sections
+  are committed with the work they describe; `git log -- mixing-functions`
+  is the authoritative record.

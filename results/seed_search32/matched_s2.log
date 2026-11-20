@@ -1,0 +1,5 @@
+exact: [16 844262a5 16 f8b6568d 17] ms=2.05072469e-7 se=0.000e0
+exact: [15 8f5a3ad5 15 a739eb59 17] ms=4.28678481e-7 se=0.000e0
+exact: [17 9e68ae5d 16 b731ae9d 16] ms=4.50207165e-7 se=0.000e0
+exact: [15 b61db15d 17 a0cd48cb 17] ms=5.42942576e-7 se=0.000e0
+matched: 64 candidates in 96.197s; screen inputs=268435456

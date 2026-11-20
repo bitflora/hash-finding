@@ -11,6 +11,23 @@
   `[16 21f0aaad 15 d35a2d97 15]` bias ≈ 0.1076, later ≈ 0.10704. Method:
   metaheuristic on sampled estimate (2²⁵ inputs) constrained near good
   functions, then exhaustive exact search in the neighbourhood.
+  Later comments (Jan 2026, scottchiefbaker / tommyettinger) list
+  `[16 21f0aaad 15 f35a2d97 15]` = 0.10734781817103507 as a "current best",
+  and a **CRC32C-based** 2-step function
+  `crc32c(·,7cdff266), ×9c80bf99, crc32c(·,f789c7a9), ×0c9cb5b5` = 0.05108
+  (exact; needs Logan007's unmerged `perm` branch). Adding a final `xorr:15`
+  gives 0.02027, at the random floor. That uses a different operation set
+  (hardware CRC32C), so it does not compete with pure xmx constants.
+- **hash-prospector issue #12** — alternative bias normalisation; under it,
+  `f35a2d97` slightly beats `735a2d97` (0.03633 vs 0.03668), so the "best"
+  depends on the metric.
+- **Node.js / V8 HashDoS fix (March 2026)** —
+  https://nodejs.org/en/blog/vulnerability/march-2026-hashdos and
+  https://github.com/joyeecheung/rapid-xorshift-multiply . 24-bit xmx with
+  shift 12 and per-process random multipliers (low 24 bits of rapidhash
+  secrets), 2 then 3 rounds; sampled SAC bias, 2-round mean ≈ 8–10 over seeds.
+  Not comparable to 32-bit constants, but a production use of random xmx
+  multipliers.
 - **hash-prospector issue #28, "About the avalanche bias"** —
   https://github.com/skeeto/hash-prospector/issues/28 . The lowest-bias
   function is not necessarily best by RRC-PractRand / TFR. Motivates

@@ -444,3 +444,17 @@ with `mixlab eval --exact`.
   negation races, so they did not share the CPU with them. The `target-trace/`
   build directory at the repo root was only needed while that race held
   target/release/mixlab.exe.
+
+### 2026-11-20: Prior art, refs rerun, BIC, core controls, seed search
+- Prior art: all 32 hash-prospector issues and the web; no pure-xmx 2-round
+  32-bit constant below 0.1153 outside the 21f0aaad lineage (F9). A CRC32C
+  2-step function reaches 0.0511, but uses a different operation set.
+- `refs_corrected.txt`: the corrected estimator confirms that only fmix64
+  and Moremur are measurably biased at 2^30 (F2).
+- New `mixlab bic` subcommand; 13 mixers × 5 seeds at 2^20. The (2,17)
+  worst pair at ≈ 1/3 is identical across aaad-core mixers at every seed (F15).
+- Core controls: 7 cores × 16 shared random high halves, all exact. Every
+  good mixer's core is good, with medians of 0.27–0.36 against 3.16 for
+  random mixers (F16).
+- Seed search: the spectral pool is no better than length-matched random
+  multipliers; recombined published constants are best (F17).

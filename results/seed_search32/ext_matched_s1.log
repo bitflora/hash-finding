@@ -1,0 +1,5 @@
+exact: [16 00032a9d 15 bb8e4d95 15] ms=6.63436930e-8 se=0.000e0
+exact: [16 00006b3b 15 ba4c64af 17] ms=4.77902943e-7 se=0.000e0
+exact: [16 00033537 15 00bdb347 15] ms=6.19461700e-7 se=0.000e0
+exact: [16 e8315a0d 15 00cc8f6d 17] ms=6.90199313e-7 se=0.000e0
+matched: 256 candidates in 108.083s; screen inputs=268435456

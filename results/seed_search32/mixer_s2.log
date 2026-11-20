@@ -1,0 +1,5 @@
+exact: [16 d35a2d97 15 d35a2d97 16] ms=4.42610030e-8 se=0.000e0
+exact: [16 85ebca6b 15 846ca68b 15] ms=5.55643942e-8 se=0.000e0
+exact: [16 85ebca6b 15 846ca68b 17] ms=6.20256698e-8 se=0.000e0
+exact: [15 85ebca6b 15 846ca68b 16] ms=5.63336499e-8 se=0.000e0
+mixer: 64 candidates in 95.136s; screen inputs=268435456

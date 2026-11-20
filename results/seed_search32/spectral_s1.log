@@ -1,0 +1,5 @@
+exact: [16 93d765dd 15 93d765dd 15] ms=8.85708320e-7 se=0.000e0
+exact: [15 93d765dd 15 93d765dd 15] ms=9.21025305e-7 se=0.000e0
+exact: [17 93d765dd 16 93d765dd 15] ms=1.17468618e-6 se=0.000e0
+exact: [17 93d765dd 15 93d765dd 16] ms=1.24562050e-6 se=0.000e0
+spectral: 64 candidates in 93.394s; screen inputs=268435456

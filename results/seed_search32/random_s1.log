@@ -1,0 +1,5 @@
+exact: [16 ef7eb739 15 9b12e547 15] ms=1.41343803e-7 se=0.000e0
+exact: [17 6c8e9a4b 15 9f233289 15] ms=2.10040044e-7 se=0.000e0
+exact: [15 e9862a91 16 370ca61b 16] ms=3.25283116e-7 se=0.000e0
+exact: [17 c3a92833 15 1111357b 16] ms=1.28865707e-6 se=0.000e0
+random: 64 candidates in 93.082s; screen inputs=268435456

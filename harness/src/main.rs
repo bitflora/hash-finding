@@ -16,6 +16,7 @@ mixlab — avalanche-bias evaluation and search for xorshift-multiply mixers
 USAGE:
   mixlab refs   [--samples N] [--exact32] [--seed S] [--extra]
   mixlab eval   (--name REF | --bits B --spec \"[s m s m s]\") [--exact] [--samples N] [--seed S] [--extra]
+  mixlab bic    --bits B --spec SPEC [--samples p16] [--seeds 1,2,3]   # sampled BIC, one line per seed
   mixlab sweep  --bits B [--rounds R] (--exhaustive | --random N) [--seed S] --out FILE.csv
   mixlab search --bits B [--rounds R] [--start SPEC] [--iters N] [--neighbors K]
                 [--levels 16,18,20] [--final-samples LOG2] [--seed S] --out FILE.csv
@@ -169,6 +170,31 @@ fn main() {
                 let exact = r.bits <= 16 || (r.bits == 32 && a.has("exact32"));
                 let pubd = r.published.map(|p| format!("  (published {p:.17})")).unwrap_or_default();
                 println!("{:<16} {:>2}-bit  {}{}", r.name, r.bits, eval_ref(&r, &a, exact), pubd);
+            }
+        }
+        "bic" => {
+            let bits = a.num("bits", 32) as u32;
+            let spec = a.get("spec").unwrap_or_else(|| die("need --spec"));
+            let x = Xmx::parse(bits, spec).unwrap_or_else(|e| die(&e));
+            let n = a.num("samples", 1 << 16);
+            let seeds: Vec<u64> = a
+                .get("seeds")
+                .unwrap_or("1")
+                .split(',')
+                .map(|s| parse_num(s).unwrap_or_else(|| die(&format!("bad seed {s}"))))
+                .collect();
+            for seed in seeds {
+                let t = Instant::now();
+                let bic = with_mixer!(x, f => bic_sampled(&f, bits, n, seed ^ 0xb1c));
+                let (wi, wj, wk, wc) = bic.worst;
+                println!(
+                    "{x} n=2^{:.1} seed={seed} rms z={:.3} (ideal≈1)  max|z|={:.2} (ideal≈{:.2}) worst: in {wi} -> out {wj},{wk} corr {wc:+.4}  [{:.1}s]",
+                    (n as f64).log2(),
+                    bic.rms_z,
+                    bic.max_z,
+                    bic.expected_max_z,
+                    t.elapsed().as_secs_f64()
+                );
             }
         }
         "eval" => {

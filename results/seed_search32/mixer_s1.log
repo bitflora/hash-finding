@@ -1,0 +1,5 @@
+exact: [15 85ebca6b 15 d35a2d97 15] ms=4.42569273e-8 se=0.000e0
+exact: [16 85ebca6b 15 846ca68b 15] ms=5.55643942e-8 se=0.000e0
+exact: [15 c2b2ae35 15 d35a2d97 15] ms=7.16205134e-8 se=0.000e0
+exact: [15 85ebca6b 15 d35a2d97 17] ms=8.53599251e-8 se=0.000e0
+mixer: 64 candidates in 97.664s; screen inputs=268435456

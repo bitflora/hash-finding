@@ -1,0 +1,5 @@
+exact: [17 86ea96cb 16 e5612cc5 15] ms=2.58123080e-7 se=0.000e0
+exact: [17 9f3a938d 15 a17934db 16] ms=2.34680220e-7 se=0.000e0
+exact: [17 92110d6d 15 e09b3355 15] ms=3.84390721e-7 se=0.000e0
+exact: [16 849ec9cd 15 fb4448df 16] ms=5.06880926e-7 se=0.000e0
+matched: 64 candidates in 98.175s; screen inputs=268435456

@@ -1,0 +1,5 @@
+exact: [15 f75fd92d 15 65612cc5 15] ms=3.09369562e-7 se=0.000e0
+exact: [15 12110d6d 15 3ac5b9e3 15] ms=3.36837746e-7 se=0.000e0
+exact: [15 95654957 17 e3d6a77b 17] ms=4.04307175e-7 se=0.000e0
+exact: [17 40e065e5 16 9743322d 16] ms=7.57230516e-7 se=0.000e0
+random: 64 candidates in 98.920s; screen inputs=268435456

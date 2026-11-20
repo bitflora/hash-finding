@@ -1,0 +1,5 @@
+exact: [16 e69b5463 15 aaf30b57 15] ms=1.30604798e-7 se=0.000e0
+exact: [16 966653ad 15 d1cdd6c1 16] ms=3.79282802e-7 se=0.000e0
+exact: [16 eab2338b 16 e32b4919 16] ms=7.46044741e-7 se=0.000e0
+exact: [16 df0a1e39 15 c319ad35 16] ms=8.04159546e-7 se=0.000e0
+matched: 64 candidates in 94.795s; screen inputs=268435456
