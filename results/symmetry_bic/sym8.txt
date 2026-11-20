@@ -1,0 +1,12 @@
+python analysis/symmetry_check.py 8 300000   (random 300k of the 5.6M 8-bit 2-round configs, rng seed 1; 248 s)
+Variant generator rng seed 7. "within-shift" = Spearman within each shift triple, weighted by group size.
+
+== 8-bit: 300000 configs
+neg_m0    spearman=0.9262  exact-equal=0.0003  median|rel diff|=0.108  top1%-overlap=0.448  top1% median|rel|=0.122  within-shift spearman=0.7447
+neg_m1    spearman=0.8821  exact-equal=0.0003  median|rel diff|=0.116  top1%-overlap=0.458  top1% median|rel|=0.122  within-shift spearman=0.6982
+neg_both  spearman=0.8293  exact-equal=0.0003  median|rel diff|=0.146  top1%-overlap=0.306  top1% median|rel|=0.194  within-shift spearman=0.5516
+inverse   spearman=0.5583  exact-equal=0.0011  median|rel diff|=0.275  top1%-overlap=0.020  top1% median|rel|=0.331  within-shift spearman=0.5439
+topflip_m0 spearman=0.9975  exact-equal=0.2393  median|rel diff|=0.004  top1%-overlap=0.832  top1% median|rel|=0.027  within-shift spearman=0.9924
+topflip_m1 spearman=0.9940  exact-equal=0.4206  median|rel diff|=0.003  top1%-overlap=0.822  top1% median|rel|=0.025  within-shift spearman=0.9854
+rand_m0   spearman=0.6785  exact-equal=0.0101  median|rel diff|=0.151  top1%-overlap=0.222  top1% median|rel|=0.312  within-shift spearman=0.4066
+rand_both spearman=0.3990  exact-equal=0.0003  median|rel diff|=0.237  top1%-overlap=0.068  top1% median|rel|=0.764  within-shift spearman=-0.0020

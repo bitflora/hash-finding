@@ -1,0 +1,12 @@
+python analysis/symmetry_check.py 16 1500 1   (1500 random multiplier pairs at fixed shifts [8 _ 7 _ 9]; 829 s)
+
+== 16-bit: 1500 configs
+neg_m0    spearman=0.9832  exact-equal=0.0000  median|rel diff|=0.070  top1%-overlap=0.533  top1% median|rel|=0.106  within-shift spearman=0.9832
+neg_m1    spearman=0.9960  exact-equal=0.0000  median|rel diff|=0.030  top1%-overlap=0.867  top1% median|rel|=0.026  within-shift spearman=0.9960
+neg_both  spearman=0.9804  exact-equal=0.0000  median|rel diff|=0.075  top1%-overlap=0.733  top1% median|rel|=0.077  within-shift spearman=0.9804
+inverse   spearman=0.2479  exact-equal=0.0000  median|rel diff|=0.541  top1%-overlap=0.000  top1% median|rel|=2.220  within-shift spearman=0.2479
+topflip_m0 spearman=0.9994  exact-equal=0.0073  median|rel diff|=0.006  top1%-overlap=0.867  top1% median|rel|=0.020  within-shift spearman=0.9994
+topflip_m1 spearman=0.9981  exact-equal=0.0207  median|rel diff|=0.004  top1%-overlap=0.933  top1% median|rel|=0.007  within-shift spearman=0.9981
+rand_m0   spearman=0.5792  exact-equal=0.0000  median|rel diff|=0.314  top1%-overlap=0.200  top1% median|rel|=0.380  within-shift spearman=0.5792
+rand_both spearman=0.0064  exact-equal=0.0000  median|rel diff|=0.584  top1%-overlap=0.000  top1% median|rel|=1.560  within-shift spearman=0.0064
+[829s]

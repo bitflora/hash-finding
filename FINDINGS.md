@@ -208,6 +208,15 @@ record's `…2d97`.
 digits: input 17 → outputs (2, 17), corr +0.3384, |z| = 86.64. TheIronBorn's
 0.1076 constant shows the same entry.
 
+*Update (2026-11-19, F11):* the worst pair's **location** is set by the shifts
+alone. It is (2, 17) = (k, k+s2) for every multiplier pair tested at s2 = 15,
+and (4, 18) at s2 = 14. Its **magnitude** matches exactly, across 3 BIC seeds,
+for pairs whose multipliers share low bits: the record and 7870aaad (m0 shares
+16 low bits, m1 shares 11), and lowbias32 and 81e3352d/042cb68b (16 and 12).
+Unrelated multipliers give different values (0.33–0.82). So this entry is
+consistent with being fixed by the low multiplier bits. It shows that shared
+low bits fix a BIC defect, not that they predict bias.
+
 **Correction to the proposed mechanism.** Multiplication alone is a
 T-function; the complete mixer is not, because right shifts move high bits
 downward. Keeping the low 16 bits of both multipliers does not fix low output
@@ -218,6 +227,71 @@ consequence of triangular multiplication.
 **Untested:** whether fixing a known-good low-bit core and searching only the
 high bits beats the record, and whether the core explains most of the gap
 between families.
+
+### F11. A final shift s2 ≥ n/2 always leaves an exactly correlated output pair (solid)
+**Method.** `results/symmetry_bic/bic_s2_swap.txt`: 7 published multiplier pairs
+(record, 7870aaad, lowbias32, 450c2d35, 81e3352d, 19085565, fmix32). Each has its
+final shift set to 14, 15, 16 and 17. BIC at 2^16 samples, seeds 1–3.
+
+**Results.**
+- **s2 = 16 or 17:** all 7 × 2 × 3 runs show |z| = 256 (corr −1). The trigger is
+  input bit s1 and the outputs are {0, s2}, exactly the two-bit parity set F3
+  predicts. Avalanche bias cannot detect this.
+- **s2 = 15:** max |z| is 86–211, except fmix32's multipliers, which give a second
+  exact pair: input 15 → outputs (2, 17). F3 does not explain that pair.
+- **s2 = 14:** max |z| is 33–89 for all 7. For the record, s2 = 13 gives 25.6 and
+  s2 = 12 gives 7.8 (ideal ≈ 4.6).
+- **The bias metric pulls the wrong way.** lowbias32 scores 0.1735 at s2 = 16 but
+  0.2516 at s2 = 15 (exact). The record goes from 0.10704 to 1.179 at s2 = 14, and
+  7870aaad from 0.11527 to 0.2809.
+
+**Consequence for search:** treat s2 < n/2 as a hard constraint, or add a BIC
+term. Bias-only searches drift toward s2 = 16. In F9, 450c2d35 (0.12122) and
+81e3352d (0.13873) both use s2 = 16 and carry the exact pair. The record and
+7870aaad (s2 = 15) do not.
+
+### F12. Negating a multiplier is a near-symmetry of bias (solid at 8/16 bits; indicative at 32)
+**Why.** x·(−m) = ~(x·m) + 1. A complement passes through a xorshift as a
+constant XOR, which avalanche cannot see, so only the "+1" carry differs. That is
+exact for the last multiply up to that carry. For m0, the complement then meets
+another multiply, so the symmetry is weaker.
+
+**Method.** `analysis/symmetry_check.py` (numpy, exact; it reproduces mixlab's 8- and
+16-bit values). Controls: flipping the top bit (small change) and a random
+replacement multiplier. "Within" is the Spearman correlation inside one shift triple.
+
+| variant | 8-bit (300k configs), within ρ | 16-bit (1500 at [8 _ 7 _ 9]) ρ | 16-bit top-1% overlap |
+|---|---|---|---|
+| −m1 | 0.70 | **0.996** | 87% |
+| −m0 | 0.74 | 0.983 | 53% |
+| −m0, −m1 | 0.55 | 0.980 | 73% |
+| inverse mixer f⁻¹ | 0.54 | 0.25 | 0% |
+| top bit of m1 flipped (control) | 0.99 | 0.998 | 93% |
+| random m0 (control) | 0.41 | 0.58 | 20% |
+| random m0, m1 (control) | 0.00 | 0.01 | 0% |
+
+**32-bit exact** (`results/symmetry_bic/neg32_exact.txt`):
+
+| mixer | original | −m1 | −m0 | both |
+|---|---|---|---|---|
+| record 21f0aaad/735a2d97 | 0.10704 | 0.11753 | **0.11123** | 0.11271 |
+| 7870aaad/be523597 | 0.11527 | 0.11677 | 0.13454 | 0.13653 |
+
+**Consequences.**
+- Negation is a long jump in Hamming distance that keeps most of the quality. It
+  is a cheap new move type, and it opens unsearched neighbourhoods. For example,
+  `[16 de0f5553 15 735a2d97 15]` = 0.11123 sits next to the record but is far from
+  it in bit-flip distance, so neither TheIronBorn's search nor ours has covered it.
+  It is not an independent discovery.
+- For screening, m and −m are near duplicates, so you need only sample one.
+- The inverse mixer's bias is nearly unrelated to the forward bias, and good
+  mixers' inverses are not good. It is a separate objective, not a symmetry.
+- Top-bit flips change bias by a median of 0.3–0.6%, which confirms that high
+  multiplier bits only fine-tune.
+
+**Limits:** the 16-bit sample is 1,500 configs at one shift triple, and its best
+is 10.07 (TheIronBorn's best 16-bit 2-round is 7.25). At 32 bits there are only two
+mixers.
 
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
