@@ -11,6 +11,58 @@ cargo test --release -- --ignored    # slow: exact 32-bit published values, samp
 
 ## Commands
 
+### Independent spectral seed search
+
+`seed-search` explores multiplier populations independently of the local-neighbour
+search. It uses the same evaluator, with a fixed sample budget per candidate.
+Build with `cargo build --release --bin seed-search` (ordinary `cargo run` still
+defaults to `mixlab`). From `harness/`:
+
+```
+target/release/seed-search --source spectral --bits 32 --count 64 --samples p20 --seed 1 --verify 4 --out ../results/spectral32.csv
+target/release/seed-search --source random   --bits 32 --count 64 --samples p20 --seed 1 --verify 4 --out ../results/random32.csv
+target/release/seed-search --source matched  --bits 32 --count 64 --samples p20 --seed 1 --verify 4 --out ../results/matched32.csv
+target/release/seed-search --source mixer    --bits 32 --count 64 --samples p20 --seed 1 --verify 4 --out ../results/mixer32.csv
+```
+
+- `spectral`: ordered pairs from Steele–Vigna Tables 4–7; provenance and the
+  exact source version are in `data/README.md`. The default uses full-width
+  constants (two per word width), with three choices for each shift around
+  half-width, hence 108 distinct default candidates.
+- `random`: uniform odd multipliers across the full word domain.
+- `matched`: random odd multipliers with lengths drawn from the spectral pool,
+  to distinguish spectral selection from the effect of multiplier length.
+- `mixer`: recombinations of constants from the existing two-round Xmx reference
+  mixers, with the same shift grid. This is a seed-pool control, not a replay of
+  the original reference functions or the local-search algorithm.
+
+`--min-mult-bits 1` includes shorter table constants at their original word
+width; it filters the spectral/mixer pools and the matched lengths, but does
+not restrict `random`. `--shifts 15,16,17` sets the common grid (up to nine
+distinct shifts). Generation is deterministic, without duplicate configurations;
+requests larger than a finite pool fail. No constants are truncated to fit.
+
+Use `--generate-only` to export without evaluating. The first column is a mixer
+specification, so generated or screened CSVs feed the existing 32-bit search:
+
+```
+target/release/mixlab race --bits 32 --start "[16 21f0aaad 15 735a2d97 15]" --candidates ../results/spectral32.csv --seed 2
+```
+
+Screening retains **signed** debiased mean-square scores, approximate standard
+errors, seeds and cumulative elapsed seconds. `--verify K` selects the K lowest
+screening scores and writes `OUT.csv.verified.csv`: exact enumeration at 32 bits,
+fresh samples at 64 bits (`--verify-samples p26` by default). Zero is the default
+verification count. Output files are not overwritten. Use different output paths
+for different runs. At 64 bits a sampled winner is not an exact record or a
+statistically established improvement; screening can miss good candidates.
+
+The commands above equalize candidate counts, sample counts and finalist counts,
+not elapsed time. Compare recorded runtime too, and repeat over multiple seeds
+before interpreting transfer from spectral quality to mixer quality. Finalists
+can then seed ordinary local searches. No carry-state surrogate or alternative
+linear-layer architecture is implemented by this command.
+
 ```
 mixlab refs   [--exact32] [--samples p26] [--extra]       # table of literature mixers
 mixlab eval   --name lowbias32 --exact [--extra]

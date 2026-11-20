@@ -2,6 +2,7 @@
 name = "mixlab"
 version = "0.1.0"
 edition = "2021"
+default-run = "mixlab"
 description = "Evaluation and search harness for multiply-xorshift integer mixers"
 
 [dependencies]

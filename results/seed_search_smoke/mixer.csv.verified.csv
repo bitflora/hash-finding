@@ -1,0 +1,2 @@
+spec,source,bits,seed,stage,n,sample_seed,ms,se_ms,seconds
+[31 94d049bb133111eb 31 94d049bb133111eb 33],mixer,64,1,fresh-sampled,65536,376466019862225498,-2.07311111901893658e-7,3.92546152133730854e-7,0.103264

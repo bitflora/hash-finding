@@ -1,0 +1,2 @@
+spec,source,bits,seed,stage,n,sample_seed,ms,se_ms,seconds
+[31 f1357aea2e62a9c5 31 f1357aea2e62a9c5 33],spectral,64,1,fresh-sampled,65536,4466298466791151570,-6.29177571543568918e-8,3.07643210025036935e-7,0.100229
