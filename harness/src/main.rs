@@ -25,7 +25,7 @@ USAGE:
   mixlab surrogate --bits 16 --random N [--top 0.1] [--baseline p12] [--seed S] [--out F.csv]
   mixlab scale  (--list FILE.csv | --bits 24 --random N) [--widths 12,16,20,24] [--maps offset:low,prop:high] [--truth]
                 [--baseline] [--seed S] --out F.csv   # exact small-width projections vs 32-bit exact
-  mixlab race   --bits B --start SPEC [--iters N] [--neighbors K] [--n0 p14] [--cap p28] [--z 3] [--patience P] [--max-s2 S] [--fix-low-bits K]
+  mixlab race   --bits B --start SPEC [--iters N] [--neighbors K] [--n0 p14] [--cap p28] [--z 3] [--patience P] [--max-s2 S] [--fix-low-bits K] [--max-bic-corr C]
                 [--verify-samples p31] [--candidates FILE] [--patience P] [--seed S] --out F.csv  # sequential racing search
   mixlab trace  --bits B (--start SPEC --path L | --list FILE.csv --bases N) [--neighbours K] [--reps R]
                 [--n0 p14] [--cap p28] [--zmax 6] [--max-s2 S] [--seed S] [--resume B:R] --out F.csv  # racing trajectories vs exact truth
@@ -676,6 +676,7 @@ fn race_cmd(a: &Args) {
         seed: a.num("seed", 1),
         max_last_shift: a.get("max-s2").map(|v| v.parse().unwrap_or_else(|_| die("bad --max-s2"))),
         fix_low_bits: a.get("fix-low-bits").map(|v| v.parse().unwrap_or_else(|_| die("bad --fix-low-bits"))),
+        max_bic_corr: a.get("max-bic-corr").map(|v| v.parse().unwrap_or_else(|_| die("bad --max-bic-corr"))),
     };
     let t = Instant::now();
     if let Some(path) = a.get("candidates") {

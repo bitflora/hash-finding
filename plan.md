@@ -458,3 +458,18 @@ with `mixlab eval --exact`.
   random mixers (F16).
 - Seed search: the spectral pool is no better than length-matched random
   multipliers; recombined published constants are best (F17).
+
+### 2026-11-20 (afternoon): BIC as a second objective; races from other cores
+- Exact check: the record's (2,17) pair flips together with P = 0.33337
+  (corr +0.33337), close to but not exactly 1/3. Within the aaad core the
+  worst pair is set by s2 alone: 0.034 / 0.102 / 0.127 / 0.334 at s2 =
+  12 / 13 / 14 / 15 (F15).
+- New `race --max-bic-corr C` (2^16 BIC filter on neighbours).
+  C = 0.05 gives `[16 d610aaad 15 4d90b597 12]` 0.20300, rms z 1.19;
+  C = 0.15 with s2 ≤ 14 gives `[16 6870aaad 15 f452f593 14]` 0.13168,
+  worst pair 0.08 (F18).
+- Core races (best F16 draw per core, s2 moved to 15): d303 0.11992,
+  lowbias32 0.12561, 450c 0.12797, 19085565 0.13568. These are new family
+  bests for d303, lowbias32 and 19085565 (F19).
+- Script: `analysis/queue_bic_cores.sh`; logs `results/bic_frontier/`,
+  `results/core_races/`, `results/queue_bic_cores.log`.

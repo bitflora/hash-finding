@@ -1,0 +1,13 @@
+[2026-11-20 10:12:37] start bic005_s12 from [16 7870aaad 15 be523597 12] --max-bic-corr 0.05
+[2026-11-20 11:24:37] done bic005_s12: best [16 d610aaad 15 4d90b597 12]  score 0.2029958292
+[2026-11-20 11:24:37] start bic015_s14 from [16 7870aaad 15 be523597 14] --max-bic-corr 0.15 --max-s2 15
+[2026-11-20 12:02:16] done bic015_s14: best [16 6870aaad 15 f452f593 14]  score 0.1316798440
+[2026-11-20 12:02:16] start core_1908 from [17 83065565 16 a5ae6b47 15] --max-s2 16
+[2026-11-20 12:33:47] done core_1908: best [17 8206552d 16 e5ae2947 15]  score 0.1356846614
+[2026-11-20 12:33:47] start core_d303 from [16 c88b32d3 15 9293c965 15] --max-s2 16
+[2026-11-20 13:20:03] done core_d303: best [16 702f32d3 15 e6134975 15]  score 0.1199159946
+[2026-11-20 13:20:03] start core_450c from [16 3d6c2d35 15 00a649a9 15] --max-s2 16
+[2026-11-20 14:34:50] done core_450c: best [16 d50c2d35 15 f2a649a9 15]  score 0.1279669287
+[2026-11-20 14:34:51] start core_lowbias32 from [16 c4a3352d 15 7daba68b 15] --max-s2 16
+[2026-11-20 16:24:33] done core_lowbias32: best [16 7803352d 15 49eb26cb 15]  score 0.1256100782
+[2026-11-20 16:24:33] queue done

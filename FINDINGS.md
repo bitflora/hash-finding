@@ -450,6 +450,27 @@ Data: `results/bic20/bic20_seeds1-5.txt`.
 - **rms z ranks the s2 = 15 aaad-core mixers slightly differently from bias:**
   88f0aaad (7.61) and 7870aaad (7.63) are below the record (7.80).
 
+**Exact check** (`analysis/exact_pair_corr.py`, all 2^32 inputs, the record,
+input 17): P(out 2 flips) = 0.50010, P(out 17 flips) = 0.49995,
+P(both) = 0.333372, corr = **+0.3333741**. So the pair flips together with
+probability ≈ 1/3 instead of 1/4, which gives corr ≈ 1/3, but neither value
+is exactly 1/3.
+
+**Within the aaad core, the worst pair depends on s2 alone** (`results/bic_frontier/s2_grid.txt`,
+2^18 samples). For the record, 7870aaad and 88f0aaad multipliers, the worst
+entry is identical across all three at each s2:
+
+| s2 | worst pair | corr | exact bias (record / 7870 / 88f0) |
+|---|---|---|---|
+| 12 | (8, 20) | 0.034 | 0.728 / **0.246** / 0.491 |
+| 13 | (6, 19) | 0.102 | 0.282 / 0.259 / 0.312 |
+| 14 | (4, 18) | 0.127 | 1.179 / 0.281 / 0.291 |
+| 15 | (2, 17) | 0.334 | 0.107 / 0.115 / 0.118 |
+
+`[16 7870aaad 15 be523597 12]` scores 0.2456 with a worst pair of only 0.034.
+That is lower bias than fmix32 (0.264, which has an exact −1 pair), and
+better BIC than any s2 = 15 mixer, without any search for this trade-off.
+
 **Consequence.** This resolves threat #6: the identical worst entries are
 not a seed artifact. The (2, 17) defect at ≈ 1/3 is a property of the
 `aaad`-core lineage. Every s2 = 15 two-round mixer tested has a (2, 17)
@@ -531,6 +552,78 @@ published constants, not from spectral tables. Caveat: the 32-bit spectral
 pool is tiny (11 constants), so this is a weak test of the idea; 64 bits
 has a larger pool and is untested.
 
+### F18. BIC-constrained search: bias and worst-pair correlation trade off steeply (exact bias; one run each)
+**Method.** New `race --max-bic-corr C`: any neighbour whose worst BIC
+|corr| at 2^16 inputs exceeds C is skipped before racing. Both runs start
+from 7870aaad with a lower final shift (F15 table), with seed 61, 96
+neighbours, patience 6 and at most 25 iterations. Logs:
+`results/bic_frontier/`; BIC of winners at 2^20, 3 seeds:
+`winners_bic20.txt`.
+
+| constraint | start | result (exact) | worst pair corr | rms z | iterations / time |
+|---|---|---|---|---|---|
+| C = 0.05 (s2 free) | `[16 7870aaad 15 be523597 12]` 0.24559 | **`[16 d610aaad 15 4d90b597 12]` 0.20300** | 0.020–0.024 | **1.19** | 25 / 72 min, last gain at 18 |
+| C = 0.15, s2 ≤ 14 | `[16 7870aaad 15 be523597 14]` 0.28086 | **`[16 6870aaad 15 f452f593 14]` 0.13168** | 0.082 | 3.38 | 16 / 38 min (patience) |
+| *reference: record (s2 = 15)* | | 0.10704 | 0.334 | 7.80 | |
+| *reference: lowbias32 (s2 = 16)* | | 0.17353 | 1 (exact) | 30.3 | |
+
+**Results.**
+- At s2 = 14, bias 0.1317 is reachable with a worst pair of 0.08, a quarter
+  of the record's 0.33. That bias is lower than lowbias32 and every
+  hash-prospector README entry, and its rms z (3.4) is less than half the
+  record's (7.8).
+- At s2 = 12, the winner is nearly BIC-clean: rms z 1.19, against ≈ 1 for an
+  ideal mixer, with every pair below 0.025. It pays for this with bias 0.203.
+- The race lowered the worst pair below the s2-only value of F15: at s2 = 14
+  it went from 0.127 to 0.082. So multipliers, not only shifts, set the
+  defect size once the core changes. (m1's low bits went from `3597` to
+  `f593`.)
+- The filter cost is small: 330–930 skipped neighbours over a run, at
+  ~0.2 s each.
+
+**Reading.** For 2-round 32-bit mixers, bias alone selects s2 = 15 and a
+≈ 1/3 worst pair. The constrained points are a better default wherever
+output-bit independence matters (hash-table probing with several output
+bits, PRNG use). None of this has been checked with PractRand. Each
+constraint level is a single run, so the frontier is only sketched.
+
+### F19. Races from other good cores reach 0.120–0.136 (exact bias; one run each)
+The d303, lowbias32 and s2 = 14 headline values were re-checked with an
+independent `mixlab eval --exact`.
+**Method.** The best random-high-half draw per core from F16 is the start,
+with s2 = 16 sources moved to s2 = 15 (F11). Settings match F14's core
+race: seed 61, 96 neighbours, patience 6, `--max-s2 16`, at most 25
+iterations. Logs: `results/core_races/`.
+
+| core | start (exact) | result (exact) | previous best in that family | BIC worst corr |
+|---|---|---|---|---|
+| d303 | 0.19106 | **`[16 702f32d3 15 e6134975 15]` 0.11992** | 0.12015 (F14 negation escape) | 0.50 |
+| lowbias32 | 0.20520 (s2 → 15) | **`[16 7803352d 15 49eb26cb 15]` 0.12561** | 0.13873 (F9, s2 = 16) | 0.41 |
+| 450c | 0.20814 (s2 → 15) | `[16 d50c2d35 15 f2a649a9 15]` 0.12797 | 0.12122 (F9, s2 = 16) | 0.82 |
+| 19085565 | 0.31292 (s2 → 15) | `[17 8206552d 16 e5ae2947 15]` 0.13568 | 0.14014 (F9, s2 = 16) | 0.33 |
+| *record core (F14)* | 0.17340 | 0.11813 (with sweep) | 0.10704 | 0.33 |
+
+**Results.**
+- **Starting from random high halves on a good core beats racing from the
+  published constants themselves** in 3 of 4 families: d303 (0.11992, a new
+  family best), lowbias32 (0.12561 against 0.13873) and 19085565 (0.13568
+  against 0.14014). The exception is 450c: at s2 = 15 it reaches 0.12797,
+  worse than its s2 = 16 family (0.12122), but without that family's exact
+  output pair. The races took 32–110 min; lowbias32 used all 25 iterations, with its last
+  gain at iteration 22, so it may not have converged.
+- The lowbias32 race result 0.12561 is the second-best non-`aaad` mixer we
+  know of, behind only d303's 0.11992, and both beat 450c's published
+  0.12243.
+- Races keep the core's characteristic defect: the d303 winner has the same
+  0.50 (2, 17) pair as d303, and 19085565 keeps 0.33. The lowbias32 winner
+  has 0.41, and the 450c core at s2 = 15 a large 0.82. Bias races do not clean BIC.
+- No race beat 7870aaad (0.11527) or the record.
+
+**Reading.** F16's claim holds up in search: a good core plus a short
+race is a better starting point than the published constants, which sit
+in stalled local optima. The best non-record result is still in the
+`aaad` lineage (7870aaad), but d303 is now within 4%.
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the
@@ -600,6 +693,11 @@ The ideas below are experimental options, not established improvements.
      metrics.
 6. ~~Spectral-test features~~: done as F17 (spectral seeds do not help at
    32 bits). NAF-weight features remain untested.
+
+**Status 2026-11-20 (evening):** BIC-constrained search (F18) and the
+other-core races (F19) are done. Open next: repeat F18/F19 over more seeds,
+map the bias/BIC frontier at more constraint levels, and run a top-bit/negation
+sweep (F14) from the new winners.
 
 **Status 2026-11-20:** prior-art search (F9), refs rerun (F2), BIC at 2^20
 (F15), core controls (F16) and the seed-search run (F17) are done. Items

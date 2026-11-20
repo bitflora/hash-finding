@@ -175,6 +175,15 @@ pub struct RaceCfg {
     /// race_search only: keep the low K bits of every multiplier fixed
     /// (FINDINGS F10 "low-bit core" test). Shift moves are still allowed.
     pub fix_low_bits: Option<u32>,
+    /// race_search only: skip neighbours whose sampled BIC worst |corr|
+    /// (2^16 inputs) exceeds this (FINDINGS F15). The start is not filtered.
+    pub max_bic_corr: Option<f64>,
+}
+
+/// Worst |corr| over all (input bit, output pair) at 2^16 sampled inputs.
+pub fn bic_worst_corr(x: &Xmx, seed: u64) -> f64 {
+    let b = crate::with_mixer!(x, f => crate::extra::bic_sampled(&f, x.bits, 1 << 16, seed));
+    b.worst.3.abs()
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -345,6 +354,10 @@ pub fn race_search(
     let mut total_inputs = 0u64;
     let mut total_exact = 0usize;
     let mut stale = 0usize;
+    let mut bic_skipped = 0usize;
+    if cfg.max_bic_corr.is_some() {
+        log(&format!("0,start_bic,{cur},{:.4},worst |corr| at 2^16", bic_worst_corr(&cur, cfg.seed ^ 0xb1c)));
+    }
     for it in 1..=iters {
         if stale >= patience {
             log(&format!("{it},patience,{cur},{:.10},no improvement in {patience} iterations", ms_to_score(cur_ms)));
@@ -361,6 +374,15 @@ pub fn race_search(
             if let Some(k) = cfg.fix_low_bits {
                 let lo = (1u64 << k) - 1;
                 if y.mults.iter().zip(&cur.mults).any(|(a, b)| (a ^ b) & lo != 0) {
+                    continue;
+                }
+            }
+            if seen.contains(&y.to_string()) {
+                continue;
+            }
+            if let Some(c) = cfg.max_bic_corr {
+                if bic_worst_corr(&y, cfg.seed ^ 0xb1c) > c {
+                    bic_skipped += 1;
                     continue;
                 }
             }
@@ -383,7 +405,7 @@ pub fn race_search(
         ns.sort();
         let med = ns.get(ns.len() / 2).map(|&n| (n as f64).log2()).unwrap_or(f64::NAN);
         let detail = format!(
-            "k={k} worse={} rejected={} unraced={} median_n_drop=2^{med:.1} inputs=2^{:.1} exact={} cum_inputs=2^{:.1} cum_exact={}",
+            "k={k} worse={} rejected={} unraced={} median_n_drop=2^{med:.1} inputs=2^{:.1} exact={} cum_inputs=2^{:.1} cum_exact={} bic_skipped={bic_skipped}",
             cnt(Verdict::Worse),
             cnt(Verdict::Rejected),
             cnt(Verdict::Unraced),
@@ -427,7 +449,7 @@ mod tests {
     #[test]
     fn multiple_looks_raise_threshold_and_cap_is_respected() {
         let x = Xmx::parse(8, "[4 ad 3 97 4]").unwrap();
-        let cfg = RaceCfg { bits: 8, n0: 16, cap: 37, z: 100.0, verify_samples: None, seed: 2, max_last_shift: None, fix_low_bits: None };
+        let cfg = RaceCfg { bits: 8, n0: 16, cap: 37, z: 100.0, verify_samples: None, seed: 2, max_last_shift: None, fix_low_bits: None, max_bic_corr: None };
         assert!(race_threshold(&cfg, 96) > race_threshold(&cfg, 1));
         let ms = crate::fast32::exact_xmx(&x, false).ms();
         let result = race(&cfg, ms, 0.0, vec![x], 1);
@@ -439,7 +461,7 @@ mod tests {
     #[test]
     fn early_acceptance_does_not_blacklist_unfinished_candidates() {
         let x = Xmx::parse(8, "[4 ad 3 97 4]").unwrap();
-        let cfg = RaceCfg { bits: 8, n0: 32, cap: 32, z: 100.0, verify_samples: None, seed: 1, max_last_shift: None, fix_low_bits: None };
+        let cfg = RaceCfg { bits: 8, n0: 32, cap: 32, z: 100.0, verify_samples: None, seed: 1, max_last_shift: None, fix_low_bits: None, max_bic_corr: None };
         // All candidates beat the deliberately poor incumbent; only one is verified.
         let y = Xmx::parse(8, "[4 b5 3 2d 4]").unwrap();
         let result = race(&cfg, 1.0, 0.0, vec![x.clone(), y.clone()], 1);
