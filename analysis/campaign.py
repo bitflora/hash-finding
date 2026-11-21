@@ -51,7 +51,10 @@ FAMILIES = {  # current best (s0, m0, s1, m1) per family
     "d303w": (16, "702f32d3", 15, "e6134975"),
     "lb32w": (16, "7803352d", 15, "49eb26cb"),
 }
-LEVELS = [(0.05, 12), (0.11, 13), (0.15, 14), (0.25, 15)]  # (C, starting s2)
+# (C, starting s2). Every start must already satisfy C: a race keeps an over-cap
+# start as its incumbent, and when the cap filters out its neighbours it never
+# moves (s2=15 starts have worst |corr| 0.34-0.50, so the 0.25 level starts at 14).
+LEVELS = [(0.05, 12), (0.11, 13), (0.15, 14), (0.25, 14)]
 DONE_CORES = {  # cores already raced (F14, F16, F19)
     (0xaaad, 0x2d97), (0xaaad, 0x3597), (0x32d3, 0xc965), (0x2d35, 0x49a9),
     (0x352d, 0xa68b), (0x5565, 0x6b47), (0xca6b, 0xae35),
@@ -263,6 +266,10 @@ def bic(spec):
     return float(m.group(1)), abs(float(m.group(3)))
 
 
+def cap(job_id):
+    return int(re.match(r"F_c(\d+)_", job_id).group(1)) / 100
+
+
 def summary():
     recs = [done_rec(j) for j in load_jobs()]
     recs = [r for r in recs if r]
@@ -277,7 +284,8 @@ def summary():
         for r in rs:
             print(f"{r['id']:<28} {r['start_bias']:8.4f} {r['best']:<30} {r['bias']:9.5f} "
                   f"{r['bic_worst_corr']:6.3f} {r['bic_rms_z']:5.2f} {r['seconds']/60:4.0f}"
-                  + ("  (resumed)" if r["parts"] else ""))
+                  + ("  (resumed)" if r["parts"] else "")
+                  + ("  OVER CAP" if c == "frontier" and r["bic_worst_corr"] > cap(r["id"]) else ""))
 
 
 if __name__ == "__main__":

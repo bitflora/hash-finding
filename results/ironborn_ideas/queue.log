@@ -1,0 +1,17 @@
+[2026-11-21 11:49:22] crossover screen
+[2026-11-21 11:49:23] radius-2 chunk 0
+[2026-11-21 11:52:44] chunk 0: accepted: none  inputs=2^33.71  exact evals=9  [200s]
+[2026-11-21 11:52:44] radius-2 chunk 1
+[2026-11-21 11:55:38] chunk 1: accepted: none  inputs=2^33.55  exact evals=7  [174s]
+[2026-11-21 11:55:38] radius-2 chunk 2
+[2026-11-21 11:59:54] chunk 2: accepted: none  inputs=2^33.66  exact evals=10  [256s]
+[2026-11-21 11:59:54] radius-2 chunk 3
+[2026-11-21 12:04:32] chunk 3: accepted: none  inputs=2^33.82  exact evals=13  [278s]
+[2026-11-21 12:04:32] radius-2 chunk 4
+[2026-11-21 12:08:13] chunk 4: accepted: none  inputs=2^33.60  exact evals=9  [221s]
+[2026-11-21 12:08:13] radius-2 chunk 5
+[2026-11-21 12:11:19] chunk 5: accepted: none  inputs=2^33.58  exact evals=8  [186s]
+[2026-11-21 12:11:19] queue done
+[2026-11-21 12:29:54] crossover screen done
+[2026-11-21 12:33:53] race cross 130332d3x919a4597
+[2026-11-21 12:49:23] race done

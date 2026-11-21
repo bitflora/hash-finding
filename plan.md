@@ -473,3 +473,25 @@ with `mixlab eval --exact`.
   bests for d303, lowbias32 and 19085565 (F19).
 - Script: `analysis/queue_bic_cores.sh`; logs `results/bic_frontier/`,
   `results/core_races/`, `results/queue_bic_cores.log`.
+
+### 2026-11-21: TheIronBorn's method (F20)
+- Read TheIronBorn's account in issue #19: a memetic algorithm, pattern
+  mining, and an exhaustive exact search within 4 steps (details in
+  `sources.md`).
+- Radius-2 check: all 2,343 neighbours of the record were raced in 22 min,
+  and none is better. New second-best mixer: `[16 21f0aaad 15 535a2d97 15]`
+  at 0.10731.
+- Crossover: 791 children of 31 parents, screened at 2^26; the top 15 were
+  scored exactly. One genuine cross, `130332d3 × 919a4597`, scored 0.11558
+  and raced to **`[16 d40332d3 15 919a4597 15]` 0.10882**. That is the best
+  non-aaad mixer, though its BIC worst correlation is 0.60.
+- Also fixed the campaign's 0.25 level: it now starts at s2 = 14, and the
+  old no-op results are in `results/campaign/void_c25_s2start15/`.
+- **Crossover generation 1 (F21):** 687 genuine children (new core pairs)
+  from 40 parents; 20 scored exactly; the 3 best distinct ones raced. The
+  lowbias32-core × record-lineage cross raced to **`[16 9c013335 15
+  335a2d97 15]` = 0.10207 exact**, 4.6% below the 2022 record.
+  - Confirmed by the generic scalar counter (`examples/exact_generic.rs`),
+    which also reproduces the old record to 17 digits.
+  - Radius-2 optimum: 2,343 neighbours, none better.
+  - BIC worst correlation 0.40.

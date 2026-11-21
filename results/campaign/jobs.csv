@@ -23,13 +23,13 @@ F_c15_d303w_s1,frontier,race,[16 702f32d3 15 e6134975 14],1,--max-bic-corr 0.15 
 M_16_15_d4eb_b169,multi,core,16 d4eb 15 b169 15,61,--max-s2 16
 F_c15_lb32w_s1,frontier,race,[16 7803352d 15 49eb26cb 14],1,--max-bic-corr 0.15 --max-s2 16
 M_15_14_5959_9359,multi,core,15 5959 14 9359 15,61,--max-s2 16
-F_c25_7870_s1,frontier,race,[16 7870aaad 15 be523597 15],1,--max-bic-corr 0.25 --max-s2 16
+F_c25_7870_s1,frontier,race,[16 7870aaad 15 be523597 14],1,--max-bic-corr 0.25 --max-s2 16
 M_rand1_84e7_62f7,multi,core,16 84e7 15 62f7 15,61,--max-s2 16
-F_c25_record_s1,frontier,race,[16 21f0aaad 15 735a2d97 15],1,--max-bic-corr 0.25 --max-s2 16
+F_c25_record_s1,frontier,race,[16 21f0aaad 15 735a2d97 14],1,--max-bic-corr 0.25 --max-s2 16
 M_16_14_7333_6573,multi,core,16 7333 14 6573 15,61,--max-s2 16
-F_c25_d303w_s1,frontier,race,[16 702f32d3 15 e6134975 15],1,--max-bic-corr 0.25 --max-s2 16
+F_c25_d303w_s1,frontier,race,[16 702f32d3 15 e6134975 14],1,--max-bic-corr 0.25 --max-s2 16
 M_16_14_6ca7_24b5,multi,core,16 6ca7 14 24b5 15,61,--max-s2 16
-F_c25_lb32w_s1,frontier,race,[16 7803352d 15 49eb26cb 15],1,--max-bic-corr 0.25 --max-s2 16
+F_c25_lb32w_s1,frontier,race,[16 7803352d 15 49eb26cb 14],1,--max-bic-corr 0.25 --max-s2 16
 M_17_15_cd35_ba73,multi,core,17 cd35 15 ba73 15,61,--max-s2 16
 F_c05_7870_s2,frontier,race,[16 7870aaad 15 be523597 12],2,--max-bic-corr 0.05 --max-s2 16
 M_16_15_552b_4a4d,multi,core,16 552b 15 4a4d 15,61,--max-s2 16
@@ -55,13 +55,13 @@ F_c15_d303w_s2,frontier,race,[16 702f32d3 15 e6134975 14],2,--max-bic-corr 0.15 
 M_16_15_aacb_d19b,multi,core,16 aacb 15 d19b 15,61,--max-s2 16
 F_c15_lb32w_s2,frontier,race,[16 7803352d 15 49eb26cb 14],2,--max-bic-corr 0.15 --max-s2 16
 M_17_15_12ad_5a73,multi,core,17 12ad 15 5a73 15,61,--max-s2 16
-F_c25_7870_s2,frontier,race,[16 7870aaad 15 be523597 15],2,--max-bic-corr 0.25 --max-s2 16
+F_c25_7870_s2,frontier,race,[16 7870aaad 15 be523597 14],2,--max-bic-corr 0.25 --max-s2 16
 M_rand3_3683_b61f,multi,core,16 3683 15 b61f 15,61,--max-s2 16
-F_c25_record_s2,frontier,race,[16 21f0aaad 15 735a2d97 15],2,--max-bic-corr 0.25 --max-s2 16
+F_c25_record_s2,frontier,race,[16 21f0aaad 15 735a2d97 14],2,--max-bic-corr 0.25 --max-s2 16
 M_16_15_96b5_cd47,multi,core,16 96b5 15 cd47 15,61,--max-s2 16
-F_c25_d303w_s2,frontier,race,[16 702f32d3 15 e6134975 15],2,--max-bic-corr 0.25 --max-s2 16
+F_c25_d303w_s2,frontier,race,[16 702f32d3 15 e6134975 14],2,--max-bic-corr 0.25 --max-s2 16
 M_15_15_acd5_d397,multi,core,15 acd5 15 d397 15,61,--max-s2 16
-F_c25_lb32w_s2,frontier,race,[16 7803352d 15 49eb26cb 15],2,--max-bic-corr 0.25 --max-s2 16
+F_c25_lb32w_s2,frontier,race,[16 7803352d 15 49eb26cb 14],2,--max-bic-corr 0.25 --max-s2 16
 M_15_15_c559_358d,multi,core,15 c559 15 358d 15,61,--max-s2 16
 M_16_15_ab35_b28b,multi,core,16 ab35 15 b28b 15,61,--max-s2 16
 M_15_15_ccb5_dca9,multi,core,15 ccb5 15 dca9 15,61,--max-s2 16

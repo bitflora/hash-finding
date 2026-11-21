@@ -1,0 +1,31 @@
+40 parents, 24 core pairs, 687 genuine children
+screen 0/304
+screen 100/304
+screen 200/304
+screen 300/304
+exact [16 21f0aaad 15 8ca5d269 15] 0.11753  (pub:hash-prospector#19 x F14 both-negated race)
+exact [16 702f32d3 15 8d66b9a9 15] 0.12557  (F19 d303 core race x M_16_15_b4d3_b9a9)
+exact [16 d70332d3 15 db5a2d97 15] 0.12188  (F14 d303 negation race x pub:hash-prospector#19)
+exact [16 b1f8cd35 15 535a2d97 15] 0.12823  (M_16_15_2d35_46b5 x F20 radius-2)
+exact [16 b1f8cd35 15 d35a2d97 15] 0.12821  (M_16_15_2d35_46b5 x pub:hash-prospector#19)
+exact [16 b1f8cd35 15 db5a2d97 15] 0.12857  (M_16_15_2d35_46b5 x pub:hash-prospector#19)
+exact [16 b1f8cd35 15 f35a2d97 15] 0.12693  (M_16_15_2d35_46b5 x pub:hash-prospector#19)
+exact [16 b1f8cd35 15 c35a2d97 15] 0.12765  (M_16_15_2d35_46b5 x pub:hash-prospector#19)
+exact [16 b1f8cd35 15 735a2d97 15] 0.12838  (M_16_15_2d35_46b5 x pub:hash-prospector#19)
+exact [16 d70332d3 15 c35a2d97 15] 0.12435  (F14 d303 negation race x pub:hash-prospector#19)
+exact [16 21f0aaad 15 f2a649a9 15] 0.13122  (pub:hash-prospector#19 x F19 450c core race)
+exact [16 b1f8cd35 15 8ca5d269 15] 0.13122  (M_16_15_2d35_46b5 x F14 both-negated race)
+exact [16 d70332d3 15 535a2d97 15] 0.12346  (F14 d303 negation race x F20 radius-2)
+exact [16 7803352d 15 8ca5d269 15] 0.12606  (F19 lowbias32 core race x F14 both-negated race)
+exact [16 d70332d3 15 d35a2d97 15] 0.12327  (F14 d303 negation race x pub:hash-prospector#19)
+exact [16 21e0aaab 15 8ca5d269 15] 0.12935  (pub:hash-prospector#19 x F14 both-negated race)
+exact [16 b1f8cd35 15 935a2d97 15] 0.12911  (M_16_15_2d35_46b5 x pub:hash-prospector#19)
+exact [16 d70332d3 15 735a2d97 15] 0.12410  (F14 d303 negation race x pub:hash-prospector#19)
+exact [16 9bfad52d 15 be523597 15] 0.12690  (M_rand1_84e7_62f7 x F9 7870aaad)
+exact [16 7803352d 15 535a2d97 15] 0.12157  (F19 lowbias32 core race x F20 radius-2)
+race [16 21f0aaad 15 8ca5d269 15] (exact 0.11753)
+best [16 61f0aaad 15 8ca5d269 15]  score 0.1095860967
+race [16 7803352d 15 535a2d97 15] (exact 0.12157)
+best [16 9c013335 15 335a2d97 15]  score 0.1020679976
+race [16 d70332d3 15 db5a2d97 15] (exact 0.12188)
+best [16 d00332d3 15 db5a2d97 15]  score 0.1144981769

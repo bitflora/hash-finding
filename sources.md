@@ -11,6 +11,21 @@
   `[16 21f0aaad 15 d35a2d97 15]` bias ≈ 0.1076, later ≈ 0.10704. Method:
   metaheuristic on sampled estimate (2²⁵ inputs) constrained near good
   functions, then exhaustive exact search in the neighbourhood.
+  Details from the thread (2022), as recalled by the author; they don't
+  remember the exact metaheuristic used for the 32-bit search.
+  - Search region: shifts in [13, 19] and multiplier popcount in [11, 19].
+  - Final step: an exhaustive exact search within 4 steps of the best found
+    ("some multipliers may not have been seen").
+  - For the 16-bit records: a memetic algorithm with dynamic population
+    management (doi 10.1016/j.ejor.2007.07.034), about 500 crossovers.
+    - Moves: shift ±1 or a single multiplier-bit flip (never bit 0),
+      shuffled.
+    - First-improvement local search, stopped after 11 steps.
+    - Pattern mining (doi 10.1016/j.patcog.2021.107957) over the elite
+      solutions; cached evaluations.
+  - The record came in single-bit steps on m1's top nibble:
+    d35a2d97 (0.10760) → f35a2d97 (0.10735) → 735a2d97 (0.10704).
+  Our follow-up is FINDINGS F20.
   Later comments (Jan 2026, scottchiefbaker / tommyettinger) list
   `[16 21f0aaad 15 f35a2d97 15]` = 0.10734781817103507 as a "current best",
   and a **CRC32C-based** 2-step function

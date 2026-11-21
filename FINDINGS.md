@@ -622,7 +622,164 @@ iterations. Logs: `results/core_races/`.
 **Reading.** F16's claim holds up in search: a good core plus a short
 race is a better starting point than the published constants, which sit
 in stalled local optima. The best non-record result is still in the
-`aaad` lineage (7870aaad), but d303 is now within 4%.
+`aaad` lineage (7870aaad), but d303 is now within 4%. *(Superseded by F20:
+a crossover child reaches 0.10882.)*
+
+### F20. TheIronBorn's method, applied: the record is a radius-2 optimum, and crossover finds 0.10882 (exact; one run each)
+TheIronBorn's own account of the method is summarised in `sources.md`.
+Two pieces of it were missing from our search: an *exhaustive* small-radius
+check and recombination of good solutions. Script:
+`analysis/queue_ironborn_ideas.sh`; generators `gen_radius2_cands.py` and
+`gen_crossover.py`; screen `screen_list.py`; outputs `results/ironborn_ideas/`.
+
+**Radius-2 check of the record.**
+- Candidates: every neighbour within two moves of TheIronBorn's move set,
+  2,343 in total. A move flips one multiplier bit 1–31, or shifts s0/s1/s2
+  by ±1 (s2 ≤ 16).
+- These were raced against the record in 6 chunks of about 390 (`race
+  --candidates`, z = 3 with the multiple-look adjustment) and took 22 min.
+- 2,287 were dropped by sampling and 56 were checked exactly. **None beats
+  the record.**
+- So the record is an exhaustive radius-2 local optimum under this move
+  set. That holds up to the racing false-drop rate, which F13 measured as
+  zero in 48 races.
+- The closest exact neighbours are all m1 top-nibble variants:
+
+  | m1 | bias |
+  |---|---|
+  | `535a2d97` | 0.10731 |
+  | `f35a2d97` | 0.10735 |
+  | `d35a2d97` | 0.10760 |
+  | `935a2d97` | 0.10840 |
+
+- **`[16 21f0aaad 15 535a2d97 15]` = 0.10730718959493174** is a new
+  second-best mixer. It is two bit flips from the record and not in issue #19.
+
+**Crossover.**
+- Parents: 31 mixers with shifts 16/15/15. These are 11 campaign winners
+  plus the 20 best published mixers, many of them #19 variants of the
+  record.
+- Children: m0 from one parent and m1 from another, giving 791 children,
+  449 of them unique. Each was screened at 2^26 samples.
+- The 15 best unique children were then scored exactly. The 2^26 screen was
+  optimistic for its top picks by up to 0.01 bias (winner's curse).
+- Most top children are trivial: the record's m0 with another #19 m1, which
+  is just a radius-1 or radius-2 neighbour of the record.
+- One child is a **genuine cross that beats both parents**: `[16 130332d3 15
+  919a4597 15]` = 0.11558 exact.
+  - Its m0 comes from the published d303 variant `[16 130332d3 15 c865c965
+    15]` (0.12941).
+  - Its m1 comes from the campaign winner `M_16_15_694b_4593` (0.12456).
+- That child was raced with the usual settings (96 neighbours, patience 6,
+  seed 71, `--max-s2 16`; 16 min). It improved 7 times, all small moves on
+  m0's top byte plus one m1 bit, and reached:
+
+  **`[16 d40332d3 15 919a4597 15]` = 0.1088178567 (exact).**
+
+- This is the **best mixer outside the record's immediate neighbourhood.**
+  - It is 1.7% above the record.
+  - It beats the negated-record line (0.11123, F14), 7870aaad (0.11527) and
+    d303's 0.11992 (F19).
+  - Its low-16-bit core (32d3 / 4597) is not the record's aaad / 2d97.
+- Its BIC is poor: the worst pair is input 0 → outputs (2, 17) at corr
+  +0.60, rms z 11.1 at 2^20. This is consistent with F15/F19: s2 = 15
+  winners carry a large single-pair defect.
+
+**Reading.**
+- The exhaustive radius-2 result strengthens the case that the record is
+  hard to improve by local moves. Threat #3 now applies only to radius ≥ 3
+  and to the other "local optimum" claims.
+- Crossover is the first operator in this project to produce a strong
+  mixer from a core *not* in the aaad lineage. A cross of two
+  mid-0.12 parents, plus a 16-min race, landed at 0.1088. That suggests
+  the population of family winners holds recombinable building blocks, and
+  that a few generations of cross-then-race could reach the record's level.
+- n = 1: one cross was raced, with one seed. The crossover gain could be
+  specific to this pair.
+
+### F21. Crossover generation 1 beats the record: `[16 9c013335 15 335a2d97 15]` = 0.10206799761502400 (exact, two independent counters)
+
+**The new best mixer.**
+
+```c
+x ^= x >> 16; x *= 0x9c013335;
+x ^= x >> 15; x *= 0x335a2d97;
+x ^= x >> 15;
+```
+
+- Exact avalanche bias over all 2^32 inputs is **0.10206799761502400**.
+  That is 4.6% below TheIronBorn's 0.10704308166917044, the best published
+  2-round 32-bit xmx.
+- It was confirmed by two independent exact counters:
+  - the SIMD Harley–Seal counter (`mixlab eval --exact`);
+  - the generic scalar counter (`examples/exact_generic.rs`, 87 s). The same
+    run reproduces the old record to all 17 digits.
+- Prior art: the constants appear nowhere in hash-prospector issue #19, its
+  2026 comments, or the F9 web search. No pure xmx below 0.10704 was known.
+- BIC is poor, like every s2 = 15 winner: the worst pair is input 1 →
+  outputs (2, 17) at corr +0.40, rms z 10.5 at 2^20. Not tested with
+  PractRand.
+
+**How it was found.** This is one generation of
+`analysis/crossover_round.py`, with outputs in `results/ironborn_ideas/gen1/`.
+
+- *Parents:* 40 mixers with shifts 16/15/15, covering 24 low-16-bit core
+  pairs: campaign winners, the 20 best published, and the F14/F19/F20 race
+  results (`gen1_extra.csv`).
+- *Children:* each child takes m0 from one parent and m1 from another. Only
+  genuine children are kept, meaning the child's core pair (m0 & 0xffff,
+  m1 & 0xffff) belongs to no parent. That leaves 687; 304 were newly
+  screened at 2^26.
+- *Exact scoring:* the 20 best by the 2^26 screen were scored exactly.
+  The best exact child was 0.11753; the eventual winner's start was 0.12157,
+  the 8th-best exact score.
+- *Races:* the 3 best exact children with distinct core pairs were raced
+  (96 neighbours, patience 6, seeds 81–83, `--max-s2 16`).
+
+| start (exact) | parents | race result (exact) |
+|---|---|---|
+| `[16 21f0aaad 15 8ca5d269 15]` 0.11753 | #19 record m0 × F14 both-negated m1 | `[16 61f0aaad 15 8ca5d269 15]` 0.10959 |
+| `[16 7803352d 15 535a2d97 15]` 0.12157 | F19 lowbias32-core race m0 × F20 0.10731 m1 | **`[16 9c013335 15 335a2d97 15]` 0.10207** |
+| `[16 d70332d3 15 db5a2d97 15]` 0.12188 | F14 d303 race m0 × #19 m1 | `[16 d00332d3 15 db5a2d97 15]` 0.11450 |
+
+**The winning race's trajectory** (9 improvements, 28 min, stopped by
+patience at iteration 21):
+
+| step | mixer | bias |
+|---|---|---|
+| start | 7803352d / 535a2d97 | 0.12157 |
+| | 78033535 | 0.11634 |
+| | 58033535 | 0.11289 |
+| | 58033535 / d35a2d97 | 0.11222 |
+| | 58033335 | 0.11093 |
+| | 58033335 / 935a2d97 | 0.10942 |
+| | d8033335 | 0.10892 |
+| | d8033335 / 335a2d97 | 0.10748 |
+| | dc013335 | 0.10367 |
+| end | 9c013335 / 335a2d97 | 0.10207 |
+
+- m0 started from the lowbias32-core race winner (`7803352d`, F19), but
+  its low byte changed (2d → 35), so the final core is 3335.
+- m1 moved around the record's `?35a2d97` top nibble and settled on
+  `335a2d97`. That m1 gives 0.10802 with the record's m0 (F20), so the gain
+  comes from the new m0 with the record-lineage m1.
+
+**Reading.**
+- Crossover between independently optimised families, followed by a race,
+  beat a record that had survived an exhaustive radius-2 check (F20). This
+  supports TheIronBorn's memetic design. Their own pattern-mining and
+  crossover, by their account, were used for the 16-bit records; they don't
+  remember which metaheuristic produced the 32-bit one.
+- The 2^26 screen picked a start that was only the 8th-best exact child.
+  The screen chooses *where to race*, not which child is already best.
+- **Radius-2 check of the new mixer:** all 2,343 neighbours were raced
+  (`results/ironborn_ideas/r2_new/`, 26 min, 75 exact checks), and none is
+  better. So it is a radius-2 local optimum, like the old record.
+- The closest neighbour is `[16 9c013335 15 b35a2d97 15]` = 0.10215, which
+  also beats the old record. Next are m0 variants `dc013335` (0.10367),
+  `cc013335` (0.10374) and `dd013335` (0.10377).
+- n = 1 generation, one seed per race. The README's BIC column is max|z|
+  scaled to 2^16 (0.40 × 256 ≈ 102).
 
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
@@ -639,7 +796,9 @@ in stalled local optima. The best non-record result is still in the
    - Acceptance is first-improvement, not best-improvement.
 3. **Neighbourhood bias.** Only 1–3-bit multiplier flips and ±1 shifts.
    "Local optimum" claims (the record, d303) are relative to this move set
-   and to a random subset of about 1,000 moves.
+   and to a random subset of about 1,000 moves. *(2026-11-21, F20: the
+   record's full radius-2 neighbourhood under single-bit flips and ±1 shifts
+   is now checked exhaustively; none is better.)*
 4. **Novelty of F9**: searched all hash-prospector issues and the web
    (2026-11-20; see F9); forks and private code are not covered.
 5. **Bias is not overall quality.** hash-prospector issue #28 notes the
@@ -693,6 +852,18 @@ The ideas below are experimental options, not established improvements.
      metrics.
 6. ~~Spectral-test features~~: done as F17 (spectral seeds do not help at
    32 bits). NAF-weight features remain untested.
+
+**Status 2026-11-21 (afternoon):** F21: crossover generation 1 found
+`[16 9c013335 15 335a2d97 15]` = 0.10207, a new best known 2-round 32-bit
+xmx and a radius-2 optimum. Next: generation 2 with the new winners as
+parents, more race seeds per child, and a PractRand / issue-#12-metric check
+of the new constant before announcing it anywhere.
+
+**Status 2026-11-21:** F20 is done. The record is a radius-2 optimum, and a
+crossover child raced to 0.10882. The most promising open item is
+*generational crossover*: cross the campaign's family winners (including
+0.10882), screen, race the best few genuine crosses, and repeat. The
+pausable campaign (F18/F19 follow-up) is at 30 of 94 jobs.
 
 **Status 2026-11-20 (evening):** BIC-constrained search (F18) and the
 other-core races (F19) are done. Open next: repeat F18/F19 over more seeds,
