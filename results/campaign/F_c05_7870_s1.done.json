@@ -1,0 +1,13 @@
+{
+ "id": "F_c05_7870_s1",
+ "campaign": "frontier",
+ "args": "--max-bic-corr 0.05 --max-s2 16",
+ "start": "[16 7870aaad 15 be523597 12]",
+ "start_bias": 0.24558546463239217,
+ "best": "[16 78302aad 15 86521593 12]",
+ "bias": 0.1976285044,
+ "parts": [],
+ "seconds": 2547,
+ "bic_rms_z": 1.164,
+ "bic_worst_corr": 0.013
+}

@@ -1,0 +1,39 @@
+56 parents, 39 core pairs, top 16 used for half/uniform
+children: whole=1105, half=500, uniform=500
+screen 0/1138
+screen 100/1138
+screen 200/1138
+screen 300/1138
+screen 400/1138
+screen 500/1138
+screen 600/1138
+screen 700/1138
+screen 800/1138
+screen 900/1138
+screen 1000/1138
+screen 1100/1138
+screen done
+exact whole   [16 930332d3 15 b15a3597 15] 0.12108
+exact whole   [16 130332d3 15 b15a3597 15] 0.12119
+exact whole   [16 d70332d3 15 b15a3597 15] 0.12370
+exact whole   [16 d30332d3 15 b15a3597 15] 0.12277
+exact whole   [16 d00332d3 15 b15a3597 15] 0.11672
+exact whole   [16 930332d3 15 b65a3597 15] 0.12736
+exact whole   [16 7803352d 15 b15a3597 15] 0.12442
+exact whole   [16 e70332d3 15 b15a3597 15] 0.12018
+exact whole   [16 d8433535 15 935a2d97 15] 0.11540
+exact whole   [16 e70332d3 15 be523597 15] 0.13125
+exact whole   [16 7803352d 15 cca5d269 15] 0.12474
+exact whole   [16 d8433535 15 d35a2d97 15] 0.11533
+exact half    [16 d40332d3 15 b35a3597 15] 0.11350
+exact half    [16 02fcd535 15 535a3597 15] 0.11960
+exact half    [16 8bf8d535 15 b35a3597 15] 0.12389
+exact half    [16 de0f32d3 15 8ca5d269 15] 0.12956
+Traceback (most recent call last):
+  File "<repo>\analysis\crossover_gen3.py", line 88, in <module>
+    ex[s] = float(re.search(r"bias=(\S+)", run(["eval", "--bits", "32", "--spec", s, "--exact"])).group(1))
+  File "<repo>\analysis\crossover_gen3.py", line 27, in <lambda>
+    run = lambda args: subprocess.run([BIN] + args, capture_output=True, text=True, encoding="utf-8", check=True).stdout
+  File "<python>\lib\subprocess.py", line 524, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['<repo>\\analysis\\..\\harness\\target\\release\\mixlab.exe', 'eval', '--bits', '32', '--spec', '[16 6f0f32d3 15 f35a3597 15]', '--exact']' returned non-zero exit status 3221225794.

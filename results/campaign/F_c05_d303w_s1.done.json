@@ -1,0 +1,13 @@
+{
+ "id": "F_c05_d303w_s1",
+ "campaign": "frontier",
+ "args": "--max-bic-corr 0.05 --max-s2 16",
+ "start": "[16 702f32d3 15 e6134975 12]",
+ "best": "[16 f34fb2d3 15 e3b3a975 12]",
+ "bias": 0.1977620763,
+ "parts": [],
+ "start_bias": 0.8134782767,
+ "seconds": 1034,
+ "bic_rms_z": 1.413,
+ "bic_worst_corr": 0.0247
+}

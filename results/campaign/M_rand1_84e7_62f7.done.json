@@ -1,0 +1,15 @@
+{
+ "id": "M_rand1_84e7_62f7",
+ "campaign": "multi",
+ "args": "--max-s2 16",
+ "core_best_draw": "[16 1ad884e7 15 db2a62f7 15]",
+ "core_best_draw_bias": 2.5261741367839314,
+ "start": "[16 1ad884e7 15 db2a62f7 15]",
+ "best": "[16 9bfad52d 15 ab3a4ae7 15]",
+ "bias": 0.1291397306,
+ "parts": [],
+ "start_bias": 2.5261741368,
+ "seconds": 1892,
+ "bic_rms_z": 8.542,
+ "bic_worst_corr": 0.3343
+}

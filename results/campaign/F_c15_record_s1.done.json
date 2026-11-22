@@ -1,0 +1,13 @@
+{
+ "id": "F_c15_record_s1",
+ "campaign": "frontier",
+ "args": "--max-bic-corr 0.15 --max-s2 16",
+ "start": "[16 21f0aaad 15 735a2d97 14]",
+ "best": "[16 e3f0aaad 15 650a4d97 13]",
+ "bias": 0.1523886412,
+ "parts": [],
+ "start_bias": 1.1788533215,
+ "seconds": 2414,
+ "bic_rms_z": 2.178,
+ "bic_worst_corr": 0.1002
+}

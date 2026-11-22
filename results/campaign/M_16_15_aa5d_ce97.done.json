@@ -1,0 +1,15 @@
+{
+ "id": "M_16_15_aa5d_ce97",
+ "campaign": "multi",
+ "args": "--max-s2 16",
+ "core_best_draw": "[16 f1dbaa5d 15 f2c9ce97 15]",
+ "core_best_draw_bias": 0.2143553219078157,
+ "start": "[16 f1dbaa5d 15 f2c9ce97 15]",
+ "best": "[16 c15baa55 15 d6d9ce97 15]",
+ "bias": 0.1388550235,
+ "parts": [],
+ "start_bias": 0.2143553219,
+ "seconds": 735,
+ "bic_rms_z": 9.089,
+ "bic_worst_corr": 0.3365
+}

@@ -18,3 +18,6 @@
 [2026-11-21 20:36:24] gen1 extra races (RACE=10)
 [2026-11-21 22:34:19] gen2 (RACE=5)
 [2026-11-22 00:35:13] done
+[2026-11-22 10:06:22] gen3 (whole/half/uniform, RACE=2 x SEEDS=3)
+[2026-11-22 10:35:50] gen3 exit 1
+[2026-11-22 10:36:00] gen3 paused by user (screen done, exact in progress; rerun queue_crossover_gen3.sh to resume)

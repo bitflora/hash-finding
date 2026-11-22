@@ -1,0 +1,13 @@
+{
+ "id": "F_c05_lb32w_s1",
+ "campaign": "frontier",
+ "args": "--max-bic-corr 0.05 --max-s2 16",
+ "start": "[16 7803352d 15 49eb26cb 12]",
+ "best": "[16 7903352d 15 386ba64b 13]",
+ "bias": 0.1825707561,
+ "parts": [],
+ "start_bias": 0.3913794316,
+ "seconds": 2126,
+ "bic_rms_z": 1.691,
+ "bic_worst_corr": 0.0431
+}

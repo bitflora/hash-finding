@@ -1,0 +1,15 @@
+{
+ "id": "M_16_15_32a7_2677",
+ "campaign": "multi",
+ "args": "--max-s2 16",
+ "core_best_draw": "[16 eb3532a7 15 ae2d2677 15]",
+ "core_best_draw_bias": 0.2767750046880735,
+ "start": "[16 eb3532a7 15 ae2d2677 15]",
+ "best": "[16 eb2632a7 15 ae3d2657 15]",
+ "bias": 0.1582637119,
+ "parts": [],
+ "start_bias": 0.2767750047,
+ "seconds": 727,
+ "bic_rms_z": 12.218,
+ "bic_worst_corr": 0.5013
+}

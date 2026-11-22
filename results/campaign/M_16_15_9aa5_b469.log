@@ -1,0 +1,13 @@
+[    16s] 0,start,[16 fb099aa5 15 f592b469 15],0.2431226537,sd=0.000e0
+[    36s] 1,improved,[16 fb099aa5 15 f5923469 15],0.2001699478,k=96 worse=52 rejected=0 unraced=43 median_n_drop=2^22.0 inputs=2^29.9 exact=1 cum_inputs=2^29.9 cum_exact=1 bic_skipped=0
+[    70s] 2,improved,[16 fb899aa5 15 f5923469 15],0.1811192744,k=96 worse=73 rejected=0 unraced=22 median_n_drop=2^22.0 inputs=2^32.1 exact=1 cum_inputs=2^32.4 cum_exact=2 bic_skipped=0
+[   110s] 3,improved,[15 fb899aa5 15 f5923469 15],0.1762318249,k=96 worse=81 rejected=0 unraced=14 median_n_drop=2^23.0 inputs=2^32.5 exact=1 cum_inputs=2^33.4 cum_exact=3 bic_skipped=0
+[   150s] 4,improved,[15 fb899aa5 15 75923469 15],0.1736523032,k=96 worse=85 rejected=0 unraced=10 median_n_drop=2^23.0 inputs=2^32.5 exact=1 cum_inputs=2^34.0 cum_exact=4 bic_skipped=0
+[   325s] 5,iter,[15 fb899aa5 15 75923469 15],0.1736523032,k=96 worse=86 rejected=10 unraced=0 median_n_drop=2^23.0 inputs=2^32.2 exact=10 cum_inputs=2^34.4 cum_exact=14 bic_skipped=0
+[   388s] 6,iter,[15 fb899aa5 15 75923469 15],0.1736523032,k=96 worse=93 rejected=3 unraced=0 median_n_drop=2^23.0 inputs=2^31.8 exact=3 cum_inputs=2^34.6 cum_exact=17 bic_skipped=0
+[   414s] 7,iter,[15 fb899aa5 15 75923469 15],0.1736523032,k=96 worse=95 rejected=1 unraced=0 median_n_drop=2^22.0 inputs=2^31.2 exact=1 cum_inputs=2^34.7 cum_exact=18 bic_skipped=0
+[   421s] 8,iter,[15 fb899aa5 15 75923469 15],0.1736523032,k=96 worse=96 rejected=0 unraced=0 median_n_drop=2^22.0 inputs=2^30.7 exact=0 cum_inputs=2^34.8 cum_exact=18 bic_skipped=0
+[   447s] 9,iter,[15 fb899aa5 15 75923469 15],0.1736523032,k=96 worse=95 rejected=1 unraced=0 median_n_drop=2^22.0 inputs=2^31.2 exact=1 cum_inputs=2^34.9 cum_exact=19 bic_skipped=0
+[   504s] 10,iter,[15 fb899aa5 15 75923469 15],0.1736523032,k=96 worse=93 rejected=3 unraced=0 median_n_drop=2^22.0 inputs=2^31.2 exact=3 cum_inputs=2^35.0 cum_exact=22 bic_skipped=0
+[   504s] 11,patience,[15 fb899aa5 15 75923469 15],0.1736523032,no improvement in 6 iterations
+best [15 fb899aa5 15 75923469 15]  score 0.1736523032
