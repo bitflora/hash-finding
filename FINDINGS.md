@@ -714,11 +714,51 @@ x ^= x >> 15;
   - the SIMD Harley–Seal counter (`mixlab eval --exact`);
   - the generic scalar counter (`examples/exact_generic.rs`, 87 s). The same
     run reproduces the old record to all 17 digits.
+- **Confirmed externally (2026-11-21).** The user ran hash-prospector
+  itself (`./prospector -E -e -p xorr:16,mul:9c013335,xorr:15,mul:335a2d97,xorr:15`)
+  and it agrees, with the old record as control. Note that `-E` alone is a
+  2^18 sampled estimate (≈ 2 for any good mixer); `-e` is the exact mode.
 - Prior art: the constants appear nowhere in hash-prospector issue #19, its
   2026 comments, or the F9 web search. No pure xmx below 0.10704 was known.
-- BIC is poor, like every s2 = 15 winner: the worst pair is input 1 →
-  outputs (2, 17) at corr +0.40, rms z 10.5 at 2^20. Not tested with
-  PractRand.
+- **It also wins under issue #12's metric** (camel-cdr's mean |count − n/2| / n
+  ×1000; `examples/metric12.rs`). It reproduces TheIronBorn's published values
+  to 17 digits (`d35a2d97` 0.03668391400424298, `f35a2d97` 0.03633152391557815).
+
+  | mixer | issue #12 | hash-prospector |
+  |---|---|---|
+  | old record `735a2d97` | 0.036194 | 0.107043 |
+  | **new `9c013335 / 335a2d97`** | **0.035729** | **0.102068** |
+  | neighbour `9c013335 / b35a2d97` | 0.035657 | 0.102149 |
+
+  - The margin is smaller under this metric: 1.3%, against 4.6%.
+  - The two metrics disagree about the radius-1 neighbour, as they did in
+    2022: `b35a2d97` is best under #12.
+  - Values are in `results/ironborn_ideas/metric12.txt`.
+- BIC is poor, like every s2 = 15 winner (exact over 2^32: corr +0.40002 for input 1 → outputs (2, 17), `exact_pair_corr.py`; old record +0.33337): the worst pair is input 1 →
+  outputs (2, 17) at corr +0.40, rms z 10.5 at 2^20. PractRand: see below.
+
+- **PractRand, bit-reversed counter** (`analysis/practrand_feed.c` mode 2,
+  `RNG_test stdin32`; run by the user, 2026-11-21).
+  - Both mixers fail clearly, at the same length (results compared at 512 MB).
+  - The new mixer's failures are mostly 2–4× weaker:
+
+    | test | old record | new |
+    |---|---|---|
+    | Gap-16:A | R=+4955 | R=+1265 |
+    | BRank(12) | R=+5307 | R=+3435 |
+    | BDayS2 | R=+30.8 | R=+24.0 |
+    | [Low1/32] Gap-16:B | R=+6207 | R=+2408 |
+    | [Low1/32] FPF:all | R=+1082 | R=+304.9 |
+    | [Low8/32] FPF:all | R=+201.8 | R=+243.7 |
+    | tests with no anomalies | 111 | 122 |
+
+  - The new mixer has 122 tests with no anomalies, against 111 for the old.
+    The exception is [Low8/32] FPF:all, where it is slightly worse.
+  - Limits: one input pattern and one length. R values show the size of a
+    failure; they are not a calibrated quality scale. The plain counter,
+    complement, Weyl and rotation patterns are untested.
+  - Both mixers fail clearly under a bit-reversed counter, so neither is
+    suitable where such inputs occur.
 
 **How it was found.** This is one generation of
 `analysis/crossover_round.py`, with outputs in `results/ironborn_ideas/gen1/`.
@@ -852,6 +892,33 @@ The ideas below are experimental options, not established improvements.
      metrics.
 6. ~~Spectral-test features~~: done as F17 (spectral seeds do not help at
    32 bits). NAF-weight features remain untested.
+
+**Crossover variations to try later (noted 2026-11-21, after F21).** In
+progress: race 7 more gen-1 children, then generation 2.
+1. **Finer crossover.**
+   - Swap 16-bit halves: one parent's core with another's high half.
+   - Uniform bit crossover over the bits where the parents differ.
+   - F16 says core swaps usually score worse before racing, but racing
+     rescued gen 1's 8th-ranked start.
+2. **Other shift templates.**
+   - So far every cross used 16/15/15. Cross families on 15/15/15,
+     16/14/15 and 17/15/15.
+   - Also try crossing across templates: m0 and m1 come from different
+     templates, and the shifts from either parent.
+3. **Pattern mining** (TheIronBorn's term).
+   - Find bit patterns shared by elite mixers, such as the `?35a2d97` m1
+     top nibble and m0 low bytes …3335 / …32d3.
+   - Seed children that keep a pattern and randomise the rest.
+4. **An automated memetic loop.**
+   - A population of about 20 that spans many core pairs.
+   - Each generation: cross, screen at 2^26, exact top-k, race the best few
+     with shorter races (patience 3), and replace the weakest members.
+   - Run it as pausable chunks through `campaign.py`'s lock, PAUSE/STOP and
+     resume machinery.
+5. **Radius-3 check of the new record.** About 45,000 candidates,
+   roughly 7–8 h of racing. It is a check rather than a likely improvement.
+6. **Several race seeds per child.** The gen-1 winner came from one seed;
+   repeat its race with 2–3 seeds to measure how much is luck.
 
 **Status 2026-11-21 (afternoon):** F21: crossover generation 1 found
 `[16 9c013335 15 335a2d97 15]` = 0.10207, a new best known 2-round 32-bit

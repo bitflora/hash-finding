@@ -1,0 +1,6 @@
+# RaceCfg { bits: 32, n0: 16384, cap: 268435456, z: 3.0, verify_samples: None, seed: 1, max_last_shift: Some(16), fix_low_bits: None, max_bic_corr: Some(0.25) }
+iter,event,config,score,detail
+0,start,[16 21f0aaad 15 735a2d97 15],0.1070430817,sd=0.000e0
+0,start_bic,[16 21f0aaad 15 735a2d97 15],0.3384,worst |corr| at 2^16
+1,iter,[16 21f0aaad 15 735a2d97 15],0.1070430817,k=1 worse=1 rejected=0 unraced=0 median_n_drop=2^17.0 inputs=2^17.0 exact=0 cum_inputs=2^17.0 cum_exact=0 bic_skipped=4464
+2,exhausted,[16 21f0aaad 15 735a2d97 15],0.1070430817,

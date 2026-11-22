@@ -1,0 +1,5 @@
+[    15s] 0,start,[16 7870aaad 15 be523597 15],0.1152742257,sd=0.000e0
+[    15s] 0,start_bic,[16 7870aaad 15 be523597 15],0.3384,worst |corr| at 2^16
+[   284s] 1,iter,[16 7870aaad 15 be523597 15],0.1152742257,k=1 worse=1 rejected=0 unraced=0 median_n_drop=2^22.0 inputs=2^22.0 exact=0 cum_inputs=2^22.0 cum_exact=0 bic_skipped=4464
+[   549s] 2,exhausted,[16 7870aaad 15 be523597 15],0.1152742257,
+best [16 7870aaad 15 be523597 15]  score 0.1152742257
