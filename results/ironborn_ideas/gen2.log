@@ -1,0 +1,35 @@
+51 parents, 34 core pairs, 1015 genuine children
+screen 0/395
+screen 100/395
+screen 200/395
+screen 300/395
+exact [16 b1fccd35 15 d35a2d97 15] 0.11292  (gen1 race race_b1f8cd35x8ca5d269 x pub:hash-prospector#19)
+exact [16 9c013335 15 cca5d269 15] 0.10462  (gen1 race race_7803352dx535a2d97 x gen1 race race_b1f8cd35x8ca5d269)
+exact [16 b1fccd35 15 535a2d97 15] 0.11211  (gen1 race race_b1f8cd35x8ca5d269 x F20 radius-2)
+exact [16 b1fccd35 15 b35a2d97 15] 0.11207  (gen1 race race_b1f8cd35x8ca5d269 x F21 radius-2 neighbour)
+exact [16 b1fccd35 15 935a2d97 15] 0.11364  (gen1 race race_b1f8cd35x8ca5d269 x pub:hash-prospector#19)
+exact [16 8bf8d535 15 8ca5d269 15] 0.11514  (gen1 race race_b1f8cd35xf35a2d97 x F21 gen1 race)
+exact [16 b1fccd35 15 db5a2d97 15] 0.11475  (gen1 race race_b1f8cd35x8ca5d269 x F21 gen1 race)
+exact [16 b1fccd35 15 335a2d97 15] 0.11205  (gen1 race race_b1f8cd35x8ca5d269 x gen1 race race_7803352dx535a2d97)
+exact [16 b1fccd35 15 f35a2d97 15] 0.11230  (gen1 race race_b1f8cd35x8ca5d269 x pub:hash-prospector#19)
+exact [16 8bf8d535 15 2ca5d269 15] 0.11464  (gen1 race race_b1f8cd35xf35a2d97 x gen1 race race_7803352dx8ca5d269)
+exact [16 8bf8d535 15 cca5d269 15] 0.11561  (gen1 race race_b1f8cd35xf35a2d97 x gen1 race race_b1f8cd35x8ca5d269)
+exact [16 b1fccd35 15 735a2d97 15] 0.11272  (gen1 race race_b1f8cd35x8ca5d269 x pub:hash-prospector#19)
+exact [16 9c013335 15 2ca5d269 15] 0.10654  (gen1 race race_7803352dx535a2d97 x gen1 race race_7803352dx8ca5d269)
+exact [16 b1f8cd35 15 b65a3597 15] 0.12193  (M_16_15_2d35_46b5 x gen1 race race_9bfad52dxbe523597)
+exact [16 930332d3 15 b65a3597 15] 0.12736  (pub:hash-prospector#19 x gen1 race race_9bfad52dxbe523597)
+exact [16 b1fccd35 15 c35a2d97 15] 0.11357  (gen1 race race_b1f8cd35x8ca5d269 x pub:hash-prospector#19)
+exact [16 b1f8cd35 15 535a2d97 15] 0.12823  (M_16_15_2d35_46b5 x F20 radius-2)
+exact [16 d70332d3 15 2a8649a9 15] 0.12448  (F14 d303 negation race x gen1 race race_21f0aaadxf2a649a9)
+exact [16 b1f8cd35 15 d35a2d97 15] 0.12821  (M_16_15_2d35_46b5 x pub:hash-prospector#19)
+exact [16 9c013335 15 8ca5d269 15] 0.10756  (gen1 race race_7803352dx535a2d97 x F21 gen1 race)
+race [16 9c013335 15 cca5d269 15] (exact 0.10462)
+best [16 ec013335 15 cca5d269 15]  score 0.1034364198
+race [16 b1fccd35 15 335a2d97 15] (exact 0.11205)
+best [16 31fccd35 15 b35a2d97 15]  score 0.1117457751
+race [16 8bf8d535 15 2ca5d269 15] (exact 0.11464)
+best [16 8bf8d535 15 2ca5d269 15]  score 0.1146351245
+race [16 b1f8cd35 15 b65a3597 15] (exact 0.12193)
+best [16 02fccd35 15 b15a3597 15]  score 0.1044677021
+race [16 d70332d3 15 2a8649a9 15] (exact 0.12448)
+best [16 e70332d3 15 4ea649a9 15]  score 0.1165095748

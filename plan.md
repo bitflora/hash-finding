@@ -495,3 +495,11 @@ with `mixlab eval --exact`.
     which also reproduces the old record to 17 digits.
   - Radius-2 optimum: 2,343 neighbours, none better.
   - BIC worst correlation 0.40.
+
+### 2026-11-21/22: Gen-1 extra races and crossover generation 2 (F22)
+- All 10 gen-1 races: 7 of 10 finish below 0.115. Best besides F21:
+  `[16 6f0f32d3 15 2d66b9a9 15]` 0.10799.
+- Gen 2: 51 parents, 1,015 genuine children, 5 races. The best are
+  `[16 ec013335 15 cca5d269 15]` 0.10344 and `[16 02fccd35 15 b15a3597 15]`
+  0.10447; the latter is the best mixer without the 2d97 m1 core.
+- No new record: 0.10207 stands.

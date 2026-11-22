@@ -821,6 +821,61 @@ patience at iteration 21):
 - n = 1 generation, one seed per race. The README's BIC column is max|z|
   scaled to 2^16 (0.40 × 256 ≈ 102).
 
+### F22. Ten gen-1 races and generation 2: crosses reliably land low; no new record (exact; one seed per race)
+Script `analysis/queue_crossover_gen2.sh`; outputs `results/ironborn_ideas/gen1/`
+(races 4–10) and `gen2/`.
+
+**Generation 1, all 10 distinct-core races** (the 3 from F21 plus 7 more,
+seeds 81–90). The results are 0.10207, 0.10799, 0.10813, 0.10959, 0.10998,
+0.11089, 0.11450, 0.11738, 0.12051 and 0.12462.
+- Seven of the ten finished below 0.115, the best that any non-crossover
+  race reached outside the record's own neighbourhood (F9/F14/F19).
+- The F21 winner was the best draw, but not an outlier from a weak
+  distribution.
+- New this round: `[16 6f0f32d3 15 2d66b9a9 15]` 0.10799 (d303-core race ×
+  multi-start winner) and `[16 8bf8d535 15 b35a2d97 15]` 0.10813.
+
+**Generation 2.**
+- Parents: 51, covering 34 core pairs, now including every gen-1 race
+  winner (`gen2_extra_full.csv`).
+- Children: 1,015 genuine, 396 of them newly screened. The 20 best were
+  scored exactly and 5 distinct ones raced (seeds 91–95, about 2 h in all).
+- Several exact children were already near the record before any race.
+  All of them are the F21 winner's m0 `9c013335` with a gen-1 m1:
+
+  | m1 | exact bias |
+  |---|---|
+  | `cca5d269` | 0.10462 |
+  | `2ca5d269` | 0.10654 |
+  | `8ca5d269` | 0.10756 |
+
+| start (exact) | race result (exact) | BIC worst corr (2^20) |
+|---|---|---|
+| `9c013335 / cca5d269` 0.10462 | `[16 ec013335 15 cca5d269 15]` **0.10344** | 0.66 |
+| `b1f8cd35 / b65a3597` 0.12193 | `[16 02fccd35 15 b15a3597 15]` **0.10447** | 0.40 |
+| `b1fccd35 / 335a2d97` 0.11205 | `[16 31fccd35 15 b35a2d97 15]` 0.11175 | — |
+| `8bf8d535 / 2ca5d269` 0.11464 | no improvement | — |
+| `d70332d3 / 2a8649a9` 0.12448 | `[16 e70332d3 15 4ea649a9 15]` 0.11651 | — |
+
+**Reading.**
+- **No new record:** 0.10207 (F21) still stands.
+- **The population is stronger and more varied.** There are now three
+  mixers below 0.105 on three different m1 cores: 2d97 (0.10207), d269
+  (0.10344) and 3597 (0.10447).
+- `[16 02fccd35 15 b15a3597 15]` = 0.10447 is the best mixer without the
+  record lineage's 2d97 m1 core.
+  - It came from a weak start (0.12193) via 8 improvements.
+  - Its BIC (worst corr 0.40) matches the F21 winner's.
+- The best gen-2 race started next to the record (0.10462) and improved
+  only 1%. Its BIC is much worse: corr 0.66 on input 27 → (2, 17).
+- **Gen 2 improved the population but not the top score.** There are two
+  readings, and one more generation should tell them apart:
+  - the 0.102–0.104 basin is close to this space's floor;
+  - or the operators (whole-multiplier swaps, one seed, patience 6) are now
+    the limit.
+- The §5 variations (finer crossover, other shift templates, several seeds
+  per child) target the second reading.
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the
@@ -893,8 +948,8 @@ The ideas below are experimental options, not established improvements.
 6. ~~Spectral-test features~~: done as F17 (spectral seeds do not help at
    32 bits). NAF-weight features remain untested.
 
-**Crossover variations to try later (noted 2026-11-21, after F21).** In
-progress: race 7 more gen-1 children, then generation 2.
+**Crossover variations to try later (noted 2026-11-21, after F21).** The 7
+extra gen-1 races and generation 2 are done (F22).
 1. **Finer crossover.**
    - Swap 16-bit halves: one parent's core with another's high half.
    - Uniform bit crossover over the bits where the parents differ.
