@@ -1,0 +1,572 @@
+<meta charset="utf-8">
+<title>Mixer Bit Atlas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one working column; shared controls on top, barcode (bits x rank) then distance scatter, then table and notes. */
+:root {
+  --bg: #f7f7f4;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --ring: rgba(11,11,11,0.10);
+  --bit0: #ebeae4;
+  --bit1: #1c5cab;
+  --same: #ebeae4;
+  --diff: #d95926;
+  --up: #2a78d6;
+  --down: #e34948;
+  --hl: #2a78d6;
+  --other: #b9b7ae;
+  --accent: #2a78d6;
+  --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111110; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+    --bit0: #262624; --bit1: #6da7ec; --same: #262624; --diff: #ec835a;
+    --up: #3987e5; --down: #e66767; --hl: #3987e5; --other: #4a4946; --accent: #6da7ec;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111110; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+  --bit0: #262624; --bit1: #6da7ec; --same: #262624; --diff: #ec835a;
+  --up: #3987e5; --down: #e66767; --hl: #3987e5; --other: #4a4946; --accent: #6da7ec;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+}
+.wrap {
+  max-width: 1180px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+  display: flex; flex-direction: column; gap: 22px;
+}
+header { display: flex; flex-direction: column; gap: 6px; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(26px, 4vw, 34px); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-weight: 500; font-size: 20px; margin: 0; text-wrap: balance; }
+.lede { color: var(--ink-2); max-width: 68ch; margin: 0; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.controls {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--grid);
+  display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: end;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.ctl { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ctl > span { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+select, button {
+  font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--axis); border-radius: 6px; padding: 5px 8px;
+}
+button { cursor: pointer; }
+button:hover, select:hover { border-color: var(--muted); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.seg { display: inline-flex; border: 1px solid var(--axis); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; background: var(--surface); color: var(--ink-2); }
+.seg button + button { border-left: 1px solid var(--axis); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+label.check { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; padding-block: 5px; cursor: pointer; }
+.refline { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 14px; }
+.refline .spec { font-family: var(--font-mono); background: var(--surface); border: 1px solid var(--grid); border-radius: 4px; padding: 1px 6px; }
+.summary { color: var(--ink-2); font-size: 14px; margin: 0; }
+.summary b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+section.panel { background: var(--surface); border: 1px solid var(--ring); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; justify-content: space-between; }
+.hint { color: var(--muted); font-size: 13px; margin: 0; max-width: 72ch; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--ink-2); align-items: center; }
+.sw { display: inline-block; width: 11px; height: 11px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; vertical-align: 0; margin-right: 5px; }
+.canvas-box { position: relative; width: 100%; }
+canvas { display: block; touch-action: pan-y; }
+.tip {
+  position: absolute; pointer-events: none; z-index: 4; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--axis); border-radius: 6px; padding: 7px 9px; font-size: 12.5px; line-height: 1.45;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12); max-width: 300px; white-space: normal;
+}
+.tip .mono { font-size: 12px; }
+.tip .k { color: var(--muted); }
+details { background: var(--surface); border: 1px solid var(--ring); border-radius: 8px; padding: 12px 18px; }
+summary { cursor: pointer; font-family: var(--font-display); font-weight: 500; font-size: 17px; }
+.table-box { overflow-x: auto; margin-top: 10px; }
+table { border-collapse: collapse; font-size: 13.5px; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th { font-weight: 500; color: var(--muted); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+td.num { text-align: right; padding-right: 14px; }
+tr.pick { cursor: pointer; }
+tr.pick:hover td { background: var(--bg); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px 28px; color: var(--ink-2); font-size: 14px; }
+.notes h3 { font-family: var(--font-display); font-weight: 500; font-size: 15px; color: var(--ink); margin: 0 0 4px; }
+.notes p { margin: 0; }
+.status { color: var(--muted); font-size: 14px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Mixer Bit Atlas</h1>
+    <p class="lede">Every exactly scored 2-round 32-bit mixer <code>[s0 m0 s1 m1 s2]</code> in <code>mixing-functions/results/</code>, laid out bit by bit. Rows are mixers sorted by avalanche bias (lower is better). Columns are the 64 multiplier bits. If certain bits matter, the good rows at the top will agree on them.</p>
+  </header>
+
+  <div class="controls" role="group" aria-label="View controls">
+    <label class="ctl"><span>Shift template</span><select id="tmpl"></select></label>
+    <label class="ctl"><span>Bias range</span><select id="cap">
+      <option value="0.15">Up to 0.15</option>
+      <option value="0.3">Up to 0.3</option>
+      <option value="1">Up to 1</option>
+      <option value="1000">All</option>
+    </select></label>
+    <div class="ctl"><span>Colour bits by</span>
+      <div class="seg" role="group" aria-label="Colour bits by">
+        <button id="mode-value" type="button" aria-pressed="true">Bit value</button>
+        <button id="mode-diff" type="button" aria-pressed="false">Differs from reference</button>
+      </div>
+    </div>
+    <div class="ctl"><span>Negation</span>
+      <label class="check"><input id="fold" type="checkbox" checked> Fold m and −m together</label>
+    </div>
+    <div class="ctl"><span>Reference mixer</span>
+      <div class="refline">
+        <span class="spec" id="ref-spec">—</span>
+        <button id="ref-best" type="button">Best (F21)</button>
+        <button id="ref-record" type="button">Old record</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="summary" id="summary">Loading results…</p>
+
+  <section class="panel" aria-labelledby="bc-title">
+    <div class="panel-head">
+      <h2 id="bc-title">Bit barcode</h2>
+      <div class="legend" id="bc-legend"></div>
+    </div>
+    <p class="hint">The strip on top compares the best 10% of rows in this view with the rest. A bar going up means that bit is 1 (or differs from the reference) more often among the best rows. Gaps separate hex digits, and the wider gap splits each multiplier into its high and low 16 bits. The right column shows each row's bias on a log scale. Hover a row to see the mixer; click it to make it the reference.</p>
+    <div class="canvas-box" id="bc-box">
+      <canvas id="bc-top" aria-label="Per-bit difference between the best 10% and the rest"></canvas>
+      <canvas id="bc-main" aria-label="Bit barcode of mixers sorted by bias"></canvas>
+      <div class="tip" id="bc-tip" hidden></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="sc-title">
+    <div class="panel-head">
+      <h2 id="sc-title">Bias against distance from the reference</h2>
+      <div class="legend" id="sc-legend"></div>
+    </div>
+    <div class="controls" style="position: static; border: 0; padding: 0; background: none;">
+      <div class="ctl"><span>Count differing bits in</span>
+        <div class="seg" role="group" aria-label="Count differing bits in">
+          <button id="d-all" type="button" aria-pressed="true">All 64</button>
+          <button id="d-low" type="button" aria-pressed="false">Low 16 of each</button>
+          <button id="d-high" type="button" aria-pressed="false">High 16 of each</button>
+        </div>
+      </div>
+      <label class="ctl"><span>Highlight</span><select id="hl"></select></label>
+      <div class="ctl"><span>Race steps</span>
+        <label class="check"><input id="steps" type="checkbox"> Draw accepted moves</label>
+      </div>
+    </div>
+    <p class="hint">Each dot is one mixer; the ringed dot is the reference. Distance counts the multiplier bits that differ from it. The pattern near zero distance shows how rugged the landscape is around the reference. Comparing "Low 16" with "High 16" tests the low-bit core idea: if the cores carry the quality, good mixers should sit near zero on Low and spread out on High.</p>
+    <div class="canvas-box" id="sc-box">
+      <canvas id="sc" aria-label="Scatter of bias against Hamming distance from the reference"></canvas>
+      <div class="tip" id="sc-tip" hidden></div>
+    </div>
+  </section>
+
+  <details id="tbl">
+    <summary>Table: the best 50 in this view</summary>
+    <div class="table-box"><table>
+      <thead><tr><th>Rank</th><th>Mixer</th><th>Bias</th><th>Bits from ref.</th><th>Origin</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table></div>
+  </details>
+
+  <div class="notes">
+    <div><h3>What is included</h3><p>Only exact scores over all 2<sup>32</sup> inputs: eval <code>--exact</code> outputs, race logs run without sampled verification (their start and accepted scores are exact), and verified race tables. Sampled screens are left out. Built by <code>analysis/collect_explored32.py --json</code>.</p></div>
+    <div><h3>Folding negation</h3><p>For odd m, −m keeps bit 0 and flips bits 1–31. Negating a multiplier barely changes bias (F12), so with folding on, each multiplier is shown in whichever form has bit 31 = 0. Without it, one family shows up as two mirror-image patterns.</p></div>
+    <div><h3>Read with care</h3><p>These rows come from local searches, so they are not a random sample. Many good rows descend from the same few parents. A bit that all the top rows share may be inherited rather than important. The random-high-halves controls (F16) are the cleanest test, and you can isolate them with "Highlight".</p></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const RECORD = "[16 21f0aaad 15 735a2d97 15]";
+  const BEST = "[16 9c013335 15 335a2d97 15]";
+  const $ = (id) => document.getElementById(id);
+  const state = { tmpl: "16,15,15", mode: "value", fold: true, ref: -1, dist: "all", hl: 2, cap: 0.3, steps: false, hoverRow: -1, hoverPt: -1 };
+  let ALL = [], ORIGINS = [], EDGES = [], view = [], colors = {};
+
+  const pc = (x) => { x = x - ((x >>> 1) & 0x55555555); x = (x & 0x33333333) + ((x >>> 2) & 0x33333333); return Math.imul((x + (x >>> 4)) & 0x0f0f0f0f, 0x01010101) >>> 24; };
+  const fold = (m) => (m & 0x80000000) ? (m ^ 0xfffffffe) >>> 0 : m;
+  const hex = (m) => (m >>> 0).toString(16).padStart(8, "0");
+  const fmtBias = (b) => b < 1 ? b.toFixed(5) : b.toFixed(3);
+  const save = (k, v) => { try { localStorage.setItem("atlas." + k, JSON.stringify(v)); } catch (e) {} };
+  const load = (k) => { try { const v = localStorage.getItem("atlas." + k); return v == null ? undefined : JSON.parse(v); } catch (e) { return undefined; } };
+
+  function readColors() {
+    const cs = getComputedStyle(document.documentElement);
+    const names = ["surface","ink","ink-2","muted","grid","axis","bit0","bit1","same","diff","up","down","hl","other"];
+    for (const n of names) colors[n] = cs.getPropertyValue("--" + n).trim();
+    const rgb = (h) => [1,3,5].map(i => parseInt(h.slice(i, i + 2), 16));
+    colors.rgb0 = rgb(colors.bit0); colors.rgb1 = rgb(colors.bit1);
+    colors.rgbSame = rgb(colors.same); colors.rgbDiff = rgb(colors.diff);
+  }
+  const mix = (a, b, t) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(",")})`;
+
+  // ---------- data ----------
+  fetch("explored32.json").then(r => r.json()).then(init).catch(() => {
+    $("summary").textContent = "The data file explored32.json could not be loaded. Run analysis/collect_explored32.py --json and republish it next to this page.";
+  });
+
+  function init(d) {
+    ORIGINS = d.origins;
+    ALL = d.mixers.map((m, i) => {
+      const m0 = parseInt(m[1], 16) >>> 0, m1 = parseInt(m[3], 16) >>> 0;
+      return { i, s0: m[0], s1: m[2], s2: m[4], m0, m1, f0: fold(m0), f1: fold(m1),
+        bias: m[5], origin: m[6], nsrc: m[7], tmpl: `${m[0]},${m[2]},${m[4]}`,
+        spec: `[${m[0]} ${m[1]} ${m[2]} ${m[3]} ${m[4]}]` };
+    });
+    EDGES = d.edges;
+    const counts = {};
+    for (const m of ALL) counts[m.tmpl] = (counts[m.tmpl] || 0) + 1;
+    const tm = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    $("tmpl").innerHTML = `<option value="all">All templates (${ALL.length})</option>` +
+      tm.map(([t, c]) => `<option value="${t}">${t.split(",").join(" · ")} (${c})</option>`).join("");
+    $("hl").innerHTML = ORIGINS.map((o, i) => `<option value="${i}">${o}</option>`).join("");
+    const bySpec = Object.fromEntries(ALL.map(m => [m.spec, m.i]));
+    state.bestIdx = bySpec[BEST] ?? 0; state.recordIdx = bySpec[RECORD] ?? 0;
+    // restore per-viewer preferences
+    const saved = load("prefs") || {};
+    for (const k of ["tmpl","mode","fold","dist","hl","steps","cap"]) if (saved[k] !== undefined) state[k] = saved[k];
+    if (!counts[state.tmpl] && state.tmpl !== "all") state.tmpl = "16,15,15";
+    state.ref = typeof saved.ref === "string" && bySpec[saved.ref] !== undefined ? bySpec[saved.ref] : state.bestIdx;
+    wire(); readColors(); refresh();
+  }
+
+  function persist() {
+    save("prefs", { cap: state.cap, tmpl: state.tmpl, mode: state.mode, fold: state.fold, dist: state.dist, hl: state.hl, steps: state.steps, ref: ALL[state.ref].spec });
+  }
+
+  function wire() {
+    $("tmpl").value = state.tmpl; $("cap").value = String(state.cap); $("fold").checked = state.fold; $("hl").value = String(state.hl); $("steps").checked = state.steps;
+    $("tmpl").addEventListener("change", e => { state.tmpl = e.target.value; refresh(); });
+    $("cap").addEventListener("change", e => { state.cap = +e.target.value; refresh(); });
+    $("fold").addEventListener("change", e => { state.fold = e.target.checked; refresh(); });
+    $("hl").addEventListener("change", e => { state.hl = +e.target.value; refresh(); });
+    $("steps").addEventListener("change", e => { state.steps = e.target.checked; refresh(); });
+    $("mode-value").addEventListener("click", () => { state.mode = "value"; refresh(); });
+    $("mode-diff").addEventListener("click", () => { state.mode = "diff"; refresh(); });
+    for (const k of ["all","low","high"]) $("d-" + k).addEventListener("click", () => { state.dist = k; refresh(); });
+    $("ref-best").addEventListener("click", () => setRef(state.bestIdx));
+    $("ref-record").addEventListener("click", () => setRef(state.recordIdx));
+    $("tbody").addEventListener("click", e => { const tr = e.target.closest("tr[data-i]"); if (tr) setRef(+tr.dataset.i); });
+    const mq = matchMedia("(prefers-color-scheme: dark)");
+    const rerender = () => { readColors(); draw(); };
+    mq.addEventListener?.("change", rerender);
+    new MutationObserver(rerender).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    let t; addEventListener("resize", () => { clearTimeout(t); t = setTimeout(draw, 80); });
+    bindBarcode(); bindScatter();
+  }
+
+  function setRef(i) { state.ref = i; refresh(); }
+
+  // ---------- derived ----------
+  const words = (m) => state.fold ? [m.f0, m.f1] : [m.m0, m.m1];
+  const bitAt = (w, c) => c < 32 ? (w[0] >>> (31 - c)) & 1 : (w[1] >>> (63 - c)) & 1;
+  const MASK = { all: 0xffffffff, low: 0x0000ffff, high: 0xffff0000 };
+  function dist(m) {
+    const a = words(m), b = words(ALL[state.ref]), k = MASK[state.dist];
+    return pc(((a[0] ^ b[0]) & k) >>> 0) + pc(((a[1] ^ b[1]) & k) >>> 0);
+  }
+
+  function refresh() {
+    view = ALL.filter(m => (state.tmpl === "all" || m.tmpl === state.tmpl) && m.bias <= state.cap);
+    for (const [k, el] of [["value", "mode-value"], ["diff", "mode-diff"]]) $(el).setAttribute("aria-pressed", String(state.mode === k));
+    for (const k of ["all","low","high"]) $("d-" + k).setAttribute("aria-pressed", String(state.dist === k));
+    const ref = ALL[state.ref];
+    $("ref-spec").textContent = ref.spec;
+    $("ref-spec").title = `bias ${ref.bias}`;
+    const n = view.length, best = view[0];
+    const nTop = Math.max(5, Math.round(n * 0.1));
+    $("summary").innerHTML = n ? `Showing <b>${n.toLocaleString()}</b> mixers${state.cap < 1000 ? ` with bias ≤ ${state.cap}` : ""}. Best in view: <span class="mono">${best.spec}</span> at <b>${fmtBias(best.bias)}</b>. The top strip compares the best <b>${nTop}</b> with the other <b>${(n - nTop).toLocaleString()}</b>.` : "No mixers in this view.";
+    // legends
+    $("bc-legend").innerHTML = state.mode === "value"
+      ? `<span><span class="sw" style="background:var(--bit1)"></span>bit = 1</span><span><span class="sw" style="background:var(--bit0);box-shadow:inset 0 0 0 1px var(--axis)"></span>bit = 0</span>`
+      : `<span><span class="sw" style="background:var(--diff)"></span>differs from reference</span><span><span class="sw" style="background:var(--same);box-shadow:inset 0 0 0 1px var(--axis)"></span>same</span>`;
+    $("sc-legend").innerHTML = `<span><span class="dot" style="background:var(--hl)"></span>${ORIGINS[state.hl]}</span><span><span class="dot" style="background:var(--other)"></span>Everything else</span><span><span class="dot" style="background:none;box-shadow:inset 0 0 0 2px var(--ink)"></span>Reference</span>`;
+    renderTable();
+    persist();
+    draw();
+  }
+
+  function renderTable() {
+    const rows = view.slice(0, 50).map((m, r) => `<tr class="pick" data-i="${m.i}" title="Click to use as reference"><td class="num">${r + 1}</td><td class="mono">${m.spec}</td><td class="mono">${m.bias}</td><td class="num">${dist(m)}</td><td>${ORIGINS[m.origin]}</td></tr>`);
+    $("tbody").innerHTML = rows.join("");
+  }
+
+  // ---------- canvas helpers ----------
+  function sizeCanvas(cv, w, h) {
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    cv.style.width = w + "px"; cv.style.height = h + "px";
+    const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); return ctx;
+  }
+  const monoFont = (px) => `${px}px "IBM Plex Mono", ui-monospace, Consolas, monospace`;
+  const sansFont = (px, w = 400) => `${w} ${px}px "IBM Plex Sans", "Segoe UI", system-ui, sans-serif`;
+
+  // ---------- barcode ----------
+  let BC = null; // layout cache
+  function barcodeLayout(W) {
+    const L = 44, gapMul = 14, BW = Math.max(72, Math.min(190, Math.round(W * 0.2)));
+    const gapsPerMul = 6 * 1 + 3; // nibble gaps, plus a wider half gap
+    const colW = Math.max(3, Math.floor((W - L - BW - 18 - gapMul - 2 * gapsPerMul) / 64));
+    const colX = []; let x = L;
+    for (let c = 0; c < 64; c++) {
+      if (c === 32) x += gapMul;
+      else if (c % 16 === 0 && c) {}
+      if (c % 32 === 16) x += 3; else if (c % 4 === 0 && c % 32 !== 0) x += 1;
+      colX.push(x); x += colW;
+    }
+    const gridR = x, bx0 = gridR + 18, bx1 = W - 6;
+    return { L, colW, colX, gridR, bx0, bx1 };
+  }
+
+  function biasScale(lo, hi) {
+    const a = Math.log10(lo), b = Math.log10(hi);
+    return (v, x0, x1) => x0 + (Math.log10(v) - a) / (b - a || 1) * (x1 - x0);
+  }
+  function niceLogTicks(lo, hi) {
+    for (const ms of [[1, 2, 5], [1, 1.5, 2, 3, 5, 7], [1, 1.2, 1.4, 1.6, 1.8, 2, 2.5, 3, 4, 5, 6, 8]]) {
+      const out = [];
+      for (let e = -2; e <= 2; e++) for (const f of ms) { const v = +(f * 10 ** e).toPrecision(3); if (v >= lo * 0.999 && v <= hi * 1.001) out.push(v); }
+      if (out.length >= 4) return out;
+    }
+    return [lo, hi];
+  }
+
+  function drawBarcode() {
+    const box = $("bc-box"), W = Math.max(300, box.clientWidth);
+    const L = barcodeLayout(W); BC = L;
+    const n = view.length;
+    const maxH = 760;
+    const rowH = n ? Math.min(10, maxH / n) : 1;
+    const H = n ? Math.max(40, Math.round(Math.min(maxH, n * Math.max(rowH, 1)))) : 40;
+    BC.H = H; BC.n = n;
+    const ref = words(ALL[state.ref]);
+    const val = (m, c) => { const w = words(m), b = bitAt(w, c); return state.mode === "value" ? b : b ^ bitAt(ref, c); };
+    const c0 = state.mode === "value" ? colors.rgb0 : colors.rgbSame;
+    const c1 = state.mode === "value" ? colors.rgb1 : colors.rgbDiff;
+    const lo = n ? Math.min(0.1, view[0].bias) : 0.1, hi = n ? Math.max(0.12, view[n - 1].bias) : 1;
+    const xs = biasScale(lo, hi);
+
+    // main grid
+    const ctx = sizeCanvas($("bc-main"), W, H + 4);
+    ctx.fillStyle = colors.surface; ctx.fillRect(0, 0, W, H + 4);
+    if (n) {
+      const per = H / n;
+      if (per >= 1.5) {
+        for (let r = 0; r < n; r++) {
+          const y0 = Math.floor(r * per), y1 = Math.floor((r + 1) * per), h = Math.max(1, y1 - y0 - (per >= 4 ? 1 : 0));
+          const m = view[r];
+          for (let c = 0; c < 64; c++) { ctx.fillStyle = val(m, c) ? `rgb(${c1})` : `rgb(${c0})`; ctx.fillRect(L.colX[c], y0, L.colW, h); }
+          ctx.fillStyle = colors["ink-2"];
+          ctx.fillRect(L.bx0, y0, Math.max(1, xs(m.bias, L.bx0, L.bx1) - L.bx0), h);
+        }
+      } else {
+        // more rows than pixels: each pixel row shows the share of 1s in its bin
+        const acc = new Float32Array(64);
+        for (let y = 0; y < H; y++) {
+          const a = Math.floor(y * n / H), b = Math.max(a + 1, Math.floor((y + 1) * n / H));
+          acc.fill(0);
+          for (let r = a; r < b; r++) for (let c = 0; c < 64; c++) acc[c] += val(view[r], c);
+          for (let c = 0; c < 64; c++) { ctx.fillStyle = mix(c0, c1, acc[c] / (b - a)); ctx.fillRect(L.colX[c], y, L.colW, 1); }
+          ctx.fillStyle = colors["ink-2"];
+          ctx.fillRect(L.bx0, y, Math.max(1, xs(view[a].bias, L.bx0, L.bx1) - L.bx0), 1);
+        }
+      }
+      // bias gridlines over the bar column
+      ctx.strokeStyle = colors.grid; ctx.lineWidth = 1;
+      for (const t of niceLogTicks(lo, hi)) { const x = Math.round(xs(t, L.bx0, L.bx1)) + 0.5; ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+      // rank axis
+      ctx.fillStyle = colors.muted; ctx.font = monoFont(10); ctx.textAlign = "right"; ctx.textBaseline = "middle";
+      const step = niceStep(n, H);
+      for (let r = 0; r < n; r += step) { const y = (r + 0.5) * H / n; ctx.fillText(String(r + 1), L.L - 8, Math.min(H - 5, Math.max(5, y))); }
+      // reference row + hover row markers
+      const refRow = view.findIndex(m => m.i === state.ref);
+      const mark = (r, color, wdt) => {
+        if (r < 0) return; const y0 = r * H / n, y1 = (r + 1) * H / n;
+        ctx.strokeStyle = color; ctx.lineWidth = wdt;
+        ctx.strokeRect(L.colX[0] - 2.5, Math.max(0.5, y0 - 1.5), L.gridR - L.colX[0] + 5, Math.max(3, y1 - y0 + 3));
+      };
+      mark(refRow, colors.ink, 2);
+      if (state.hoverRow >= 0 && state.hoverRow < n) mark(state.hoverRow, colors.muted, 1.5);
+    }
+
+    // top strip: enrichment + labels
+    const TH = 112;
+    const t = sizeCanvas($("bc-top"), W, TH);
+    t.fillStyle = colors.surface; t.fillRect(0, 0, W, TH);
+    const zeroY = 64, amp = 26;
+    t.font = sansFont(12, 600); t.fillStyle = colors.ink; t.textBaseline = "alphabetic"; t.textAlign = "left";
+    t.fillText("m0", L.colX[0], 13); t.fillText("m1", L.colX[32], 13);
+    t.font = sansFont(11); t.fillStyle = colors.muted; t.textAlign = "center";
+    for (const base of [0, 32]) {
+      t.fillText("high 16", (L.colX[base] + L.colX[base + 15] + L.colW) / 2, 29);
+      t.fillText("low 16", (L.colX[base + 16] + L.colX[base + 31] + L.colW) / 2, 29);
+    }
+    t.strokeStyle = colors.axis; t.lineWidth = 1;
+    t.beginPath(); t.moveTo(L.colX[0], zeroY + 0.5); t.lineTo(L.gridR, zeroY + 0.5); t.stroke();
+    t.font = monoFont(10); t.fillStyle = colors.muted; t.textAlign = "right"; t.textBaseline = "middle";
+    t.fillText("+1", L.L - 8, zeroY - amp); t.fillText("0", L.L - 8, zeroY); t.fillText("−1", L.L - 8, zeroY + amp);
+    BC.enrich = new Array(64).fill(null);
+    if (n >= 10) {
+      const k = Math.max(5, Math.round(n * 0.1));
+      for (let c = 0; c < 64; c++) {
+        let top = 0, rest = 0;
+        for (let r = 0; r < n; r++) { const v = val(view[r], c); if (r < k) top += v; else rest += v; }
+        const pt = top / k, pr = rest / (n - k), d = pt - pr;
+        BC.enrich[c] = { pt, pr, d };
+        const h = Math.round(Math.abs(d) * amp);
+        t.fillStyle = d >= 0 ? colors.up : colors.down;
+        if (h > 0) t.fillRect(L.colX[c], d >= 0 ? zeroY - h : zeroY + 1, L.colW, h);
+      }
+    }
+    // bit numbers
+    t.textAlign = "center"; t.textBaseline = "alphabetic"; t.fillStyle = colors.muted; t.font = monoFont(10);
+    for (const base of [0, 32]) for (const b of [31, 24, 16, 8, 0]) {
+      if (L.colW < 6 && (b === 24 || b === 8)) continue;
+      const c = base + 31 - b; t.fillText(String(b), L.colX[c] + L.colW / 2, TH - 6);
+    }
+    // bias axis labels
+    t.textAlign = "center";
+    for (const tk of niceLogTicks(lo, hi)) t.fillText(String(tk), xs(tk, L.bx0, L.bx1), TH - 6);
+    t.textAlign = "left"; t.font = sansFont(11); t.fillText("bias (log)", L.bx0, 13);
+    BC.TH = TH;
+  }
+
+  function niceStep(n, H) {
+    const want = Math.max(1, Math.round(n / (H / 48)));
+    for (const s of [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000]) if (s >= want) return s;
+    return 1000;
+  }
+
+  function bindBarcode() {
+    const main = $("bc-main"), top = $("bc-top"), tip = $("bc-tip"), box = $("bc-box");
+    const rowAt = (e) => { const r = main.getBoundingClientRect(); const y = e.clientY - r.top; return BC && BC.n ? Math.min(BC.n - 1, Math.max(0, Math.floor(y * BC.n / BC.H))) : -1; };
+    const colAt = (x) => { if (!BC) return -1; for (let c = 0; c < 64; c++) if (x >= BC.colX[c] - 1 && x < BC.colX[c] + BC.colW + 1) return c; return -1; };
+    const place = (e) => {
+      const br = box.getBoundingClientRect();
+      let x = e.clientX - br.left + 14, y = e.clientY - br.top + 14;
+      tip.hidden = false;
+      const tw = tip.offsetWidth, th = tip.offsetHeight;
+      if (x + tw > br.width) x = Math.max(0, e.clientX - br.left - tw - 14);
+      if (y + th > br.height) y = Math.max(0, e.clientY - br.top - th - 14);
+      tip.style.left = x + "px"; tip.style.top = y + "px";
+    };
+    main.addEventListener("pointermove", (e) => {
+      const r = rowAt(e); if (r < 0) return;
+      const m = view[r], br = main.getBoundingClientRect(), c = colAt(e.clientX - br.left);
+      const negNote = state.fold && (m.f0 !== m.m0 || m.f1 !== m.m1)
+        ? `<div class="k">shown folded: ${m.f0 !== m.m0 ? "m0 → −m0 " : ""}${m.f1 !== m.m1 ? "m1 → −m1" : ""}</div>` : "";
+      const bitNote = c >= 0 ? `<div class="k">${c < 32 ? "m0" : "m1"} bit ${31 - (c % 32)} = ${bitAt(words(m), c)}</div>` : "";
+      const binNote = BC.H / BC.n < 1.5 ? `<div class="k">this pixel row averages ~${Math.ceil(BC.n / BC.H)} mixers</div>` : "";
+      tip.innerHTML = `<div class="mono">${m.spec}</div><div>bias <b class="mono">${m.bias}</b> · rank ${r + 1}</div><div class="k">${ORIGINS[m.origin]} · ${dist(m)} bits from ref.</div>${bitNote}${negNote}${binNote}`;
+      place(e);
+      if (state.hoverRow !== r) { state.hoverRow = r; state.hoverPt = m.i; drawBarcode(); drawScatter(); }
+    });
+    main.addEventListener("pointerleave", () => { tip.hidden = true; state.hoverRow = -1; state.hoverPt = -1; drawBarcode(); drawScatter(); });
+    main.addEventListener("click", (e) => { const r = rowAt(e); if (r >= 0) setRef(view[r].i); });
+    top.addEventListener("pointermove", (e) => {
+      const br = top.getBoundingClientRect(), c = colAt(e.clientX - br.left);
+      if (c < 0 || !BC.enrich[c]) { tip.hidden = true; return; }
+      const s = BC.enrich[c], what = state.mode === "value" ? "bit = 1" : "differs from ref.";
+      tip.innerHTML = `<div><b>${c < 32 ? "m0" : "m1"} bit ${31 - (c % 32)}</b> (${(c % 32) < 16 ? "high" : "low"} half)</div><div>${what}: best 10% <b class="mono">${(s.pt * 100).toFixed(0)}%</b>, rest <b class="mono">${(s.pr * 100).toFixed(0)}%</b></div><div class="k">difference ${s.d >= 0 ? "+" : "−"}${Math.abs(s.d).toFixed(2)}</div>`;
+      place(e);
+    });
+    top.addEventListener("pointerleave", () => { tip.hidden = true; });
+  }
+
+  // ---------- scatter ----------
+  let SC = null;
+  function drawScatter() {
+    const box = $("sc-box"), W = Math.max(300, box.clientWidth), H = W < 560 ? 320 : 400;
+    const ctx = sizeCanvas($("sc"), W, H);
+    const m = { l: 62, r: 14, t: 12, b: 40 };
+    ctx.fillStyle = colors.surface; ctx.fillRect(0, 0, W, H);
+    const n = view.length; if (!n) { SC = null; return; }
+    const ds = view.map(dist);
+    const dmax = Math.max(4, ...ds);
+    const lo = Math.min(0.1, view[0].bias) * 0.97, hi = Math.max(0.12, view[n - 1].bias) * 1.02;
+    const ys = (v) => m.t + (1 - (Math.log10(v) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo))) * (H - m.t - m.b);
+    const xs = (d) => m.l + d / dmax * (W - m.l - m.r);
+    // grid + axes
+    ctx.strokeStyle = colors.grid; ctx.lineWidth = 1; ctx.font = monoFont(10); ctx.fillStyle = colors.muted;
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (const t of niceLogTicks(lo, hi)) { const y = Math.round(ys(t)) + 0.5; ctx.beginPath(); ctx.moveTo(m.l, y); ctx.lineTo(W - m.r, y); ctx.stroke(); ctx.fillText(String(t), m.l - 14, y); }
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    const xstep = dmax > 40 ? 8 : dmax > 16 ? 4 : 2;
+    for (let d = 0; d <= dmax; d += xstep) ctx.fillText(String(d), xs(d), H - m.b + 8);
+    ctx.strokeStyle = colors.axis; ctx.beginPath(); ctx.moveTo(m.l, H - m.b + 0.5); ctx.lineTo(W - m.r, H - m.b + 0.5); ctx.stroke();
+    ctx.fillStyle = colors["ink-2"]; ctx.font = sansFont(12);
+    ctx.fillText(`differing multiplier bits (${state.dist === "all" ? "all 64" : state.dist === "low" ? "low 16 of m0 and m1" : "high 16 of m0 and m1"})`, (m.l + W - m.r) / 2, H - 16);
+    ctx.save(); ctx.translate(14, (m.t + H - m.b) / 2); ctx.rotate(-Math.PI / 2); ctx.textBaseline = "middle"; ctx.fillText("bias (log)", 0, 0); ctx.restore();
+
+    // deterministic jitter so integer distances don't stack
+    const jit = (i) => (((i * 2654435761) >>> 0) / 4294967296 - 0.5) * 0.6;
+    const pts = view.map((mx, k) => ({ i: mx.i, x: xs(ds[k] + jit(mx.i)), y: ys(mx.bias), hl: mx.origin === state.hl }));
+    const pos = new Map(pts.map(p => [p.i, p]));
+    if (state.steps) {
+      ctx.strokeStyle = colors.muted; ctx.globalAlpha = 0.45; ctx.lineWidth = 1;
+      for (const [a, b] of EDGES) { const p = pos.get(a), q = pos.get(b); if (!p || !q) continue; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+    }
+    const dot = (p, fill, r) => { ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fillStyle = fill; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = colors.surface; ctx.stroke(); };
+    for (const p of pts) if (!p.hl) dot(p, colors.other, 3);
+    for (const p of pts) if (p.hl) dot(p, colors.hl, 3.5);
+    const ring = (p, color, r, w) => { if (!p) return; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.stroke(); };
+    ring(pos.get(state.ref), colors.ink, 7, 2);
+    if (state.hoverPt >= 0) ring(pos.get(state.hoverPt), colors.ink, 5.5, 1.5);
+    SC = { pts, ds, viewIndex: new Map(view.map((mx, k) => [mx.i, k])) };
+  }
+
+  function bindScatter() {
+    const cv = $("sc"), tip = $("sc-tip"), box = $("sc-box");
+    const nearest = (e) => {
+      if (!SC) return null; const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+      let best = null, bd = 144;
+      for (const p of SC.pts) { const d = (p.x - x) ** 2 + (p.y - y) ** 2; if (d < bd) { bd = d; best = p; } }
+      return best;
+    };
+    cv.addEventListener("pointermove", (e) => {
+      const p = nearest(e);
+      if (!p) { tip.hidden = true; if (state.hoverPt !== -1) { state.hoverPt = -1; state.hoverRow = -1; drawScatter(); drawBarcode(); } return; }
+      const mx = ALL[p.i], k = SC.viewIndex.get(p.i);
+      tip.innerHTML = `<div class="mono">${mx.spec}</div><div>bias <b class="mono">${mx.bias}</b> · rank ${k + 1}</div><div class="k">${ORIGINS[mx.origin]} · ${SC.ds[k]} bits from ref.</div>`;
+      const br = box.getBoundingClientRect();
+      tip.hidden = false;
+      let x = e.clientX - br.left + 14, y = e.clientY - br.top + 14;
+      if (x + tip.offsetWidth > br.width) x = Math.max(0, e.clientX - br.left - tip.offsetWidth - 14);
+      if (y + tip.offsetHeight > br.height) y = Math.max(0, e.clientY - br.top - tip.offsetHeight - 14);
+      tip.style.left = x + "px"; tip.style.top = y + "px";
+      if (state.hoverPt !== p.i) { state.hoverPt = p.i; state.hoverRow = k; drawScatter(); drawBarcode(); }
+    });
+    cv.addEventListener("pointerleave", () => { tip.hidden = true; state.hoverPt = -1; state.hoverRow = -1; drawScatter(); drawBarcode(); });
+    cv.addEventListener("click", (e) => { const p = nearest(e); if (p) setRef(p.i); });
+  }
+
+  function draw() { if (!ALL.length) return; drawBarcode(); drawScatter(); }
+})();
+</script>
