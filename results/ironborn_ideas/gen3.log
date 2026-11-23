@@ -83,3 +83,21 @@ best [16 22fcd535 15 535a35a7 15]  score 0.1159894342
 race half [16 02fcd535 15 535a3597 15] seed#1 (exact 0.11960)
 best [16 50fccd35 15 535a3597 15]  score 0.1067421125
 race half [16 02fcd535 15 535a3597 15] seed#2 (exact 0.11960)
+56 parents, 39 core pairs, top 16 used for half/uniform
+children: whole=1105, half=500, uniform=500
+screen done
+race half [16 02fcd535 15 535a3597 15] seed#2 (exact 0.11960)
+best [16 18fcd535 15 cb5e3597 15]  score 0.1119446936
+race uniform [16 1bfcd535 15 b75a3597 15] seed#0 (exact 0.12245)
+best [16 9efcd535 15 eb5a3597 15]  score 0.1148390644
+race uniform [16 1bfcd535 15 b75a3597 15] seed#1 (exact 0.12245)
+best [16 18fcd535 15 cb5e3597 15]  score 0.1119446936
+race uniform [16 1bfcd535 15 b75a3597 15] seed#2 (exact 0.12245)
+best [16 2bfcd535 15 b35a2d97 15]  score 0.1105998669
+race uniform [16 abf8ad2d 15 535a2d97 15] seed#0 (exact 0.13078)
+best [16 6bf8ad2d 15 db5a2d97 15]  score 0.1247863083
+race uniform [16 abf8ad2d 15 535a2d97 15] seed#1 (exact 0.13078)
+best [16 6bf8ad2d 15 db5a2d97 15]  score 0.1247863083
+race uniform [16 abf8ad2d 15 535a2d97 15] seed#2 (exact 0.13078)
+best [16 6bf8ad2d 15 db5a2d97 15]  score 0.1247863083
+gen3 done

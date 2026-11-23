@@ -24,3 +24,7 @@
 [2026-11-22 18:19:50] gen3 (whole/half/uniform, RACE=2 x SEEDS=3)
 [2026-11-22 21:32:58] gen3 exit 127
 [2026-11-22 21:33:08] gen3 paused by user (11/18 races done; half 02fcd535 seed#2 interrupted; rerun queue_crossover_gen3.sh to resume)
+[2026-11-22 21:59:27] gen3 (whole/half/uniform, RACE=2 x SEEDS=3)
+[2026-11-23 00:06:37] gen3 exit 0
+[2026-11-23 00:07:03] core list (39 specs, RACE=5 x SEEDS=2)
+[2026-11-23 03:52:18] core list exit 0

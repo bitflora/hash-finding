@@ -876,7 +876,7 @@ seeds 81–90). The results are 0.10207, 0.10799, 0.10813, 0.10959, 0.10998,
 - The §5 variations (finer crossover, other shift templates, several seeds
   per child) target the second reading.
 
-### F23. Crossover generation 3 (partial): half-swap children reach 0.10091, a new best bias but with worse BIC (exact, two independent counters)
+### F23. Crossover generation 3: half-swap children reach 0.10091, a new best bias but with worse BIC (exact, two independent counters)
 
 Generation 3 tries FINDINGS §5 variations 1 (finer crossover) and 6 (several
 race seeds per child): `analysis/crossover_gen3.py`, outputs in
@@ -886,7 +886,7 @@ race winners (56; `gen3_parents.csv`). Three child kinds, kept apart:
 16 bits of one top-16 parent | low 16 bits of another; 500 sampled) and
 *uniform* (per-bit random mix of two top-16 parents; 500 sampled). Each kind:
 2^26 screen, exact top 12, race the 2 best distinct-core children with 3 seeds.
-Paused by the user at 11 of 18 races (uniform races not yet run).
+All 18 races done (2026-11-23; paused once at 11/18 and resumed).
 
 - Best exact score before racing: half 0.1135, whole 0.1153, uniform 0.1225
   (most uniform children 0.142-0.153: random bit mixing breaks the parents' structure).
@@ -897,7 +897,9 @@ Paused by the user at 11 of 18 races (uniform races not yet run).
   | whole | `[16 d8433535 15 d35a2d97 15]` (0.11533) | 0.10748 | 0.10848 | 0.11169 |
   | whole | `[16 d00332d3 15 b15a3597 15]` (0.11672) | 0.10490 | 0.10464 | 0.10490 |
   | half | `[16 d40332d3 15 b35a3597 15]` (0.11350) | **0.10091** | 0.10214 | 0.10800 |
-  | half | `[16 02fcd535 15 535a3597 15]` (0.11960) | 0.11599 | 0.10674 | (interrupted) |
+  | half | `[16 02fcd535 15 535a3597 15]` (0.11960) | 0.11599 | 0.10674 | 0.11194 |
+  | uniform | `[16 1bfcd535 15 b75a3597 15]` (0.12245) | 0.11484 | 0.11194 | 0.11060 |
+  | uniform | `[16 abf8ad2d 15 535a2d97 15]` (0.13078) | 0.12479 | 0.12479 | 0.12479 |
 
 - **`[16 b20332d3 15 d21a3597 15]` = 0.10091140751290814**, 1.1% below F21's
   0.10206799761502400. Confirmed by both exact counters (`mixlab eval --exact`
@@ -912,8 +914,38 @@ Paused by the user at 11 of 18 races (uniform races not yet run).
   0.1067-0.1160; a single seed would have missed the new best. Conversely the
   `d00332d3` child's seeds 0 and 2 converged to the same mixer, so its ~0.1047
   is that family's floor, not bad luck.
-- Half crossover beat whole crossover on both finalists' best seeds; uniform is
-  untested in racing but its starts are much weaker.
+- By kind (best seed): half 0.10091, whole 0.10464, uniform 0.11060. Half-swap
+  crossover is the useful finer variant; uniform bit mixing gives weak starts
+  and weak finishes. Different starts converge: half seed 2 and uniform seed 1
+  both ended at `[16 18fcd535 15 cb5e3597 15]` (0.11194), and all three seeds
+  of the last uniform child ended at the same mixer.
+
+### F24. 39 hand-picked core pairings: no new record; best race 0.10477 (exact; 2 seeds each)
+
+A reviewer-supplied list of 39 m0/m1 core pairings whose cores had only been
+tried with their own partners (heavy on m1 `34d7`, `35a7`, `5269` and m0
+`2aad`); `results/ironborn_ideas/core_list.csv`, run by `analysis/race_list.py`
+(exact-score all, race the best 5 distinct core pairs with 2 seeds each).
+
+- Exact starting scores: 0.1222-0.2120, median 0.1446. Weaker than gen-3
+  crossover starts (0.1135 best): by m1 core, `35a7` 0.1222-0.1838,
+  `34d7` 0.1257-0.2120, `5269` 0.1302-0.1600; every `2aad` m0 pairing
+  0.1349 or worse.
+- Races (exact):
+
+  | start (exact) | seed 0 | seed 1 |
+  |---|---|---|
+  | `[16 02fccd35 15 535a35a7 15]` (0.12217) | 0.11358 | 0.11276 |
+  | `[16 02fccd35 15 735a34d7 15]` (0.12573) | **0.10477** | 0.11054 |
+  | `[16 9c013335 15 735a34d7 15]` (0.12597) | 0.10556 | 0.11509 |
+  | `[16 8bf8d535 15 ed21ad97 15]` (0.13018) | 0.11318 | 0.11547 |
+  | `[16 dbfad52d 15 535a35a7 15]` (0.13068) | 0.11203 | 0.11169 |
+
+- Best: `[16 54fccd35 15 535a34d7 15]` = 0.10477, near gen 2's 0.10447 but
+  short of F21 (0.10207) and F23 (0.10091). The `34d7` m1 core does pair
+  well outside its own family (two finishes under 0.106), but the gain over
+  each family's own best is small.
+- Seed spread again large (up to 0.0095 between seeds of one child).
 
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
