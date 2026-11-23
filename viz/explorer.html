@@ -23,6 +23,8 @@
   --hl: #2a78d6;
   --other: #b9b7ae;
   --accent: #2a78d6;
+  --empty: #efeee9;
+  --r0: #cde2fb; --r1: #9ec5f4; --r2: #6da7ec; --r3: #3987e5; --r4: #256abf; --r5: #184f95; --r6: #0d366b;
   --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
   --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
@@ -33,6 +35,8 @@
     --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
     --bit0: #262624; --bit1: #6da7ec; --same: #262624; --diff: #ec835a;
     --up: #3987e5; --down: #e66767; --hl: #3987e5; --other: #4a4946; --accent: #6da7ec;
+    --empty: #232321;
+    --r0: #104281; --r1: #1c5cab; --r2: #2a78d6; --r3: #5598e7; --r4: #86b6ef; --r5: #b7d3f6; --r6: #e6f0fd;
     color-scheme: dark;
   }
 }
@@ -41,6 +45,8 @@
   --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
   --bit0: #262624; --bit1: #6da7ec; --same: #262624; --diff: #ec835a;
   --up: #3987e5; --down: #e66767; --hl: #3987e5; --other: #4a4946; --accent: #6da7ec;
+  --empty: #232321;
+  --r0: #104281; --r1: #1c5cab; --r2: #2a78d6; --r3: #5598e7; --r4: #86b6ef; --r5: #b7d3f6; --r6: #e6f0fd;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -59,10 +65,10 @@ h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(26px, 
 h2 { font-family: var(--font-display); font-weight: 500; font-size: 20px; margin: 0; text-wrap: balance; }
 .lede { color: var(--ink-2); max-width: 68ch; margin: 0; }
 code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
-.controls {
+.controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: end; }
+.wrap > .controls {
   position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
   background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--grid);
-  display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: end;
 }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
 .ctl { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
@@ -111,6 +117,12 @@ tr.pick:hover td { background: var(--bg); }
 .notes h3 { font-family: var(--font-display); font-weight: 500; font-size: 15px; color: var(--ink); margin: 0 0 4px; }
 .notes p { margin: 0; }
 .status { color: var(--muted); font-size: 14px; }
+.cm-scroll { overflow-x: auto; max-width: 100%; }
+.ramp { display: inline-block; width: 120px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-inline: 6px;
+  background: linear-gradient(90deg, var(--r0), var(--r1), var(--r2), var(--r3), var(--r4), var(--r5), var(--r6)); }
+.subhead { font-family: var(--font-display); font-weight: 500; font-size: 16px; margin: 8px 0 0; }
+.sel-all { user-select: all; }
+.row-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 </style>
 
 <div class="wrap">
@@ -185,6 +197,41 @@ tr.pick:hover td { background: var(--bg); }
     </div>
   </section>
 
+  <section class="panel" aria-labelledby="cm-title">
+    <div class="panel-head">
+      <h2 id="cm-title">Core matrix</h2>
+      <div class="legend" id="cm-legend"></div>
+    </div>
+    <div class="controls" style="position: static; border: 0; padding: 0; background: none;">
+      <div class="ctl"><span>Order cores by</span>
+        <div class="seg" role="group" aria-label="Order cores by">
+          <button id="o-best" type="button" aria-pressed="true">Best bias</button>
+          <button id="o-count" type="button" aria-pressed="false">Mixers scored</button>
+        </div>
+      </div>
+      <label class="ctl"><span>Cores shown</span><select id="minc">
+        <option value="1">All cores</option>
+        <option value="2">Cores with 2+ mixers</option>
+        <option value="3">Cores with 3+ mixers</option>
+      </select></label>
+    </div>
+    <p class="hint">A core is a multiplier's low 16 bits. Columns are m0 cores and rows are m1 cores, best first, so the strong region sits top-left. Each cell is coloured by the best exact bias of any mixer with that pair of cores. Blank cells were never tried at this shift template; a dot means the pair was only screened with sampled scores. This chart uses every mixer for the template; the bias range filter only caps the colour scale. With negation folded, a core and its negation (c and c XOR 0xfffe) count as one. Hover a cell for details; click a scored cell to make its best mixer the reference.</p>
+    <p class="summary" id="cm-summary"></p>
+    <div class="canvas-box" id="cm-wrap">
+      <div class="cm-scroll" id="cm-box"><canvas id="cm" aria-label="Matrix of m0 core by m1 core coloured by best bias"></canvas></div>
+      <div class="tip" id="cm-tip" hidden></div>
+    </div>
+    <h3 class="subhead">Untried pairs of strong cores</h3>
+    <div class="row-actions">
+      <p class="hint">Pairs among the 12 best m0 and 12 best m1 cores that appear nowhere in results/, not even in a sampled screen, ranked by the sum of the two cores' best biases. That ranking is a rough heuristic. Each child takes m0 from the best mixer with that m0 core and m1 from the best mixer with that m1 core: one whole-multiplier crossover.</p>
+      <button id="copy-untried" type="button">Copy specs</button>
+    </div>
+    <div class="table-box"><table>
+      <thead><tr><th>#</th><th>m0 core</th><th>Best with it</th><th>m1 core</th><th>Best with it</th><th>Suggested child</th></tr></thead>
+      <tbody id="untried"></tbody>
+    </table></div>
+  </section>
+
   <details id="tbl">
     <summary>Table: the best 50 in this view</summary>
     <div class="table-box"><table>
@@ -205,8 +252,8 @@ tr.pick:hover td { background: var(--bg); }
   const RECORD = "[16 21f0aaad 15 735a2d97 15]";
   const BEST = "[16 9c013335 15 335a2d97 15]";
   const $ = (id) => document.getElementById(id);
-  const state = { tmpl: "16,15,15", mode: "value", fold: true, ref: -1, dist: "all", hl: 2, cap: 0.3, steps: false, hoverRow: -1, hoverPt: -1 };
-  let ALL = [], ORIGINS = [], EDGES = [], view = [], colors = {};
+  const state = { tmpl: "16,15,15", mode: "value", fold: true, ref: -1, dist: "all", hl: 2, cap: 0.3, order: "best", minc: 1, steps: false, hoverRow: -1, hoverPt: -1 };
+  let ALL = [], ORIGINS = [], EDGES = [], SCREENED = {}, view = [], colors = {};
 
   const pc = (x) => { x = x - ((x >>> 1) & 0x55555555); x = (x & 0x33333333) + ((x >>> 2) & 0x33333333); return Math.imul((x + (x >>> 4)) & 0x0f0f0f0f, 0x01010101) >>> 24; };
   const fold = (m) => (m & 0x80000000) ? (m ^ 0xfffffffe) >>> 0 : m;
@@ -217,16 +264,17 @@ tr.pick:hover td { background: var(--bg); }
 
   function readColors() {
     const cs = getComputedStyle(document.documentElement);
-    const names = ["surface","ink","ink-2","muted","grid","axis","bit0","bit1","same","diff","up","down","hl","other"];
+    const names = ["surface","ink","ink-2","muted","grid","axis","bit0","bit1","same","diff","up","down","hl","other","empty","r0","r1","r2","r3","r4","r5","r6"];
     for (const n of names) colors[n] = cs.getPropertyValue("--" + n).trim();
     const rgb = (h) => [1,3,5].map(i => parseInt(h.slice(i, i + 2), 16));
     colors.rgb0 = rgb(colors.bit0); colors.rgb1 = rgb(colors.bit1);
     colors.rgbSame = rgb(colors.same); colors.rgbDiff = rgb(colors.diff);
+    colors.ramp = [0,1,2,3,4,5,6].map(k => rgb(colors["r" + k]));
   }
   const mix = (a, b, t) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(",")})`;
 
   // ---------- data ----------
-  fetch("explored32.json").then(r => r.json()).then(init).catch(() => {
+  fetch("explored32.json", { cache: "no-cache" }).then(r => r.json()).then(init).catch(() => {
     $("summary").textContent = "The data file explored32.json could not be loaded. Run analysis/collect_explored32.py --json and republish it next to this page.";
   });
 
@@ -238,7 +286,7 @@ tr.pick:hover td { background: var(--bg); }
         bias: m[5], origin: m[6], nsrc: m[7], tmpl: `${m[0]},${m[2]},${m[4]}`,
         spec: `[${m[0]} ${m[1]} ${m[2]} ${m[3]} ${m[4]}]` };
     });
-    EDGES = d.edges;
+    EDGES = d.edges; SCREENED = d.screened || {};
     const counts = {};
     for (const m of ALL) counts[m.tmpl] = (counts[m.tmpl] || 0) + 1;
     const tm = Object.entries(counts).sort((a, b) => b[1] - a[1]);
@@ -249,19 +297,23 @@ tr.pick:hover td { background: var(--bg); }
     state.bestIdx = bySpec[BEST] ?? 0; state.recordIdx = bySpec[RECORD] ?? 0;
     // restore per-viewer preferences
     const saved = load("prefs") || {};
-    for (const k of ["tmpl","mode","fold","dist","hl","steps","cap"]) if (saved[k] !== undefined) state[k] = saved[k];
+    for (const k of ["tmpl","mode","fold","dist","hl","steps","cap","order","minc"]) if (saved[k] !== undefined) state[k] = saved[k];
     if (!counts[state.tmpl] && state.tmpl !== "all") state.tmpl = "16,15,15";
     state.ref = typeof saved.ref === "string" && bySpec[saved.ref] !== undefined ? bySpec[saved.ref] : state.bestIdx;
     wire(); readColors(); refresh();
   }
 
   function persist() {
-    save("prefs", { cap: state.cap, tmpl: state.tmpl, mode: state.mode, fold: state.fold, dist: state.dist, hl: state.hl, steps: state.steps, ref: ALL[state.ref].spec });
+    save("prefs", { order: state.order, minc: state.minc, cap: state.cap, tmpl: state.tmpl, mode: state.mode, fold: state.fold, dist: state.dist, hl: state.hl, steps: state.steps, ref: ALL[state.ref].spec });
   }
 
   function wire() {
-    $("tmpl").value = state.tmpl; $("cap").value = String(state.cap); $("fold").checked = state.fold; $("hl").value = String(state.hl); $("steps").checked = state.steps;
+    $("tmpl").value = state.tmpl; $("cap").value = String(state.cap); $("minc").value = String(state.minc); $("fold").checked = state.fold; $("hl").value = String(state.hl); $("steps").checked = state.steps;
     $("tmpl").addEventListener("change", e => { state.tmpl = e.target.value; refresh(); });
+    $("minc").addEventListener("change", e => { state.minc = +e.target.value; refresh(); });
+    $("o-best").addEventListener("click", () => { state.order = "best"; refresh(); });
+    $("o-count").addEventListener("click", () => { state.order = "count"; refresh(); });
+    $("copy-untried").addEventListener("click", copyUntried);
     $("cap").addEventListener("change", e => { state.cap = +e.target.value; refresh(); });
     $("fold").addEventListener("change", e => { state.fold = e.target.checked; refresh(); });
     $("hl").addEventListener("change", e => { state.hl = +e.target.value; refresh(); });
@@ -277,7 +329,7 @@ tr.pick:hover td { background: var(--bg); }
     mq.addEventListener?.("change", rerender);
     new MutationObserver(rerender).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     let t; addEventListener("resize", () => { clearTimeout(t); t = setTimeout(draw, 80); });
-    bindBarcode(); bindScatter();
+    bindBarcode(); bindScatter(); bindMatrix();
   }
 
   function setRef(i) { state.ref = i; refresh(); }
@@ -295,6 +347,8 @@ tr.pick:hover td { background: var(--bg); }
     view = ALL.filter(m => (state.tmpl === "all" || m.tmpl === state.tmpl) && m.bias <= state.cap);
     for (const [k, el] of [["value", "mode-value"], ["diff", "mode-diff"]]) $(el).setAttribute("aria-pressed", String(state.mode === k));
     for (const k of ["all","low","high"]) $("d-" + k).setAttribute("aria-pressed", String(state.dist === k));
+    $("o-best").setAttribute("aria-pressed", String(state.order === "best"));
+    $("o-count").setAttribute("aria-pressed", String(state.order === "count"));
     const ref = ALL[state.ref];
     $("ref-spec").textContent = ref.spec;
     $("ref-spec").title = `bias ${ref.bias}`;
@@ -307,6 +361,7 @@ tr.pick:hover td { background: var(--bg); }
       : `<span><span class="sw" style="background:var(--diff)"></span>differs from reference</span><span><span class="sw" style="background:var(--same);box-shadow:inset 0 0 0 1px var(--axis)"></span>same</span>`;
     $("sc-legend").innerHTML = `<span><span class="dot" style="background:var(--hl)"></span>${ORIGINS[state.hl]}</span><span><span class="dot" style="background:var(--other)"></span>Everything else</span><span><span class="dot" style="background:none;box-shadow:inset 0 0 0 2px var(--ink)"></span>Reference</span>`;
     renderTable();
+    computeMatrix();
     persist();
     draw();
   }
@@ -567,6 +622,169 @@ tr.pick:hover td { background: var(--bg); }
     cv.addEventListener("click", (e) => { const p = nearest(e); if (p) setRef(p.i); });
   }
 
-  function draw() { if (!ALL.length) return; drawBarcode(); drawScatter(); }
+  // ---------- core matrix ----------
+  let MX = null, CM = null;
+  const coreOf = (m) => { const c = m & 0xffff; return state.fold && (c & 0x8000) ? (c ^ 0xfffe) : c; };
+  const h4 = (c) => c.toString(16).padStart(4, "0");
+  const coreLabel = (c, m) => { const raw = m & 0xffff; return raw === c ? h4(c) : `${h4(c)} <span class="k">(${h4(raw)})</span>`; };
+
+  function computeMatrix() {
+    if (state.tmpl === "all") { MX = null; renderMatrixText(); return; }
+    // every mixer at this template, ignoring the bias cap: "untried" must mean never scored
+    const pool = ALL.filter(m => m.tmpl === state.tmpl);
+    const cells = new Map(), colS = new Map(), rowS = new Map();
+    const better = (o, m) => !o.best || m.bias < o.best.bias;
+    for (const m of pool) {
+      const a = coreOf(m.m0), b = coreOf(m.m1), key = a * 65536 + b;
+      const cell = cells.get(key) || { a, b, n: 0, best: null };
+      cell.n++; if (better(cell, m)) cell.best = m; cells.set(key, cell);
+      for (const [map, c] of [[colS, a], [rowS, b]]) {
+        const s = map.get(c) || { c, n: 0, best: null };
+        s.n++; if (better(s, m)) s.best = m; map.set(c, s);
+      }
+    }
+    const order = (map) => [...map.values()].filter(s => s.n >= state.minc).sort((x, y) =>
+      state.order === "best" ? x.best.bias - y.best.bias : (y.n - x.n) || (x.best.bias - y.best.bias));
+    const cols = order(colS), rows = order(rowS);
+    const colIdx = new Map(cols.map((s, k) => [s.c, k])), rowIdx = new Map(rows.map((s, k) => [s.c, k]));
+    const screened = new Set();
+    for (const [a0, b0] of SCREENED[state.tmpl] || []) {
+      const key = coreOf(a0) * 65536 + coreOf(b0);
+      if (!cells.has(key)) screened.add(key);
+    }
+    let filled = 0, nScreened = 0;
+    for (const key of screened) if (colIdx.has(Math.floor(key / 65536)) && rowIdx.has(key % 65536)) nScreened++;
+    for (const cell of cells.values()) if (colIdx.has(cell.a) && rowIdx.has(cell.b)) filled++;
+    // untried pairs between strong cores (always taken from the best-first order)
+    const topC = [...colS.values()].sort((x, y) => x.best.bias - y.best.bias).slice(0, 12);
+    const topR = [...rowS.values()].sort((x, y) => x.best.bias - y.best.bias).slice(0, 12);
+    const [s0, s1, s2] = state.tmpl.split(",");
+    const untried = [];
+    for (const c of topC) for (const r of topR) {
+      if (cells.has(c.c * 65536 + r.c) || screened.has(c.c * 65536 + r.c)) continue;
+      untried.push({ c, r, score: c.best.bias + r.best.bias, spec: `[${s0} ${hex(c.best.m0)} ${s1} ${hex(r.best.m1)} ${s2}]` });
+    }
+    untried.sort((x, y) => x.score - y.score);
+    MX = { cells, screened, nScreened, cols, rows, colIdx, rowIdx, filled, colS, rowS, untried: untried.slice(0, 12), nUntriedTop: untried.length, pool };
+    renderMatrixText();
+  }
+
+  function renderMatrixText() {
+    if (!MX) {
+      $("cm-summary").textContent = "Pick a single shift template above to see the core matrix. Cores mean different things under different shifts.";
+      $("cm-legend").innerHTML = ""; $("untried").innerHTML = ""; return;
+    }
+    const total = MX.cols.length * MX.rows.length;
+    $("cm-summary").innerHTML = `<b>${MX.cols.length}</b> m0 cores × <b>${MX.rows.length}</b> m1 cores. <b>${MX.filled.toLocaleString()}</b> of ${total.toLocaleString()} pairs have an exact score (${(100 * MX.filled / Math.max(1, total)).toFixed(1)}%), and <b>${MX.nScreened.toLocaleString()}</b> more were only screened with sampled scores. Among the 12 × 12 strongest cores, <b>${MX.nUntriedTop}</b> of 144 pairs were never tried at all.`;
+    $("cm-legend").innerHTML = `<span>worse<span class="ramp" aria-hidden="true"></span>better</span><span><span class="sw" style="background:var(--empty);box-shadow:inset 0 0 0 1px var(--axis)"></span>never tried</span><span><span class="sw" style="background:radial-gradient(circle, var(--muted) 0 2px, var(--empty) 2.5px);box-shadow:inset 0 0 0 1px var(--axis)"></span>screened only</span><span><span class="sw" style="background:none;box-shadow:inset 0 0 0 2px var(--ink)"></span>reference</span>`;
+    $("untried").innerHTML = MX.untried.length ? MX.untried.map((u, k) => `<tr><td class="num">${k + 1}</td><td class="mono">${coreLabel(u.c.c, u.c.best.m0)}</td><td class="mono">${fmtBias(u.c.best.bias)}</td><td class="mono">${coreLabel(u.r.c, u.r.best.m1)}</td><td class="mono">${fmtBias(u.r.best.bias)}</td><td class="mono sel-all">${u.spec}</td></tr>`).join("")
+      : `<tr><td colspan="6" class="status">Every pair among the strongest cores has been scored.</td></tr>`;
+  }
+
+  function copyUntried() {
+    const btn = $("copy-untried"), text = MX ? MX.untried.map(u => u.spec).join("\n") : "";
+    const done = (msg) => { btn.textContent = msg; setTimeout(() => { btn.textContent = "Copy specs"; }, 1800); };
+    if (!text) return done("Nothing to copy");
+    try {
+      navigator.clipboard.writeText(text).then(() => done("Copied"), () => done("Copy blocked: select the specs in the table"));
+    } catch (e) { done("Copy blocked: select the specs in the table"); }
+  }
+
+  function rampColor(t) {
+    const R = colors.ramp, x = Math.max(0, Math.min(1, t)) * (R.length - 1), k = Math.min(R.length - 2, Math.floor(x));
+    return mix(R[k], R[k + 1], x - k);
+  }
+
+  function drawMatrix() {
+    const cv = $("cm");
+    if (!MX || !MX.cols.length || !MX.rows.length) { sizeCanvas(cv, 1, 1); CM = null; return; }
+    const avail = Math.max(300, $("cm-box").clientWidth);
+    const nc = MX.cols.length, nr = MX.rows.length;
+    const cell = Math.max(5, Math.min(18, Math.floor((avail - 70) / nc)));
+    const showLabels = cell >= 11;
+    const L = showLabels ? 58 : 30, T = showLabels ? 58 : 30;
+    const W = L + nc * cell + 8, H = T + nr * cell + 8;
+    const ctx = sizeCanvas(cv, W, H);
+    ctx.fillStyle = colors.surface; ctx.fillRect(0, 0, W, H);
+    const lo = Math.min(...MX.pool.map(m => m.bias)), hi = Math.max(lo * 1.05, Math.min(state.cap, Math.max(...MX.pool.map(m => m.bias))));
+    const tOf = (b) => (Math.log(hi) - Math.log(Math.min(hi, b))) / (Math.log(hi) - Math.log(lo));
+    const gap = cell >= 8 ? 1 : 0;
+    ctx.fillStyle = colors.empty;
+    ctx.fillRect(L, T, nc * cell, nr * cell);
+    for (const c of MX.cells.values()) {
+      const x = MX.colIdx.get(c.a), y = MX.rowIdx.get(c.b);
+      if (x === undefined || y === undefined) continue;
+      ctx.fillStyle = rampColor(tOf(c.best.bias));
+      ctx.fillRect(L + x * cell, T + y * cell, cell - gap, cell - gap);
+    }
+    if (gap) { // faint cell grid over the empty area
+      ctx.fillStyle = colors.surface;
+      for (let k = 1; k < nc; k++) ctx.fillRect(L + k * cell - 1, T, 1, nr * cell);
+      for (let k = 1; k < nr; k++) ctx.fillRect(L, T + k * cell - 1, nc * cell, 1);
+      for (const c of MX.cells.values()) { // repaint filled cells over the grid
+        const x = MX.colIdx.get(c.a), y = MX.rowIdx.get(c.b);
+        if (x === undefined || y === undefined) continue;
+        ctx.fillStyle = rampColor(tOf(c.best.bias));
+        ctx.fillRect(L + x * cell, T + y * cell, cell - 1, cell - 1);
+      }
+    }
+    ctx.fillStyle = colors.muted;
+    for (const key of MX.screened) {
+      const x = MX.colIdx.get(Math.floor(key / 65536)), y = MX.rowIdx.get(key % 65536);
+      if (x === undefined || y === undefined) continue;
+      ctx.beginPath(); ctx.arc(L + x * cell + (cell - gap) / 2, T + y * cell + (cell - gap) / 2, Math.max(1, cell * 0.17), 0, Math.PI * 2); ctx.fill();
+    }
+    // axis titles
+    ctx.fillStyle = colors["ink-2"]; ctx.font = sansFont(12); ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+    ctx.fillText(`m0 core → (${state.order === "best" ? "best first" : "most scored first"})`, L, 14);
+    ctx.save(); ctx.translate(14, T); ctx.rotate(-Math.PI / 2); ctx.textAlign = "right"; ctx.fillText("m1 core →", 0, 0); ctx.restore();
+    if (showLabels) {
+      ctx.font = monoFont(9); ctx.fillStyle = colors.muted;
+      ctx.textAlign = "right"; ctx.textBaseline = "middle";
+      MX.rows.forEach((s, k) => ctx.fillText(h4(s.c), L - 4, T + k * cell + cell / 2));
+      MX.cols.forEach((s, k) => { ctx.save(); ctx.translate(L + k * cell + cell / 2, T - 4); ctx.rotate(-Math.PI / 2); ctx.textAlign = "left"; ctx.fillText(h4(s.c), 0, 0); ctx.restore(); });
+    }
+    const ring = (x, y, color, w) => { ctx.strokeStyle = color; ctx.lineWidth = w; ctx.strokeRect(L + x * cell - 1, T + y * cell - 1, cell + 1, cell + 1); };
+    const ref = ALL[state.ref];
+    if (ref.tmpl === state.tmpl) {
+      const x = MX.colIdx.get(coreOf(ref.m0)), y = MX.rowIdx.get(coreOf(ref.m1));
+      if (x !== undefined && y !== undefined) ring(x, y, colors.ink, 2);
+    }
+    if (CM && CM.hover) ring(CM.hover[0], CM.hover[1], colors.muted, 1.5);
+    CM = { L, T, cell, nc, nr, hover: CM && CM.hover };
+  }
+
+  function bindMatrix() {
+    const cv = $("cm"), tip = $("cm-tip"), wrap = $("cm-wrap");
+    const at = (e) => {
+      if (!CM || !MX) return null;
+      const r = cv.getBoundingClientRect(), x = Math.floor((e.clientX - r.left - CM.L) / CM.cell), y = Math.floor((e.clientY - r.top - CM.T) / CM.cell);
+      return x >= 0 && y >= 0 && x < CM.nc && y < CM.nr ? [x, y] : null;
+    };
+    cv.addEventListener("pointermove", (e) => {
+      const p = at(e);
+      if (!p) { tip.hidden = true; if (CM && CM.hover) { CM.hover = null; drawMatrix(); } return; }
+      const cs = MX.cols[p[0]], rs = MX.rows[p[1]], cell = MX.cells.get(cs.c * 65536 + rs.c);
+      const head = `<div>m0 core <b class="mono">${h4(cs.c)}</b> <span class="k">best ${fmtBias(cs.best.bias)}, ${cs.n} mixers</span></div><div>m1 core <b class="mono">${h4(rs.c)}</b> <span class="k">best ${fmtBias(rs.best.bias)}, ${rs.n} mixers</span></div>`;
+      tip.innerHTML = cell
+        ? `${head}<div style="margin-top:4px" class="mono">${cell.best.spec}</div><div>best bias <b class="mono">${cell.best.bias}</b> · ${cell.n} scored</div>`
+        : `${head}<div style="margin-top:4px" class="k">${MX.screened.has(cs.c * 65536 + rs.c) ? "Screened with sampled scores only, never scored exactly." : "Never tried."} Whole-multiplier child:</div><div class="mono">[${state.tmpl.split(",")[0]} ${hex(cs.best.m0)} ${state.tmpl.split(",")[1]} ${hex(rs.best.m1)} ${state.tmpl.split(",")[2]}]</div>`;
+      const br = wrap.getBoundingClientRect();
+      tip.hidden = false;
+      let x = e.clientX - br.left + 14, y = e.clientY - br.top + 14;
+      if (x + tip.offsetWidth > br.width) x = Math.max(0, e.clientX - br.left - tip.offsetWidth - 14);
+      if (y + tip.offsetHeight > br.height) y = Math.max(0, e.clientY - br.top - tip.offsetHeight - 14);
+      tip.style.left = x + "px"; tip.style.top = y + "px";
+      if (!CM.hover || CM.hover[0] !== p[0] || CM.hover[1] !== p[1]) { CM.hover = p; drawMatrix(); }
+    });
+    cv.addEventListener("pointerleave", () => { tip.hidden = true; if (CM) { CM.hover = null; drawMatrix(); } });
+    cv.addEventListener("click", (e) => {
+      const p = at(e); if (!p) return;
+      const cell = MX.cells.get(MX.cols[p[0]].c * 65536 + MX.rows[p[1]].c);
+      if (cell) setRef(cell.best.i);
+    });
+  }
+
+  function draw() { if (!ALL.length) return; drawBarcode(); drawScatter(); drawMatrix(); }
 })();
 </script>

@@ -163,6 +163,20 @@ def read_txt(path):
             add(m[1], ms_to_score(float(m[2])), 5, src)
 
 
+def screened_core_pairs():
+    seen = set()
+    for p in RES.rglob("*"):
+        if p.suffix in (".csv", ".txt", ".log") and not p.name.startswith("explored32"):
+            for m in SPEC.finditer(p.read_bytes().decode(errors="replace")):
+                seen.add((m[1], m[2], m[3], m[4], m[5]))
+    out = {}
+    for s0, m0, s1, m1, s2 in seen:
+        if f"[{s0} {m0} {s1} {m1} {s2}]" in rows:
+            continue
+        out.setdefault(f"{s0},{s1},{s2}", set()).add((int(m0, 16) & 0xFFFF, int(m1, 16) & 0xFFFF))
+    return {t: sorted(v) for t, v in out.items()}
+
+
 def main():
     for p in sorted(RES.rglob("*")):
         if p.suffix == ".csv" and not p.name.startswith("explored32"):
@@ -208,6 +222,9 @@ def main():
                 for spec, r in out for m in [SPEC.search(spec)]
             ],
             "edges": [[idx[a], idx[b]] for a, b, _ in uniq],
+            # core pairs (raw low 16 bits of m0, m1) seen only with sampled
+            # scores, per shift template: screened but never scored exactly
+            "screened": screened_core_pairs(),
         }
         (ROOT / "viz").mkdir(exist_ok=True)
         (ROOT / "viz" / "explored32.json").write_text(json.dumps(data, separators=(",", ":")))
