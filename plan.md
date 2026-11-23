@@ -507,3 +507,4 @@ with `mixlab eval --exact`.
 ## 2026-11-22
 - Crossover gen 3 (whole/half/uniform, 3 seeds per finalist): paused at 11/18 races. Half-swap race found `[16 b20332d3 15 d21a3597 15]` = 0.10091 (both exact counters), best bias so far but BIC 0.60 vs F21 0.40 (FINDINGS F23). Resume with `analysis/queue_crossover_gen3.sh`.
 - 2026-11-23: gen 3 finished (18/18; half 0.10091, whole 0.10464, uniform 0.11060). 39 hand-picked core pairings (FINDINGS F24): best race 0.10477, no record.
+- 2026-11-23: beam search past radius 2 around F23 (FINDINGS F25): `[16 b20332d3 15 549a3597 15]` = 0.10076, verified on both exact counters; best issue-#12 too. BIC still 0.60.

@@ -954,6 +954,34 @@ tried with their own partners (heavy on m1 `34d7`, `35a7`, `5269` and m0
   each family's own best is small.
 - Seed spread again large (up to 0.0095 between seeds of one child).
 
+### F25. Beam search past radius 2 finds `[16 b20332d3 15 549a3597 15]` = 0.10075753534782024 (exact, two independent counters)
+
+The F23 mixer `[16 b20332d3 15 d21a3597 15]` (0.10091) is a radius-2 optimum,
+so I searched further out with a beam instead of an exhaustive radius-3/4
+scan (≈50k / ≈800k candidates): `analysis/beam_step.py`,
+`analysis/queue_beam_b203.sh`, outputs in `results/ironborn_ideas/beam_b203/`.
+Every candidate is raced against the centre with `race --candidates` (early
+acceptance), same move set as the radius-2 check.
+
+- Step 1: all unseen radius-1 neighbours of the 66 radius-2 neighbours that
+  the radius-2 check had scored exactly: 3,270 candidates (radius ≤ 3), none
+  accepted; closest `[16 b20332d3 15 d49a3597 15]` ≈ 0.10102.
+- Step 2: unseen radius-1 neighbours of the 66 best exactly-scored step-1
+  candidates: 4,063 candidates (radius ≤ 4). Chunk 4 accepted
+  **`[16 b20332d3 15 549a3597 15]`** and stopped early (its remaining
+  candidates are untested); the other 5 chunks accepted none.
+- It differs from the centre by 4 bit flips in m1 (`d21a3597` -> `549a3597`),
+  out of reach of the radius-2 check.
+- Exact bias **0.10075753534782024** on both counters (`mixlab eval --exact`,
+  `examples/exact_generic.rs`, 106 s): 0.15% below F23, 1.3% below F21.
+- Issue #12 metric **0.035309**, now the best of all (F21 0.035729, F23 0.035762).
+- BIC unchanged from F23: worst corr 0.60 (in 0 -> out 2,17; max|z| 154 at
+  2^16), the `32d3` m0 core's signature. F21 (0.40) remains the best balanced.
+- Not yet: hash-prospector `-e`; radius-2 or beam check around the new mixer;
+  the untested remainder of step-2 chunk 4.
+- Cost: ≈ 2.9 h of racing for 7,333 candidates (vs ≈ 10 h for exhaustive
+  radius 3, which would not have reached this radius-4 point).
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the

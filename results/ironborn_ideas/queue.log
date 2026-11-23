@@ -41,3 +41,24 @@
 [2026-11-23 04:53:06] r2 b20332d3 chunk 5
 [2026-11-23 04:58:40] r2 b20332d3 chunk 5: accepted: none  inputs=2^33.71  exact evals=13  [334s]
 [2026-11-23 04:58:40] r2 b20332d3 done
+[2026-11-23 09:13:20] beam step 1
+[2026-11-23 09:22:56] beam b1 chunk 0: accepted: none  inputs=2^35.09  exact evals=31  [576s]
+[2026-11-23 09:35:35] beam b1 chunk 1: accepted: none  inputs=2^35.04  exact evals=30  [759s]
+[2026-11-23 09:44:54] beam b1 chunk 2: accepted: none  inputs=2^34.99  exact evals=21  [559s]
+[2026-11-23 09:56:36] beam b1 chunk 3: accepted: none  inputs=2^34.98  exact evals=28  [702s]
+[2026-11-23 10:06:25] beam b1 chunk 4: accepted: none  inputs=2^34.98  exact evals=22  [589s]
+[2026-11-23 10:18:18] beam b1 chunk 5: accepted: none  inputs=2^35.08  exact evals=28  [713s]
+[2026-11-23 10:18:18] beam step 2
+160 exactly scored; beam of 66: ms 1.0205e-08 .. 1.1779e-08
+4063 new candidates in 6 chunks -> results/ironborn_ideas/beam_b203/b2_k*.csv
+[2026-11-23 10:39:27] beam b2 chunk 0: accepted: none  inputs=2^35.52  exact evals=55  [1268s]
+[2026-11-23 10:52:11] beam b2 chunk 1: 
+[2026-11-23 10:52:18] beam paused by user (step 1 done; step 2 chunk 0/6 done, chunk 1 interrupted; rerun queue_beam_b203.sh to resume)
+[2026-11-23 15:25:09] beam step 1
+[2026-11-23 15:25:10] beam step 2
+[2026-11-23 15:52:35] beam b2 chunk 1: accepted: none  inputs=2^35.58  exact evals=50  [1644s]
+[2026-11-23 16:21:38] beam b2 chunk 2: accepted: none  inputs=2^35.43  exact evals=40  [1740s]
+[2026-11-23 16:47:50] beam b2 chunk 3: accepted: none  inputs=2^35.32  exact evals=34  [1572s]
+[2026-11-23 16:55:15] beam b2 chunk 4: accepted: [16 b20332d3 15 549a3597 15] ms=1.015208e-8  inputs=2^35.29  exact evals=2  [444s]
+[2026-11-23 17:12:51] beam b2 chunk 5: accepted: none  inputs=2^35.45  exact evals=43  [1055s]
+[2026-11-23 17:12:51] beam done

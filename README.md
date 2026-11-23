@@ -121,7 +121,8 @@ means a perfectly correlated output-bit pair.
 | 32 | TheIronBorn `[16 21f0aaad 15 d35a2d97 15]` | 2 | 0.10760 | 87 | hash-prospector #19 |
 | 32 | TheIronBorn `[16 21f0aaad 15 735a2d97 15]` (previous record) | 2 | 0.10704 | 87 | hash-prospector #19 |
 | 32 | **this project `[16 9c013335 15 335a2d97 15]`** (best balanced, F21) | 2 | 0.10207 | 102 | FINDINGS F21 |
-| 32 | **this project `[16 b20332d3 15 d21a3597 15]`** (best bias, worse BIC; F23) | 2 | 0.10091 | 154 | FINDINGS F23 |
+| 32 | this project `[16 b20332d3 15 d21a3597 15]` (F23) | 2 | 0.10091 | 154 | FINDINGS F23 |
+| 32 | **this project `[16 b20332d3 15 549a3597 15]`** (best bias, worse BIC; F25) | 2 | 0.10076 | 154 | FINDINGS F25 |
 | 32 | triple32 | 3 | 0.02089 | 4.0 | hash-prospector |
 | 64 | Murmur3 fmix64 | 2 | 33.5 ± 2.7 (bias 0.0183) | 247 | MurmurHash3 |
 | 64 | Moremur | 2 | 19.2 ± 2.0 (bias 0.0139) | 9.2 | Evensen 2019 |
