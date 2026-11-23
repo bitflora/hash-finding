@@ -876,6 +876,45 @@ seeds 81–90). The results are 0.10207, 0.10799, 0.10813, 0.10959, 0.10998,
 - The §5 variations (finer crossover, other shift templates, several seeds
   per child) target the second reading.
 
+### F23. Crossover generation 3 (partial): half-swap children reach 0.10091, a new best bias but with worse BIC (exact, two independent counters)
+
+Generation 3 tries FINDINGS §5 variations 1 (finer crossover) and 6 (several
+race seeds per child): `analysis/crossover_gen3.py`, outputs in
+`results/ironborn_ideas/gen3/`. Parents: the 51 gen-2 parents plus the 5 gen-2
+race winners (56; `gen3_parents.csv`). Three child kinds, kept apart:
+*whole* (as gen 1/2; 1,105 genuine children), *half* (each multiplier = high
+16 bits of one top-16 parent | low 16 bits of another; 500 sampled) and
+*uniform* (per-bit random mix of two top-16 parents; 500 sampled). Each kind:
+2^26 screen, exact top 12, race the 2 best distinct-core children with 3 seeds.
+Paused by the user at 11 of 18 races (uniform races not yet run).
+
+- Best exact score before racing: half 0.1135, whole 0.1153, uniform 0.1225
+  (most uniform children 0.142-0.153: random bit mixing breaks the parents' structure).
+- Race results (exact):
+
+  | kind | start (exact) | seed 0 | seed 1 | seed 2 |
+  |---|---|---|---|---|
+  | whole | `[16 d8433535 15 d35a2d97 15]` (0.11533) | 0.10748 | 0.10848 | 0.11169 |
+  | whole | `[16 d00332d3 15 b15a3597 15]` (0.11672) | 0.10490 | 0.10464 | 0.10490 |
+  | half | `[16 d40332d3 15 b35a3597 15]` (0.11350) | **0.10091** | 0.10214 | 0.10800 |
+  | half | `[16 02fcd535 15 535a3597 15]` (0.11960) | 0.11599 | 0.10674 | (interrupted) |
+
+- **`[16 b20332d3 15 d21a3597 15]` = 0.10091140751290814**, 1.1% below F21's
+  0.10206799761502400. Confirmed by both exact counters (`mixlab eval --exact`
+  and `examples/exact_generic.rs`, 91 s; the same run reproduces F21 to all
+  17 digits). Not yet run through hash-prospector itself, nor radius-2 checked.
+- **It is not better on every axis.** Issue #12 metric: 0.035762 vs F21's
+  0.035729 (slightly worse). BIC worst-pair correlation 0.60 (in 0 -> out 2,17;
+  max|z| 154 at 2^16) vs F21's 0.40 (101). The 0.6022 is identical for every
+  `32d3` m0 mixer tried, so it is a property of that core, not of the m1.
+  So it is the best bias found but F21 remains the best balanced mixer.
+- Seeds matter: one child spanned 0.1009-0.1080 across seeds and another
+  0.1067-0.1160; a single seed would have missed the new best. Conversely the
+  `d00332d3` child's seeds 0 and 2 converged to the same mixer, so its ~0.1047
+  is that family's floor, not bad luck.
+- Half crossover beat whole crossover on both finalists' best seeds; uniform is
+  untested in racing but its starts are much weaker.
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the

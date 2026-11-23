@@ -21,3 +21,6 @@
 [2026-11-22 10:06:22] gen3 (whole/half/uniform, RACE=2 x SEEDS=3)
 [2026-11-22 10:35:50] gen3 exit 1
 [2026-11-22 10:36:00] gen3 paused by user (screen done, exact in progress; rerun queue_crossover_gen3.sh to resume)
+[2026-11-22 18:19:50] gen3 (whole/half/uniform, RACE=2 x SEEDS=3)
+[2026-11-22 21:32:58] gen3 exit 127
+[2026-11-22 21:33:08] gen3 paused by user (11/18 races done; half 02fcd535 seed#2 interrupted; rerun queue_crossover_gen3.sh to resume)

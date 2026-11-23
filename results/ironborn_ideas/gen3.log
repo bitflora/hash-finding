@@ -37,3 +37,49 @@ Traceback (most recent call last):
   File "<python>\lib\subprocess.py", line 524, in run
     raise CalledProcessError(retcode, process.args,
 subprocess.CalledProcessError: Command '['<repo>\\analysis\\..\\harness\\target\\release\\mixlab.exe', 'eval', '--bits', '32', '--spec', '[16 6f0f32d3 15 f35a3597 15]', '--exact']' returned non-zero exit status 3221225794.
+56 parents, 39 core pairs, top 16 used for half/uniform
+children: whole=1105, half=500, uniform=500
+screen done
+exact half    [16 6f0f32d3 15 f35a3597 15] 0.12612
+exact half    [16 d40332d3 15 919a3597 15] 0.12521
+exact half    [16 31fcd52d 15 535a2d97 15] 0.13304
+exact half    [16 31fcd52d 15 335a2d97 15] 0.13219
+exact half    [16 6f0f32d3 15 d35a3597 15] 0.12816
+exact half    [16 21f05553 15 535a3597 15] 0.12535
+exact half    [16 6f0f5553 15 f35a4597 15] 0.12833
+exact half    [16 de0f32d3 15 cca5d269 15] 0.12834
+exact uniform [16 1bfcd535 15 b75a3597 15] 0.12245
+exact uniform [16 abf8ad2d 15 535a2d97 15] 0.13078
+exact uniform [16 31fcab2d 15 b35a2d97 15] 0.14271
+exact uniform [16 8bfad535 15 b65a2597 15] 0.14399
+exact uniform [16 3bf8cd2d 15 b75a3597 15] 0.14688
+exact uniform [16 de0f54d3 15 319a4597 15] 0.14249
+exact uniform [16 cbfad525 15 b65a3597 15] 0.14383
+exact uniform [16 8afecd2d 15 b25a3597 15] 0.14911
+exact uniform [16 9a3d5533 15 f35a2d97 15] 0.14717
+exact uniform [16 8960b335 15 b35a2d97 15] 0.14408
+exact uniform [16 defed52d 15 365a2d97 15] 0.14974
+exact uniform [16 31fcccb5 15 935a2d97 15] 0.15319
+race whole [16 d8433535 15 d35a2d97 15] seed#0 (exact 0.11533)
+best [16 d8033335 15 335a2d97 15]  score 0.1074778909
+race whole [16 d8433535 15 d35a2d97 15] seed#1 (exact 0.11533)
+best [16 9d033535 15 d35a2d97 15]  score 0.1084843487
+race whole [16 d8433535 15 d35a2d97 15] seed#2 (exact 0.11533)
+best [16 18033535 15 d35a2d97 15]  score 0.1116914123
+race whole [16 d00332d3 15 b15a3597 15] seed#0 (exact 0.11672)
+best [16 f00332d3 15 591a3597 15]  score 0.1048974721
+race whole [16 d00332d3 15 b15a3597 15] seed#1 (exact 0.11672)
+best [16 dd0332cb 15 b15a3597 15]  score 0.1046409385
+race whole [16 d00332d3 15 b15a3597 15] seed#2 (exact 0.11672)
+best [16 f00332d3 15 591a3597 15]  score 0.1048974721
+race half [16 d40332d3 15 b35a3597 15] seed#0 (exact 0.11350)
+best [16 b20332d3 15 d21a3597 15]  score 0.1009114075
+race half [16 d40332d3 15 b35a3597 15] seed#1 (exact 0.11350)
+best [16 f00332d3 15 321a3597 15]  score 0.1021405570
+race half [16 d40332d3 15 b35a3597 15] seed#2 (exact 0.11350)
+best [16 d20332d3 15 735a34d7 15]  score 0.1079984403
+race half [16 02fcd535 15 535a3597 15] seed#0 (exact 0.11960)
+best [16 22fcd535 15 535a35a7 15]  score 0.1159894342
+race half [16 02fcd535 15 535a3597 15] seed#1 (exact 0.11960)
+best [16 50fccd35 15 535a3597 15]  score 0.1067421125
+race half [16 02fcd535 15 535a3597 15] seed#2 (exact 0.11960)

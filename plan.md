@@ -503,3 +503,6 @@ with `mixlab eval --exact`.
   `[16 ec013335 15 cca5d269 15]` 0.10344 and `[16 02fccd35 15 b15a3597 15]`
   0.10447; the latter is the best mixer without the 2d97 m1 core.
 - No new record: 0.10207 stands.
+
+## 2026-11-22
+- Crossover gen 3 (whole/half/uniform, 3 seeds per finalist): paused at 11/18 races. Half-swap race found `[16 b20332d3 15 d21a3597 15]` = 0.10091 (both exact counters), best bias so far but BIC 0.60 vs F21 0.40 (FINDINGS F23). Resume with `analysis/queue_crossover_gen3.sh`.
