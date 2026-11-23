@@ -28,3 +28,16 @@
 [2026-11-23 00:06:37] gen3 exit 0
 [2026-11-23 00:07:03] core list (39 specs, RACE=5 x SEEDS=2)
 [2026-11-23 03:52:18] core list exit 0
+[2026-11-23 04:29:27] r2 b20332d3 chunk 0
+[2026-11-23 04:35:43] r2 b20332d3 chunk 0: accepted: none  inputs=2^33.87  exact evals=16  [376s]
+[2026-11-23 04:35:44] r2 b20332d3 chunk 1
+[2026-11-23 04:39:56] r2 b20332d3 chunk 1: accepted: none  inputs=2^33.71  exact evals=9  [253s]
+[2026-11-23 04:39:56] r2 b20332d3 chunk 2
+[2026-11-23 04:44:04] r2 b20332d3 chunk 2: accepted: none  inputs=2^33.64  exact evals=9  [248s]
+[2026-11-23 04:44:04] r2 b20332d3 chunk 3
+[2026-11-23 04:48:49] r2 b20332d3 chunk 3: accepted: none  inputs=2^33.78  exact evals=10  [284s]
+[2026-11-23 04:48:49] r2 b20332d3 chunk 4
+[2026-11-23 04:53:06] r2 b20332d3 chunk 4: accepted: none  inputs=2^33.67  exact evals=9  [258s]
+[2026-11-23 04:53:06] r2 b20332d3 chunk 5
+[2026-11-23 04:58:40] r2 b20332d3 chunk 5: accepted: none  inputs=2^33.71  exact evals=13  [334s]
+[2026-11-23 04:58:40] r2 b20332d3 done

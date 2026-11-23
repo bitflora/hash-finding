@@ -904,7 +904,14 @@ All 18 races done (2026-11-23; paused once at 11/18 and resumed).
 - **`[16 b20332d3 15 d21a3597 15]` = 0.10091140751290814**, 1.1% below F21's
   0.10206799761502400. Confirmed by both exact counters (`mixlab eval --exact`
   and `examples/exact_generic.rs`, 91 s; the same run reproduces F21 to all
-  17 digits). Not yet run through hash-prospector itself, nor radius-2 checked.
+  17 digits). Not yet run through hash-prospector itself.
+- **It is a radius-2 local optimum** (2026-11-23,
+  `results/ironborn_ideas/r2_b203/`, `analysis/queue_r2_b203.sh`): all 2,343
+  neighbours (1-2 bit flips of m0/m1, shifts ±1 with s2 ≤ 16) raced against it,
+  none accepted. 66 came close enough to be scored exactly; the best,
+  `[16 f00332d3 15 d21a3597 15]` and `[16 b70332d3 15 d21a3597 15]`, are
+  0.10108 and 0.10111 (≈ 1000·√ms from the race's exact verification), so
+  the 32d3 neighbourhood also holds two more mixers below F21's 0.10207.
 - **It is not better on every axis.** Issue #12 metric: 0.035762 vs F21's
   0.035729 (slightly worse). BIC worst-pair correlation 0.60 (in 0 -> out 2,17;
   max|z| 154 at 2^16) vs F21's 0.40 (101). The 0.6022 is identical for every
