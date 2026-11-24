@@ -8,6 +8,7 @@
 pub mod bias;
 pub mod extra;
 pub mod fast32;
+pub mod metrics;
 pub mod mixers;
 pub mod racing;
 pub mod refs;

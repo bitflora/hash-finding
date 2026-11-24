@@ -1,7 +1,7 @@
 """Validate candidate 64-bit metrics at 32 bits.
 
 Joins results/metric_validation/set.csv (exact bias) with metrics_s*.csv from
-harness/examples/metrics_validate.rs and reports Spearman rho of each metric
+`mixlab metrics` (harness/src/metrics.rs) and reports Spearman rho of each metric
 with exact bias over all mixers, over bias < 0.2, and over bias < 0.12;
 plus the metrics of the three PractRand-tested mixers.
 

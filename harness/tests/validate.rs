@@ -241,3 +241,57 @@ fn inverse_score_matches_generic_inverse() {
         }
     }
 }
+
+// --- 64-bit candidate metrics (src/metrics.rs, FINDINGS F27/F28) ---
+
+fn small_metrics_cfg() -> mixlab::metrics::MetricsCfg {
+    mixlab::metrics::MetricsCfg { kctr: 16, nrand: 1 << 16, ntwo: 1 << 12, nbic: 1 << 14, seed: 3 }
+}
+
+#[test]
+fn metrics_are_near_one_for_a_strong_mixer() {
+    // triple32 (3 rounds, bias 0.0209) should look ideal on every metric.
+    let x = Xmx::parse(32, "[17 ed5ad4bb 11 ac4c1b51 15 31848bab 14]").unwrap();
+    let s = mixlab::metrics::scorecard(&x, &small_metrics_cfg());
+    for (name, v) in [("ctr", s.ctr), ("rev", s.rev), ("hi", s.hi), ("adj2", s.adj2), ("add", s.add), ("sac", s.sac), ("two", s.two)] {
+        assert!((0.7..1.4).contains(&v), "{name} = {v}");
+    }
+    assert!(s.bic.rms_z < 1.3, "bic rms z = {}", s.bic.rms_z);
+}
+
+#[test]
+fn metrics_find_the_record_lineage_two_bit_defect() {
+    // F28: adj2 = 164 for the 2022 record at 2^22; the defect scales with n,
+    // so expect ~11 at 2^18 against ~1.2 for F26.
+    let c = mixlab::metrics::MetricsCfg { nrand: 1 << 18, ..small_metrics_cfg() };
+    let rec = mixlab::metrics::scorecard(&Xmx::parse(32, "[16 21f0aaad 15 735a2d97 15]").unwrap(), &c);
+    let f26 = mixlab::metrics::scorecard(&Xmx::parse(32, "[16 e00332d3 15 549a3597 15]").unwrap(), &c);
+    assert!(rec.adj2 > 6.0 && rec.adj2 > 4.0 * f26.adj2, "record adj2 {} vs F26 {}", rec.adj2, f26.adj2);
+    assert!(f26.adj2 < 1.6, "F26 adj2 {}", f26.adj2);
+}
+
+#[test]
+fn two_bit_pairs_at_distance_s0_are_structural_and_excluded() {
+    use mixlab::metrics::{random_units, two_bit_pairs};
+    let pairs = two_bit_pairs(32, 16);
+    assert_eq!(pairs.len(), 32 * 31 / 2 - 16);
+    assert!(pairs.iter().all(|&(i, j)| j - i != 16));
+    // {15, 31} collapses to a single top-bit difference: some output bit never flips.
+    let x = Xmx::parse(32, "[16 e00332d3 15 549a3597 15]").unwrap();
+    let f = |v: u64| x.apply(v);
+    let d = (1u64 << 15) | (1u64 << 31);
+    assert!(random_units(&f, 32, 1 << 12, 1, 1, &|_, v| v ^ d) > 100.0);
+}
+
+#[test]
+fn sparse_multiple_screen_matches_hand_values() {
+    use mixlab::metrics::{naf_weight, sparse_multiple};
+    assert_eq!(naf_weight(0b0111), 2); // 8 - 1
+    assert_eq!(naf_weight(0b1011), 3); // 11 = 16 - 4 - 1
+    // 3 * 0x21f0aaad = 0x65d20007: low 17 bits are 7 = 8 - 1, NAF weight 2.
+    let (d, k, j) = sparse_multiple(0x21f0aaad, 32, &[1, 3], 12);
+    assert_eq!((k, j), (3, 17));
+    assert!((d - 2.0 / 17.0).abs() < 1e-12);
+    // F26's m0 has no such sparse multiple.
+    assert!(sparse_multiple(0xe00332d3, 32, &[1, 3], 12).0 > 0.15);
+}

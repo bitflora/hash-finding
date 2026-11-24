@@ -19,6 +19,8 @@ USAGE:
   mixlab exact  --bits B --list FILE [--inverse] [--out F.csv]  # batch exact bias, one spec per line (- = stdin);
                                                                # --inverse scores f^-1 (bits <= 24); CSV spec,bias,max_abs
   mixlab bic    --bits B --spec SPEC [--samples p16] [--seeds 1,2,3]   # sampled BIC, one line per seed
+  mixlab metrics --bits B (--spec SPEC | --list FILE) [--kctr 24] [--nrand p22] [--ntwo p18] [--nbic p20]
+                [--seed S] [--out F.csv]   # 64-bit candidate scorecard (FINDINGS F28), CSV in noise units
   mixlab sweep  --bits B [--rounds R] (--exhaustive | --random N) [--seed S] --out FILE.csv
   mixlab search --bits B [--rounds R] [--start SPEC] [--iters N] [--neighbors K]
                 [--levels 16,18,20] [--final-samples LOG2] [--seed S] --out FILE.csv
@@ -275,6 +277,7 @@ fn main() {
             println!("best {best}  score {score:.10}");
         }
         "exact" => exact_list_cmd(&a),
+        "metrics" => metrics_cmd(&a),
         "surrogate" => surrogate_cmd(&a),
         "scale" => scale_cmd(&a),
         "paired" => paired_cmd(&a),
@@ -284,6 +287,63 @@ fn main() {
         _ => {
             println!("{USAGE}");
         }
+    }
+}
+
+/// Read specs one per line (blank lines, '#' comments and a 'spec' header
+/// skipped; a leading/trailing '"' is stripped). `-` reads stdin.
+fn read_spec_list(bits: u32, path: &str) -> Vec<Xmx> {
+    use std::io::{BufRead, BufReader, Read};
+    let input: Box<dyn Read> = if path == "-" {
+        Box::new(std::io::stdin())
+    } else {
+        Box::new(File::open(path).unwrap_or_else(|e| die(&format!("open {path}: {e}"))))
+    };
+    let mut cfgs = Vec::new();
+    for (i, line) in BufReader::new(input).lines().enumerate() {
+        let line = line.expect("read list");
+        let t = line.trim().trim_matches('"');
+        if t.is_empty() || t.starts_with('#') || t == "spec" {
+            continue;
+        }
+        cfgs.push(Xmx::parse(bits, t).unwrap_or_else(|e| die(&format!("{path}:{}: {e}", i + 1))));
+    }
+    cfgs
+}
+
+/// Candidate 64-bit scorecard (FINDINGS F28) for one spec or a list; one CSV
+/// row per spec, written as each finishes (each metric is parallel inside).
+fn metrics_cmd(a: &Args) {
+    use mixlab::metrics::{csv_row, scorecard, MetricsCfg, CSV_HEADER};
+    let bits = a.num("bits", 32) as u32;
+    let cfgs = match (a.get("spec"), a.get("list")) {
+        (Some(s), None) => vec![Xmx::parse(bits, s).unwrap_or_else(|e| die(&e))],
+        (None, Some(p)) => read_spec_list(bits, p),
+        _ => die("need exactly one of --spec or --list"),
+    };
+    let d = MetricsCfg::default();
+    let c = MetricsCfg {
+        kctr: a.num("kctr", d.kctr as u64) as u32,
+        nrand: a.num("nrand", d.nrand),
+        ntwo: a.num("ntwo", d.ntwo),
+        nbic: a.num("nbic", d.nbic),
+        seed: a.num("seed", d.seed),
+    };
+    if c.kctr >= bits {
+        die("--kctr must be < bits");
+    }
+    let out: Box<dyn Write> = match a.get("out") {
+        Some(p) => Box::new(File::create(p).unwrap_or_else(|e| die(&format!("create {p}: {e}")))),
+        None => Box::new(std::io::stdout().lock()),
+    };
+    let mut w = BufWriter::new(out);
+    writeln!(w, "{CSV_HEADER}").unwrap();
+    for x in &cfgs {
+        let t = Instant::now();
+        let s = scorecard(x, &c);
+        writeln!(w, "{}", csv_row(x, &s)).unwrap();
+        w.flush().unwrap();
+        eprintln!("{x}  [{:.1}s]", t.elapsed().as_secs_f64());
     }
 }
 

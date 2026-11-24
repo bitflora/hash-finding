@@ -100,6 +100,14 @@ mixlab search --bits 64 --rounds 2 --iters 100 --final-samples 26 --seed 1 --out
   - **BIC** gives the z-scores of the pairwise correlation between output-bit
     flips. An RMS near 1 is ideal; compare the max against the stated
     expected max.
+- `mixlab metrics` (`src/metrics.rs`, 64bit branch): the candidate 64-bit
+  scorecard of FINDINGS F28 at any width, one CSV row per spec, all in noise
+  units (ideal ≈ 1, a defect grows ∝ n): counter / bit-reversed / high-half
+  counter avalanche, adjacent two-bit and additive-difference avalanche, plain
+  avalanche, every two-bit flip except the structural j − i = s0 pairs (mean and
+  worst), BIC, and the exact `sparse` screen (min NAF density of {m0, 3·m0}
+  mod 2^j). Takes about 15–25 s per 32-bit mixer at the defaults and about 2 min per
+  64-bit mixer at `--kctr 22 --ntwo p20`.
 
 ## Analytic surrogate (`surrogate.rs`)
 

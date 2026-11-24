@@ -1073,7 +1073,8 @@ populations (5,000 random 16-bit, 1,200 random 24-bit, all exact).
   worst two-bit flip is bits (13, 15), a gap of 2, as predicted.
 
 ### F28. Candidate 64-bit metrics validated at 32 bits, plus a 64-bit pilot (indicative)
-**Method.** `harness/examples/metrics_validate.rs` scores any-width xmx in
+**Method.** `mixlab metrics` (`harness/src/metrics.rs`; first run as
+`examples/metrics_validate.rs`, whose rows it reproduces exactly) scores any-width xmx in
 noise units (ideal ≈ 1; a defect adds ms·n, so it grows with n):
 - counter, bit-reversed counter and high-half counter inputs (2^24 at 32 bits);
 - adjacent two-bit flips (`adj2`), additive differences x vs x+2^i (`add`), and
@@ -1135,8 +1136,8 @@ random 2^22, two-bit 2^20 per pair, BIC 2^20; 6.6 min for 3 mixers):
 **Limits.** The PractRand comparison is three mixers with one input pattern.
 The two-bit metric has not been run over the whole validation set. Noise
 units have sd ≈ √(2/cells) for an ideal mixer, but replicate seeds were not
-run. The metric code is a harness example, not yet a `mixlab` subcommand with
-a test.
+run. (`mixlab metrics` adds an exact `sparse` column: the min NAF density of
+{m0, 3·m0} mod 2^j, the F27 screen.)
 
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
