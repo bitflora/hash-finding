@@ -16,6 +16,8 @@ mixlab — avalanche-bias evaluation and search for xorshift-multiply mixers
 USAGE:
   mixlab refs   [--samples N] [--exact32] [--seed S] [--extra]
   mixlab eval   (--name REF | --bits B --spec \"[s m s m s]\") [--exact] [--samples N] [--seed S] [--extra]
+  mixlab exact  --bits B --list FILE [--inverse] [--out F.csv]  # batch exact bias, one spec per line (- = stdin);
+                                                               # --inverse scores f^-1 (bits <= 24); CSV spec,bias,max_abs
   mixlab bic    --bits B --spec SPEC [--samples p16] [--seeds 1,2,3]   # sampled BIC, one line per seed
   mixlab sweep  --bits B [--rounds R] (--exhaustive | --random N) [--seed S] --out FILE.csv
   mixlab search --bits B [--rounds R] [--start SPEC] [--iters N] [--neighbors K]
@@ -272,6 +274,7 @@ fn main() {
             });
             println!("best {best}  score {score:.10}");
         }
+        "exact" => exact_list_cmd(&a),
         "surrogate" => surrogate_cmd(&a),
         "scale" => scale_cmd(&a),
         "paired" => paired_cmd(&a),
@@ -282,6 +285,51 @@ fn main() {
             println!("{USAGE}");
         }
     }
+}
+
+/// Batch exact scoring: specs one per line (blank lines, '#' comments and a
+/// 'spec' header skipped), parallel over configs, output in input order.
+/// Bias is printed in Rust's shortest round-trip form, so it parses back to
+/// the identical f64.
+fn exact_list_cmd(a: &Args) {
+    use rayon::prelude::*;
+    use std::io::{BufRead, BufReader, Read};
+    let bits = a.num("bits", 32) as u32;
+    let inverse = a.has("inverse");
+    if inverse && bits > 24 {
+        die("--inverse needs --bits <= 24");
+    }
+    let path = a.get("list").unwrap_or_else(|| die("need --list FILE (or - for stdin)"));
+    let input: Box<dyn Read> = if path == "-" {
+        Box::new(std::io::stdin())
+    } else {
+        Box::new(File::open(path).unwrap_or_else(|e| die(&format!("open {path}: {e}"))))
+    };
+    let mut cfgs = Vec::new();
+    for (i, line) in BufReader::new(input).lines().enumerate() {
+        let line = line.expect("read list");
+        let t = line.trim();
+        if t.is_empty() || t.starts_with('#') || t == "spec" {
+            continue;
+        }
+        cfgs.push(Xmx::parse(bits, t).unwrap_or_else(|e| die(&format!("{path}:{}: {e}", i + 1))));
+    }
+    let t = Instant::now();
+    let scores: Vec<(f64, f64)> = cfgs
+        .par_iter()
+        .map(|x| if inverse { mixlab::search::exact_inverse_score_serial(x) } else { mixlab::search::exact_score_serial(x) })
+        .collect();
+    let out: Box<dyn Write> = match a.get("out") {
+        Some(p) => Box::new(File::create(p).unwrap_or_else(|e| die(&format!("create {p}: {e}")))),
+        None => Box::new(std::io::stdout().lock()),
+    };
+    let mut w = BufWriter::new(out);
+    writeln!(w, "spec,bias,max_abs").unwrap();
+    for (x, (s, m)) in cfgs.iter().zip(&scores) {
+        writeln!(w, "{x},{s},{m}").unwrap();
+    }
+    w.flush().unwrap();
+    eprintln!("scored {} configs{}  [{:.1}s]", cfgs.len(), if inverse { " (inverse)" } else { "" }, t.elapsed().as_secs_f64());
 }
 
 fn sampled_ms(x: &Xmx, n: u64, seed: u64) -> f64 {

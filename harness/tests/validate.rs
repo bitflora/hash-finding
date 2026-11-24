@@ -227,3 +227,17 @@ fn fast32_ranges_match_scalar_for_every_tail_length() {
         }
     }
 }
+
+#[test]
+fn inverse_score_matches_generic_inverse() {
+    let mut rng = Xoshiro256::new(11);
+    for bits in [8u32, 12, 16] {
+        for rounds in 1..=3 {
+            let x = random_config(bits, rounds, &mut rng);
+            let (s, m) = mixlab::search::exact_inverse_score_serial(&x);
+            let c = exact_serial(&|y: u64| x.invert(y), bits);
+            assert_eq!(s, c.score(), "{x}");
+            assert_eq!(m, c.max_abs(), "{x}");
+        }
+    }
+}

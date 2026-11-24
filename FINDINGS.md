@@ -279,7 +279,7 @@ constant XOR, which avalanche cannot see, so only the "+1" carry differs. That i
 exact for the last multiply up to that carry. For m0, the complement then meets
 another multiply, so the symmetry is weaker.
 
-**Method.** `analysis/symmetry_check.py` (numpy, exact; it reproduces mixlab's 8- and
+**Method.** `analysis/symmetry_check.py` (exact, scored by `mixlab exact --list`; originally numpy, which reproduced mixlab's 8- and
 16-bit values). Controls: flipping the top bit (small change) and a random
 replacement multiplier. "Within" is the Spearman correlation inside one shift triple.
 

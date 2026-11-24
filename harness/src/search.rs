@@ -42,6 +42,22 @@ pub fn exact_score_serial(x: &Xmx) -> (f64, f64) {
     (c.score(), c.max_abs())
 }
 
+/// Exact avalanche bias of the inverse mixer f^-1 (via a lookup table, so
+/// widths <= 24), single-threaded. Returns (score, max_abs) like
+/// `exact_score_serial`.
+pub fn exact_inverse_score_serial(x: &Xmx) -> (f64, f64) {
+    assert!(x.bits <= 24, "inverse scoring builds a 2^bits table; bits must be <= 24");
+    let n = 1usize << x.bits;
+    let mut inv = vec![0u32; n];
+    with_mixer!(x, f => {
+        for v in 0..n as u64 {
+            inv[f(v) as usize] = v as u32;
+        }
+    });
+    let c = exact_serial(&|y: u64| inv[y as usize] as u64, x.bits);
+    (c.score(), c.max_abs())
+}
+
 fn csv_header(rounds: usize) -> String {
     let mut h = String::from("bits");
     for i in 0..=rounds {
