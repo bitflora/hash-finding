@@ -170,14 +170,21 @@ def screen_core(j):
 def race_job(j, start):
     """Race with resume: a log without a 'best' line is a stopped part."""
     log_p = D / f"{j['id']}.log"
-    parts = sorted(D.glob(f"{j['id']}.part*.log"))
+    part_number = lambda p: int(p.stem.rsplit(".part", 1)[1])
+    parts = sorted(D.glob(f"{j['id']}.part*.log"), key=part_number)
     used_iters = 0
     for p in parts:
-        its = [int(m.group(1)) for m in LINE.finditer(p.read_text())]
-        used_iters += max(its, default=0)
-    if log_p.exists() and "\nbest " not in "\n" + log_p.read_text():
-        k = len(parts) + 1
+        hits = list(LINE.finditer(p.read_text()))
+        if hits:
+            start = hits[-1].group(3)
+            used_iters += max(int(m.group(1)) for m in hits)
+    if log_p.exists():
         text = log_p.read_text()
+        # A crash after the process finished must not discard its result.
+        best = re.search(r"^best (\[[^\]]*\])\s+score ([0-9.]+)", text, re.M)
+        if best:
+            return best.group(1), float(best.group(2)), [p.name for p in parts]
+        k = max((part_number(p) for p in parts), default=0) + 1
         log_p.rename(D / f"{j['id']}.part{k}.log")
         hits = list(LINE.finditer(text))
         if hits:

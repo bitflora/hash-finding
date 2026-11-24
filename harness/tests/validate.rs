@@ -200,3 +200,30 @@ fn fixed_low_multiplier_bits_do_not_fix_low_output_bits() {
     let b = Xmx::parse(32, "[16 21f1aaad 15 735a2d97 15]").unwrap();
     assert_ne!(a.apply(1) & 1, b.apply(1) & 1);
 }
+
+/// Compare arbitrary ranges against scalar input-by-input counting, rather
+/// than comparing two SIMD paths that could share the same tail bug.
+#[test]
+fn fast32_ranges_match_scalar_for_every_tail_length() {
+    let mut rng = Xoshiro256::new(123);
+    for bits in [3, 8, 32] {
+        let top = 1u64 << bits;
+        for rounds in 1..=4 {
+            let x = random_config(bits, rounds, &mut rng);
+            for len in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 127, 128, 129, 135, 255, 263] {
+                if len > top { continue; }
+                for lo in [0, top - len] {
+                    let hi = lo + len;
+                    let mut acc = mixlab::bias::Acc::new(bits);
+                    for v in lo..hi { acc.add_input(&|v| x.apply(v), v); }
+                    let expected = acc.finish();
+                    for hs in [false, true] {
+                        let got = mixlab::fast32::counts_range(&x, lo, hi, hs);
+                        assert_eq!((got.n, &got.bins), (expected.n, &expected.bins),
+                                   "{x} [{lo}, {hi}) hs={hs}");
+                    }
+                }
+            }
+        }
+    }
+}

@@ -3,6 +3,24 @@
 Raw historical results are retained as provenance; do not interpret them as
 measurements of the corrected implementation.
 
+## Reliability fixes, 2026-11-23
+
+- The PractRand feeder now sets Windows stdout to binary mode. Windows runs
+  made without binary mode must be repeated; text translation corrupts the
+  byte stream. This does not imply that historical runs used Windows.
+- The radius-2 generator now includes repeated shift moves (shift changes of
+  plus or minus two). Earlier generated lists omitted these configurations,
+  so the full radius-2 optimum claims in FINDINGS require supplemental checks.
+  The exact scores already measured remain valid.
+- Campaign restarts recover the latest archived incumbent even when stopped
+  before the current part logged its start. Completed logs are reused.
+- Arbitrary-range SIMD counting now handles tails shorter than eight inputs.
+  Full-domain exact evaluations use aligned ranges and are unaffected.
+
+Regression checks: `python -m unittest discover -s analysis -p test_*.py` and,
+from `harness/`, `cargo test --release`. Set `PRACTRAND_FEED_EXE` to a compiled
+feeder to include the byte-for-byte stream check.
+
 ## What remains valid
 
 Exact full-domain avalanche scores, the scalar/SIMD agreement checks, and

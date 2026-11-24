@@ -1,8 +1,9 @@
 """Every radius-1 and radius-2 neighbour of a 32-bit 2-round mixer.
 
 A move is one of: flip bit k (1..31) of m0 or m1, or shift s0/s1/s2 by +-1
-(TheIronBorn's move set, issue #19). Radius 2 = two distinct moves, excluding
-+1 and -1 on the same shift. s2 is capped at 16, as in the campaign.
+(TheIronBorn's move set, issue #19). Radius 2 includes repeated moves,
+so a shift may change by +-2. Cancelling moves are deduplicated away.
+s2 is capped at 16, as in the campaign.
 Writes N chunk files <out>_kK.csv for `mixlab race --candidates`.
 Usage: python gen_radius2_cands.py "[16 21f0aaad 15 735a2d97 15]" OUTPREFIX CHUNKS
 """
@@ -24,8 +25,7 @@ def apply(ms):
 
 seen, rows = {tuple(base)}, []
 for r in (1, 2):
-    for ms in itertools.combinations(moves, r):
-        if r == 2 and ms[0][0] == ms[1][0] == "sh" and ms[0][1] == ms[1][1]: continue
+    for ms in itertools.combinations_with_replacement(moves, r):
         c = apply(ms)
         if c and c not in seen:
             seen.add(c); rows.append(c)

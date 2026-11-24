@@ -20,6 +20,10 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
 
 static uint32_t M0, M1;
 
@@ -43,6 +47,12 @@ int main(int argc, char **argv) {
         fprintf(stderr, "usage: %s M0 M1 MODE [R]   (hex multipliers, e.g. 9c013335 335a2d97 2)\n", argv[0]);
         return 1;
     }
+#ifdef _WIN32
+    if (_setmode(_fileno(stdout), _O_BINARY) == -1) {
+        perror("set stdout binary mode");
+        return 1;
+    }
+#endif
     M0 = (uint32_t)strtoul(argv[1], 0, 16);
     M1 = (uint32_t)strtoul(argv[2], 0, 16);
     int mode = atoi(argv[3]);

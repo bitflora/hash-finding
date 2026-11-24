@@ -297,13 +297,22 @@ fn run_range_hs<const R: usize>(k: &K32, bits: u32, lo: u64, hi: u64) -> Counts 
 fn run_range<const R: usize>(k: &K32, bits: u32, lo: u64, hi: u64) -> Counts {
     let mut a = Acc32::new(bits);
     let mut x0 = lo;
-    while x0 < hi {
+    while x0 + L as u64 <= hi {
         let b = x0 as u32;
         let x = [b, b + 1, b + 2, b + 3, b + 4, b + 5, b + 6, b + 7];
         a.add8::<R>(k, x);
         x0 += L as u64;
     }
-    a.finish()
+    let c = a.finish();
+    if x0 == hi {
+        return c;
+    }
+    let mut tail = [0u32; L];
+    let len = (hi - x0) as usize;
+    for (i, v) in tail[..len].iter_mut().enumerate() {
+        *v = (x0 + i as u64) as u32;
+    }
+    c.merge(run_inputs::<R>(k, bits, &tail[..len]))
 }
 
 fn exact_r<const R: usize>(k: &K32, bits: u32, parallel: bool, hs: bool) -> Counts {
