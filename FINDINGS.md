@@ -1008,6 +1008,31 @@ early acceptance, so each accepting chunk stopped early (rest untested).
   `32d3` m0 core's signature. F21 (0.40) remains the best balanced.
 - Within one family, repeated local search keeps paying: F23 0.10091 ->
   F25 0.10076 -> F26 0.09967, each a radius-2 optimum or beyond it.
+- **PractRand, bit-reversed counter** (`analysis/practrand_feed.c` mode 2,
+  `RNG_test stdin32 -tlmax 512MB`; run by the user, 2026-11-23). It fails at
+  512 MB like F21 and the old record, but its failures are smaller on almost
+  every test (R values at 512 MB; F21 rerun 2026-11-23 reproduced F21's
+  numbers exactly):
+
+  | test | old record | F21 | F26 |
+  |---|---|---|---|
+  | Gap-16:A | +4955 | +1265 | **+152.4** |
+  | Gap-16:B | | +920.9 | **+98.1** |
+  | BRank(12) | +5307 | +3435 | **+1743** |
+  | BDayS2 | +30.8 | +24.0 | **+8.4** |
+  | [Low8/32] Gap-16:B | | +172.6 | **+46.8** |
+  | [Low8/32] FPF:all | +201.8 | +243.7 | **+115.7** |
+  | [Low1/32] Gap-16:A | | +1189 | **+1036** |
+  | [Low1/32] Gap-16:B | +6207 | +2408 | **+2137** |
+  | [Low1/32] FPF:all | +1082 | +304.9 | **+133.2** |
+  | [Low1/32] DC6-9x1Bytes-1 | | **+284.6** | +322.3 |
+  | tests with no anomalies | 111 | 122 | **126** |
+
+  - Full-width failures shrink most (Gap-16:A about 8x vs F21); the lowest
+    output bit barely improves and now dominates. Only [Low1/32] DC6 is worse.
+  - So the worse BIC worst pair (0.60 vs 0.40) does not show up as worse
+    PractRand results here. Same limits as F21: one input pattern, R is not a
+    calibrated scale; modes 0, 3 and 4 are untested.
 - Not yet: hash-prospector `-e`; a local search centred on F26 itself.
 
 ## 3. Threats to validity (please check)
