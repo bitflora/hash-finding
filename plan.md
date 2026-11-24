@@ -648,3 +648,7 @@ outputs goes to the `64bit` branch.
   counters. BIC still 0.60; issue-#12 slightly worse than F29.
 - The byte is not bit-separable: good values are scattered.
 - Next: sweep m1's top byte with m0 = 4b0332d3.
+- m1's top byte, swept exactly with m0 = 4b0332d3 (F31): `54` is already
+  optimal (next best d4 0.09906). No new best; the alternating byte sweeps
+  converged after one round. m1's byte is driven by its low bits (low
+  nibble 4 is best), unlike m0's.

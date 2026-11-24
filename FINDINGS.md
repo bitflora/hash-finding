@@ -1194,8 +1194,37 @@ fixed, scored exactly: `python analysis/topbyte_sweep.py run "[16 cb0332d3
   0.1068-0.1108. The good values are scattered (4b, cb, e0, f0, 0b), so the
   byte acts jointly, not bit by bit. Every top-byte value that earlier local
   searches accepted (b2, b7, e0, f0, cb) is in the top 7.
-- Not yet: the same sweep of m1's top byte with m0 = `4b0332d3`;
-  PractRand; hash-prospector `-e`.
+- Not yet: the same sweep of m1's top byte with m0 = `4b0332d3` (done:
+  F31); PractRand; hash-prospector `-e`.
+
+### F31. Exact sweep of m1's top byte: F30 is already optimal there (exact; no new best)
+
+2026-11-24. All 256 values of bits 24-31 of m1, with F30's m0 `4b0332d3`
+and the rest fixed: `python analysis/topbyte_sweep.py run "[16 4b0332d3 15
+549a3597 15]" m1 results/ironborn_ideas/topbyte_4b03_m1` (64 min).
+
+| top byte | exact bias | flips from F30 |
+|---|---|---|
+| **54 (F30)** | **0.09873011186879989** | 0 |
+| d4 | 0.09905794251693231 | 1 (bit 31) |
+| 94 | 0.10012620964659884 | 2 |
+| 74 | 0.10049928261110645 | 1 |
+| 14 | 0.10051539973246745 | 1 |
+| f4 | 0.10070938244159955 | 2 |
+
+- **F30's `54` is the exact optimum of m1's top byte.** F30 is therefore
+  optimal in each top byte separately (m0 by F30, m1 here), so alternating
+  byte sweeps have converged after one round. Changing both bytes at once
+  is not ruled out.
+- **Unlike m0's byte, m1's byte has structure.** Its spread is much wider
+  (0.0987-0.2303, median 0.1170), and the low bits of the byte dominate:
+  mean bias with bit 24 set vs clear is 0.1333 vs 0.1128 (bit 25: 0.1287 vs
+  0.1174; bit 26: 0.1175 vs 0.1286), while bits 29-31 move it by under
+  0.002. The 6 best values all have low nibble 4 (`x4`), as do 11 of the
+  top 20. The m1 high half F20-F26 settled on (`549a`, also `d49a`) fits
+  this pattern.
+- Not yet: a joint search over both top bytes, or bits 16-23; PractRand;
+  hash-prospector `-e`.
 
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
