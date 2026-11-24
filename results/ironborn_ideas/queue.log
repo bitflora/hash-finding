@@ -62,3 +62,29 @@
 [2026-11-23 16:55:15] beam b2 chunk 4: accepted: [16 b20332d3 15 549a3597 15] ms=1.015208e-8  inputs=2^35.29  exact evals=2  [444s]
 [2026-11-23 17:12:51] beam b2 chunk 5: accepted: none  inputs=2^35.45  exact evals=43  [1055s]
 [2026-11-23 17:12:51] beam done
+[2026-11-23 17:25:06] local search [16 b20332d3 15 549a3597 15]: radius 2
+[2026-11-23 17:26:51] local [16 b20332d3 15 549a3597 15] r2 chunk 0: accepted: [16 f00332d3 15 549a3597 15] ms=9.988464e-9  inputs=2^33.99  exact evals=1  [105s]
+[2026-11-23 17:28:44] local [16 b20332d3 15 549a3597 15] r2 chunk 1: accepted: [16 b70332d3 15 549a3597 15] ms=1.014780e-8  inputs=2^33.64  exact evals=2  [112s]
+[2026-11-23 17:32:13] local [16 b20332d3 15 549a3597 15] r2 chunk 2: accepted: none  inputs=2^33.74  exact evals=8  [209s]
+[2026-11-23 17:36:34] local [16 b20332d3 15 549a3597 15] r2 chunk 3: accepted: none  inputs=2^33.94  exact evals=12  [261s]
+[2026-11-23 17:40:31] local [16 b20332d3 15 549a3597 15] r2 chunk 4: accepted: none  inputs=2^33.76  exact evals=11  [237s]
+[2026-11-23 17:45:19] local [16 b20332d3 15 549a3597 15] r2 chunk 5: accepted: none  inputs=2^33.69  exact evals=11  [288s]
+[2026-11-23 17:45:19] local search [16 b20332d3 15 549a3597 15]: beam 1
+43 exactly scored; beam of 43: ms 1.0276e-08 .. 1.3015e-08
+2167 new candidates in 6 chunks -> results/ironborn_ideas/local_549a/b1_k*.csv
+[2026-11-23 17:55:23] local [16 b20332d3 15 549a3597 15] b1 chunk 0: accepted: none  inputs=2^34.58  exact evals=27  [603s]
+[2026-11-23 18:03:35] local [16 b20332d3 15 549a3597 15] b1 chunk 1: accepted: none  inputs=2^34.61  exact evals=26  [492s]
+[2026-11-23 18:13:33] local [16 b20332d3 15 549a3597 15] b1 chunk 2: accepted: none  inputs=2^34.64  exact evals=33  [597s]
+[2026-11-23 18:23:38] local [16 b20332d3 15 549a3597 15] b1 chunk 3: accepted: none  inputs=2^34.73  exact evals=32  [605s]
+[2026-11-23 18:31:39] local [16 b20332d3 15 549a3597 15] b1 chunk 4: accepted: none  inputs=2^34.58  exact evals=24  [481s]
+[2026-11-23 18:33:58] local [16 b20332d3 15 549a3597 15] b1 chunk 5: accepted: [16 e00332d3 15 549a3597 15] ms=9.933693e-9  inputs=2^34.64  exact evals=1  [139s]
+[2026-11-23 18:33:58] local search [16 b20332d3 15 549a3597 15]: beam 2
+142 exactly scored; beam of 66: ms 1.0234e-08 .. 1.1683e-08
+4079 new candidates in 6 chunks -> results/ironborn_ideas/local_549a/b2_k*.csv
+[2026-11-23 18:53:30] local [16 b20332d3 15 549a3597 15] b2 chunk 0: accepted: none  inputs=2^35.66  exact evals=55  [1171s]
+[2026-11-23 19:11:04] local [16 b20332d3 15 549a3597 15] b2 chunk 1: accepted: none  inputs=2^35.62  exact evals=54  [1054s]
+[2026-11-23 19:15:30] local [16 b20332d3 15 549a3597 15] b2 chunk 2: accepted: [16 e00332d3 15 d49a3597 15] ms=1.000883e-8  inputs=2^35.71  exact evals=1  [265s]
+[2026-11-23 19:31:09] local [16 b20332d3 15 549a3597 15] b2 chunk 3: accepted: none  inputs=2^35.64  exact evals=53  [939s]
+[2026-11-23 19:47:17] local [16 b20332d3 15 549a3597 15] b2 chunk 4: accepted: none  inputs=2^35.64  exact evals=57  [968s]
+[2026-11-23 20:03:26] local [16 b20332d3 15 549a3597 15] b2 chunk 5: accepted: none  inputs=2^35.68  exact evals=58  [968s]
+[2026-11-23 20:03:26] local search [16 b20332d3 15 549a3597 15]: done

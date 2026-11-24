@@ -982,6 +982,34 @@ acceptance), same move set as the radius-2 check.
 - Cost: ≈ 2.9 h of racing for 7,333 candidates (vs ≈ 10 h for exhaustive
   radius 3, which would not have reached this radius-4 point).
 
+### F26. Local search around F25 breaks 0.1: `[16 e00332d3 15 549a3597 15]` = 0.09966791588921688 (exact, two independent counters)
+
+Radius-2 check + 2-step beam around F25's `[16 b20332d3 15 549a3597 15]`
+with the reusable `analysis/queue_local_search.sh` (+ `filter_seen.py`, which
+skipped 66 radius-2 neighbours already raced against F23); outputs in
+`results/ironborn_ideas/local_549a/`. All candidates raced against F25 with
+early acceptance, so each accepting chunk stopped early (rest untested).
+
+| step | candidates | accepted (exact bias) |
+|---|---|---|
+| radius 2 | 2,277 | `[16 b70332d3 15 549a3597 15]` 0.10073628061716855 |
+| beam 1 | 2,167 | **`[16 e00332d3 15 549a3597 15]` 0.09966791588921688** |
+| beam 2 | 4,079 | `[16 e00332d3 15 d49a3597 15]` 0.10004414175138568 |
+
+- **0.09966791588921688 is the first 2-round 32-bit xmx below 0.1** that we
+  know of: 1.1% below F25, 2.4% below F21, 6.9% below TheIronBorn's 0.10704.
+  Same value on `mixlab eval --exact` and `examples/exact_generic.rs` (78 s).
+- It is 3 bit flips from F25, all in m0's top byte (`b2` -> `e0`); the core
+  pair `32d3/3597` is unchanged. Earlier hints: `e00332d3` with F23's m1
+  was already close (ms 1.0413e-8 in the F25 beam step 1).
+- Issue #12 metric 0.035701: better than F21 (0.035729), worse than F25
+  (0.035309), so the two metrics now prefer different mixers.
+- BIC unchanged: worst corr 0.60 (in 0 -> out 2,17; max|z| 154 at 2^16), the
+  `32d3` m0 core's signature. F21 (0.40) remains the best balanced.
+- Within one family, repeated local search keeps paying: F23 0.10091 ->
+  F25 0.10076 -> F26 0.09967, each a radius-2 optimum or beyond it.
+- Not yet: hash-prospector `-e`; a local search centred on F26 itself.
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the
