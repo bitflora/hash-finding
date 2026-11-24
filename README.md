@@ -1,13 +1,46 @@
+# Intro
+
+This is a scratchpad for finding better integer hash functions, currently
+targeting lowbias32(). At the time of this writing, well over 100 new functions
+improving on the previous state of the art have been found.
+
+See https://github.com/skeeto/hash-prospector/issues/19#issuecomment-7090221712
+for discussion on the progress.
+
+
 # Mixing functions for hashing and PRNGs
 
 Searching for better constants in integer "finalizers" — the multiply-xorshift
 mixers used by hash tables and random number generators — judged primarily by
 avalanche bias, with additional statistical yardsticks.
 
+- `FINDINGS.md` — numbered findings (F1, F2, …) with evidence; the main writeup
 - `sources.md` — annotated bibliography
 - `plan.md` — research plan and experiment log
-- `harness/` — Rust evaluation and search tool
+- `harness/` — Rust evaluation and search tool (`mixlab`); see `harness/README.md`
 - `results/`, `analysis/` — raw results and analysis scripts
+  (`results/REVIEW_STATUS.md` tracks the status of saved experiments)
+- `viz/` — `explorer.html`, an interactive browser for the explored 32-bit
+  mixers (`explored32.json`)
+
+## Building and running
+
+Needs a Rust toolchain. The release build uses `target-cpu=native`
+(`harness/.cargo/config.toml`), so build on the machine you run it on.
+
+```sh
+cd harness
+cargo build --release
+cargo test --release
+# exact 32-bit avalanche bias of a two-round mixer
+target/release/mixlab eval --bits 32 --spec "[16 b20332d3 15 549a3597 15]" --exact
+```
+
+The shell scripts in `analysis/` run under `bash` and change to the directory
+they need, so they can be started from anywhere. The Python scripts need
+Python 3. `viz/explorer.html` loads its data with `fetch`, so serve `viz/`
+over HTTP (for example `python -m http.server`) rather than opening the file
+directly.
 
 ## Plain-language primer
 

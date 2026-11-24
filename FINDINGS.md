@@ -1103,6 +1103,6 @@ sweep (F14) from the new winners.
 2, 3, 5 and the PractRand check (4) remain.
 
 ## 6. State of the repository
-- Everything through F14 is committed (latest: `e15fe16`). Later sections
-  are committed with the work they describe; `git log -- mixing-functions`
-  is the authoritative record.
+- Each findings section is committed together with the work it describes;
+  `git log` is the authoritative record. Commit subjects cite the F-numbers
+  above.

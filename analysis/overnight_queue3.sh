@@ -3,7 +3,10 @@
 cd "$(dirname "$0")/../harness" || exit 1
 R=../results/negation_races
 Q=$R/queue.log
-B=../../target-lowbits/release/mixlab.exe
+# Originally a side build (CARGO_TARGET_DIR=../../target-lowbits) so the binary
+# with --fix-low-bits could be built while queue 2 held target/. The current
+# harness includes --fix-low-bits, so the normal build works.
+B=target/release/mixlab.exe
 say() { echo "[$(date '+%F %T')] $*" | tee -a $Q; }
 until grep -q "queue2 done" $Q; do sleep 30; done
 say "queue3 start"

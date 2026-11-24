@@ -1,0 +1,16 @@
+# Rust build output (including side build dirs such as target-lowbits/)
+harness/target*/
+target/
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor / office lock files
+.~lock.*#
+*~
+
+# Campaign runner control files
+results/campaign/runner.lock
+results/campaign/PAUSE
+results/campaign/STOP
