@@ -1,0 +1,10 @@
+{
+  "spec": "[16 dc01552d 15 335a2d97 15]",
+  "exact_bias": 0.13059123885031584,
+  "group": "rational_q9",
+  "seed": 1,
+  "start_spec": "[16 9c01552d 15 335a2d97 15]",
+  "start_bias": 0.13060397347235267,
+  "canonical_core0": "552d",
+  "canonical_core1": "2d97"
+}

@@ -1,0 +1,16 @@
+{
+  "seeds_per_core": 2,
+  "rounds_per_seed": 2,
+  "variants_per_round": 96,
+  "coarse_samples": 4194304,
+  "fine_samples": 67108864,
+  "fine_finalists": 3,
+  "exact_proposals_per_round": 1,
+  "fixed_shifts": [
+    16,
+    15,
+    15
+  ],
+  "fixed_low_bits": 16,
+  "pilot": "Interrupted adaptive seed 2500; exact accepted improvements retained and re-evaluated before reuse as seed zero of the first core."
+}

@@ -1,0 +1,9 @@
+{
+  "status": "interrupted",
+  "reason": "Switched from adaptive racing to a fixed refinement budget across four new core pairs.",
+  "completed_seed_runs": 0,
+  "exact_accepted_moves": 2,
+  "last_accepted_spec": "[16 e0073335 15 509a4597 15]",
+  "last_logged_bias": 0.115999995,
+  "reused_by": "bounded_0_s0"
+}

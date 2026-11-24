@@ -1033,7 +1033,133 @@ early acceptance, so each accepting chunk stopped early (rest untested).
   - So the worse BIC worst pair (0.60 vs 0.40) does not show up as worse
     PractRand results here. Same limits as F21: one input pattern, R is not a
     calibrated scale; modes 0, 3 and 4 are untested.
-- Not yet: hash-prospector `-e`; a local search centred on F26 itself.
+- Not yet: hash-prospector `-e`. (The local search centred on F26 is F29.)
+
+### F27. Arithmetic core search finds 476 previously unseen pairs; best reaches 0.11718 (exact bias; one campaign)
+
+2026-11-24. `analysis/new_core_search.py`; all artifacts in
+`results/new_cores_2026_11_24/`. The current overall record remains F26's
+**0.09966791588921688**. This search found useful new starting points, not a
+record or a better demonstrated bias/BIC trade-off.
+
+**Design and novelty.** At shifts 16/15/15, generate first-multiplier cores
+`a = q^-1 * r mod 2^16`, with q in {3,5,7,9,17} and 32 small signed odd
+residuals per q (16 closest to zero, 16 sampled within +/-1023). Pair them
+with second cores 2d97, 3597 and 34d7. Separately vary bits 11-15 of a
+second core ending in 0x597, including negation, with first cores 3335,
+32d3 and cd35. Include random first-core controls with the same second-core
+pool. Deduplicate core pairs after independently identifying each 16-bit
+core with its modular negative; this is a search restriction motivated by
+F12, not an exact symmetry of score.
+
+- Freeze the prior exact dataset: 2,535 specs, 293 sign-folded core pairs.
+- Exclude those pairs from the new groups. This leaves **516 previously
+  unscored pairs**: 333 arithmetic, 87 shared-low-11-bit, 96 random.
+- Add 6 known control pairs. Attach the same three high-half pairs to each:
+  9c01/335a, e003/549a, and the seeded random pair ef87/a5c4.
+- Total: **1,566 configurations**, screened at 2^22 inputs, seed 2401.
+- Independently rescreen the best extension of the best 8 distinct pairs
+  per group at 2^26, seed 2402 (62 configurations; the known group has 6).
+- Score 17 finalists exactly: the best 2 per group plus the best 8 overall
+  by the independent screen. The F21 control reproduces all 17 digits.
+- A separate scan of prior saved specs finds that **476** of the pairs
+  were absent even from generated candidate lists. Another 40 had appeared
+  in generated lists but had no saved exact score. See `prior_seen.csv`.
+
+**Refinement and exact results.** Select the best four new pairs with
+distinct sign-folded first cores. Fix both low 16-bit halves and the shifts.
+For each pair, run two seeds with two rounds each: 96 high-bit variants,
+2^22 screening, fresh 2^26 rescreening of the top three, exact scoring of
+one proposal, and acceptance only on exact improvement. Variants include
+all single high-bit flips, short arithmetic steps in the high halves, mixed
+2-6-bit flips, and random high-half replacements.
+
+| Low-16-bit pair (raw) | Best full spec | Initial exact bias | Best exact bias | Previously generated pair? | BIC worst abs(corr), 3 seeds |
+|---|---|---|---|---|---|
+| 3335 / 4597 | `[16 e0073335 15 509a4597 15]` | 0.12141145984169195 | **0.11599999499509583** | yes; previously unscored | 0.398-0.401 |
+| d2d3 / 34d7 | `[16 9c04d2d3 15 335a34d7 15]` | 0.13308051097832266 | **0.11717554315024437** | no | 0.648-0.649 |
+| 3353 / 34d7 | `[16 e0033353 15 549a34d7 15]` | 0.12560516705290276 | 0.12560516705290276 | no | 0.598-0.600 |
+| 552d / 2d97 | `[16 dc01552d 15 335a2d97 15]` | 0.13060397347235267 | 0.13059123885031584 | no | 0.334-0.338 |
+
+An initial adaptive-racing pilot on 3335/4597 accepted two moves before
+being interrupted to bound refinement cost across all four pairs. Its last
+incumbent was re-evaluated exactly and reused by seed zero of the bounded
+search. Thus the first row received extra search effort; do not compare
+refinement efficiency between rows. The partial pilot and its status are
+retained. All final bias values are full-domain mixlab evaluations; BIC uses
+2^18 inputs per seed, seeds 1/2/3, and still shows strong pair correlations.
+No new PractRand measurements were made.
+
+**What the arithmetic pattern predicts in this campaign.** The q=5 group
+has the largest coarse-screen fraction below ms=4e-8 (bias scale 0.2):
+36/192 = **18.75%**, versus 10/288 = **3.47%** for matched random first
+cores. The shared-low-11-bit group has the lowest new-group median ms
+(1.13e-7 versus 7.29e-7 for random). These are descriptive sampled results,
+not exact proportions or independent statistical replications: extensions
+and input samples are shared.
+
+The best unseen pair comes from `17 * 0xd2d3 = 14 * 65536 + 3`.
+The q=5 finalist satisfies `5 * 0x3353 = 65536 + 159`. However, the q=9
+winner also satisfies `3 * 0x552d = 65536 - 121`, so its denominator label
+does not establish a distinct mathematical family. The selected pairs are
+only 2-3 bit changes from prior exact sign-folded pairs, and d2d3 shares
+its bottom 13 bits with 32d3. Novel saved pairs do not imply independent
+carry structures.
+
+**Reading.** Small-denominator residuals and the shared low-11-bit pattern
+are useful biased candidate generators in this run. They have not exposed
+a superior independent basin. The coarse screens can miss promising
+extensions (the F26 control's best extension was not the one retained), and
+the small refinement budget establishes no local-optimum or family-floor
+claim. q=5 enriches promising starts; q=17 supplies the best previously
+unseen pair after refinement. Neither improves the current record.
+
+**Reproduction.** Build `harness/examples/screen_list.rs` in release mode,
+then run the script's `generate screen exact bounded verify history summary`
+stages from the repository root. Existing completed rows/rounds are reused.
+To regenerate the extra first-row pilot from scratch, run `refine` until
+seed 2500 logs its second accepted move, interrupt it, then run `bounded`;
+the retained partial pilot otherwise supplies that starting point.
+The Rust wrapper delegates all score computation to the existing SIMD
+sampler and retains signed debiased ms. The generic/SIMD sampled-count
+regression passed, as did checks of oddness, residual congruences, novelty,
+resume behavior and changed-seed rejection. JSON/CSV files retain selection
+rules, seeds, budgets, exact proposals, rejected moves and final scores.
+
+### F29. Local search around F26 finds `[16 cb0332d3 15 549a3597 15]` = 0.09908399853581717 (exact, two independent counters)
+
+(Numbered F29 because F27–F28 are on the `64bit` branch.) 2026-11-24.
+The F25/F26 recipe, centred on F26 `[16 e00332d3 15 549a3597 15]`:
+`bash analysis/queue_local_search.sh "[16 e00332d3 15 549a3597 15]"
+results/ironborn_ideas/local_e003 3000 SEEN`, with SEEN listing every
+candidate CSV from `local_549a/` and `beam_b203/`. Outputs are in
+`results/ironborn_ideas/local_e003/`. Every candidate was raced against F26
+with early acceptance. Total run time was 3.1 h.
+
+| step | candidates | accepted (exact bias) |
+|---|---|---|
+| radius 2 | 2,193 (155 already tried were skipped) | none |
+| beam 1 | 2,186 | none |
+| beam 2 | 4,059 | **`[16 cb0332d3 15 549a3597 15]` 0.09908399853581717** (chunk 4; the rest of that chunk is untested) |
+
+- **F26 is a radius-2 optimum, and nothing in beam 1 beat it.** The
+  improvement came at radius 4: 4 bit flips in m0's top byte (`e0` -> `cb`).
+  The core pair `32d3/3597` and m1 are unchanged.
+- Exact bias **0.09908399853581717** on `mixlab eval --exact` (26 s) and on
+  `examples/exact_generic.rs` (168 s). That is 0.59% below F26, 2.9% below
+  F21 and 7.4% below TheIronBorn's 0.10704.
+- Issue #12 metric 0.035235, the best yet (F25 0.035309, F26 0.035701).
+- BIC (2^16 inputs, seed 1) is the same as F26: worst correlation 0.60
+  (input 0 -> outputs 2,17), max|z| 154, the `32d3` signature.
+- **Also below 0.1:** the F25 radius-2 race (`local_549a/r2_k0`) had
+  accepted `[16 f00332d3 15 549a3597 15]`, but F26 did not report it. It
+  scores **0.09994230415343848** on both counters, with issue #12 metric
+  0.035508.
+- m0's top byte keeps moving within this core: `b2`, `b7`, `e0`, `f0` and
+  `cb` all score at or below 0.1008 with m1 `549a3597`. An exhaustive exact
+  sweep of that byte (256 specs) is the obvious next check.
+- Not yet: PractRand; hash-prospector `-e`; a local search centred on F29;
+  the untested rest of beam-2 chunk 4.
 
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs

@@ -1,0 +1,10 @@
+{
+  "spec": "[16 e0073335 15 509a4597 15]",
+  "exact_bias": 0.11599999499509583,
+  "group": "shared_low11",
+  "seed": 0,
+  "start_spec": "[16 e0033335 15 549a4597 15]",
+  "start_bias": 0.12141145984169195,
+  "canonical_core0": "3335",
+  "canonical_core1": "4597"
+}

@@ -1,0 +1,3 @@
+[    31s] 0,start,[16 e0033335 15 549a4597 15],0.1214114598,sd=0.000e0
+[   123s] 1,improved,[16 e0073335 15 549a4597 15],0.1167651425,k=48 worse=29 rejected=0 unraced=18 median_n_drop=2^25.0 inputs=2^32.8 exact=1 cum_inputs=2^32.8 cum_exact=1 bic_skipped=0
+[   204s] 2,improved,[16 e0073335 15 509a4597 15],0.1159999950,k=48 worse=32 rejected=0 unraced=15 median_n_drop=2^25.0 inputs=2^32.5 exact=1 cum_inputs=2^33.7 cum_exact=2 bic_skipped=0

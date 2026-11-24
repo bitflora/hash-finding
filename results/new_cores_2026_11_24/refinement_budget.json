@@ -1,0 +1,10 @@
+{
+  "selection": "Four best new pairs with distinct canonical first-multiplier cores",
+  "seeds_per_start": 2,
+  "iterations": 8,
+  "neighbors": 48,
+  "patience": 3,
+  "cap": 268435456,
+  "fixed_low_bits": 16,
+  "max_s2_exclusive": 16
+}

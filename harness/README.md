@@ -11,6 +11,23 @@ cargo test --release -- --ignored    # slow: exact 32-bit published values, samp
 
 ## Commands
 
+### Batch screening of supplied 32-bit candidates
+
+```
+cargo build --release --example screen_list
+target/release/examples/screen_list INPUT.csv OUTPUT.csv 22 2401
+```
+
+The first input column must be `spec`. This example calls the existing SIMD
+sampler and writes signed debiased `sampled_ms`, sample count, seed and runtime.
+It resumes by skipping completed specs and rejects changes to the sample budget
+or seed. It does not estimate uncertainty or establish improvements; use fresh
+samples for selection and `mixlab eval --exact` for final verification.
+
+`analysis/new_core_search.py` uses this wrapper for the reproducible 2026-11-24
+small-denominator and shared-low-11-bit core search. Run its `generate`, `screen`,
+`exact`, `bounded`, `verify`, `history`, and `summary` stages in order from the repository root.
+
 ### Independent spectral seed search
 
 `seed-search` explores multiplier populations independently of the local-neighbour

@@ -509,3 +509,28 @@ with `mixlab eval --exact`.
 - 2026-11-23: gen 3 finished (18/18; half 0.10091, whole 0.10464, uniform 0.11060). 39 hand-picked core pairings (FINDINGS F24): best race 0.10477, no record.
 - 2026-11-23: beam search past radius 2 around F23 (FINDINGS F25): `[16 b20332d3 15 549a3597 15]` = 0.10076, verified on both exact counters; best issue-#12 too. BIC still 0.60.
 - 2026-11-23: local search around F25 (FINDINGS F26): `[16 e00332d3 15 549a3597 15]` = 0.09967, first below 0.1; both exact counters. BIC still 0.60.
+
+## 2026-11-24: new core search (F27)
+- Screened 516 previously unscored sign-folded low-16-bit core pairs plus
+  six known controls, each with three matched high-half extensions. Of the
+  new pairs, 476 were also absent from prior generated candidate lists.
+- Tested small-denominator residuals (q=3/5/7/9/17), shared low-11-bit
+  second cores, and matched random first-core controls. q=5's coarse-screen
+  share below the 0.2 bias scale was 18.75%, versus 3.47% for random.
+- Independently rescreened 62 starts, scored 17 exactly, and refined four
+  distinct first cores with two seeds each under a fixed budget. Retained
+  two exact improvements from an interrupted adaptive pilot as well.
+- Best previously unseen pair: d2d3/34d7, full spec
+  `[16 9c04d2d3 15 335a34d7 15]`, exact bias 0.11717554315024437.
+  Best previously unscored pairing: 3335/4597, full spec
+  `[16 e0073335 15 509a4597 15]`, exact bias 0.11599999499509583.
+- No new record. BIC remains poor; details and reproducible scripts are in
+  F27 and `results/new_cores_2026_11_24/`.
+
+## 2026-11-24: local search around F26 (F29)
+- Radius 2 + 2-step beam centred on F26 (8,438 candidates, 3.1 h). Radius 2
+  and beam 1 found nothing better. Beam 2 found `[16 cb0332d3 15 549a3597 15]`
+  = 0.09908, a new best, verified on both exact counters. BIC still 0.60.
+- Also verified the F25 radius-2 hit that F26 did not report:
+  `[16 f00332d3 15 549a3597 15]` = 0.09994.
+- Next: an exact sweep of m0's top byte, and a beam on the F21 core.

@@ -1,0 +1,9 @@
+{
+  "start_spec": "[16 9c01552d 15 335a2d97 15]",
+  "start_bias": 0.13060397347235267,
+  "proposed_spec": "[16 9e01552d 15 335a2d97 15]",
+  "proposed_exact_bias": 0.14009271579966526,
+  "accepted": false,
+  "end_spec": "[16 9c01552d 15 335a2d97 15]",
+  "end_bias": 0.13060397347235267
+}
