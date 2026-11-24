@@ -534,3 +534,117 @@ with `mixlab eval --exact`.
 - Also verified the F25 radius-2 hit that F26 did not report:
   `[16 f00332d3 15 549a3597 15]` = 0.09994.
 - Next: an exact sweep of m0's top byte, and a beam on the F21 core.
+
+## Planned (not started): shift templates, then cheaper mixers
+Order: finish F29 (top-byte sweep, F21-core beam) → Plan A → Plan B.
+
+### Plan A: other shift templates for 2-round 32-bit xmx
+**Why.** Of the ~1,500 exactly scored configs in `results/explored32.csv`,
+995 use 16/15/15. Most others are ±1 shift moves on multipliers tuned for
+16/15/15, which is an unfair test because shifts and multipliers co-adapt.
+Even so, 15/15/15 reached 0.1128 in 27 configs. The question: is 16/15/15
+really the best template, or only the one that got all the effort?
+
+**Constraints.** s2 ≤ 15 (F11: s2 ≥ 16 always leaves an exact output pair).
+Every score is from mixlab (CLAUDE.md); Python only picks configs and
+reads results.
+
+**A0. Harness prerequisites.**
+- `mixlab race --fix-shifts`: race moves currently include shift ±1, so a
+  race would drift back toward 16/15/15. With the flag, only multiplier
+  moves are allowed. Add a test in `harness/tests/`.
+- A batch sampled screen of a spec list at a chosen sample count, if
+  `screen_list` does not already cover arbitrary templates.
+
+**A1. Wide screen (cheap, a few hours).**
+- Grid: s0 ∈ 13..18, s1 ∈ 12..17, s2 ∈ 12..15 (144 templates).
+- Per template, two kinds of starts: 64 random odd multiplier pairs, and the
+  ~20 best known low-16-bit core pairs (F16, F27) with random high halves.
+- Screen all starts at 2^22 samples; also get the F4 surrogate score per
+  template as a second ranking.
+- Rank templates by the 10th-percentile and best start score, not by the
+  single best. 16/15/15 goes through the same protocol as the control.
+
+**A2. Equal-budget races (the main experiment).**
+- Take the top ~6 templates from A1 plus 16/15/15 as control.
+- Per template: the 3 best starts × 2 seeds, `--fix-shifts`, same patience
+  and iteration cap. Exact score every race winner.
+- Estimate: ~1–2 h per race, 42 races, so roughly 2–3 days of queued runs
+  through `campaign.py` (pausable).
+- Result: per-template distribution of race winners. The claim is
+  "template T reaches X under budget B, against 16/15/15's Y under the same
+  B", never a comparison against the record, which had far more effort.
+
+**A3. Follow-up only if a template gets close.** If a non-16/15/15 template's
+best race is within ~5% of 16/15/15's best under the same budget: crossover
+within that template (F21 method), then a radius-2 beam around its winner.
+
+**A4. Structure.** For each template's winners: BIC at 2^20 over 5 seeds.
+Check whether the worst pair sits at (k, k+s2) as F10/F11 predict, and
+whether low-bit cores transfer across templates (does a 16/15/15 core stay
+good at 15/15/15?).
+
+**Deliverable.** A FINDINGS entry with a template × (best, median race
+winner, BIC) table, and a README/record update if anything beats 0.09908.
+
+### Plan B: fewer instructions, similar quality
+**Goal.** A front of quality (exact bias, BIC, the F11 defect) against speed,
+not a single winner. Reference point: the current best 2-round xmx is
+8 ops (3 × shift+xor, 2 multiplies), critical path ≈ 12 cycles on x86-64
+(3-cycle multiply, 1-cycle shift and xor).
+
+**B0. Measure speed properly (harness).**
+- Add `mixlab bench`: latency-bound (each output feeds the next input) and
+  throughput-bound (independent inputs) loops in Rust, with the mixer
+  inlined. Report ns/hash and the op count. Speed is not a score, but it
+  sits next to the mixers, so it belongs in the harness.
+- Benchmark lowbias32, the record, triple32, and fmix32 first as anchors.
+
+**B1. Generalise the mixer form (harness).** Replace the fixed
+`[s0 m0 s1 m1 s2]` shape with an op list, for example
+`xs16 m:cb0332d3 xs15 m:549a3597 xs15`, plus the new ops below. Keep the
+AVX2 exact path for plain xmx, and add a generic exact path for the rest.
+Measure how much slower generic exact evaluation is; if it is minutes per
+config, add SIMD paths only for the families that survive B2.
+
+**B2. Candidate families, cheapest to test first.**
+1. **Truncated xmx.** Drop one op from the 2-round form: no first xorshift
+   (`m0 xs m1 xs`), no last xorshift, or 1.5 rounds. 6–7 ops. Needs only B1.
+   Note: without a final xorshift, high input bits can reach low output bits
+   only through the earlier xorshift, so expect a weak worst pair. BIC will
+   show it.
+2. **1-round xmx** (`[s0 m s1]`, 5 ops). Race with a fresh template scan, to
+   get the floor of what 5 ops buys.
+3. **64-bit multiply, 32-bit result.** On x86-64 and ARM64, a 64-bit
+   multiply costs the same as a 32-bit one. For example
+   `p = (u64)x * M; h = (u32)(p >> 32) ^ (u32)p`, then one xorshift or
+   multiply. 3–5 ops, but generally **not a bijection**, so add a collision
+   count to mixlab next to bias (exact over 2^32 inputs is cheap).
+4. **CRC32C as the linear step.** `crc32c(x)` is one instruction (SSE4.2,
+   ARMv8 CRC), invertible and linear over GF(2), and mixes in both
+   directions, unlike a right xorshift. Try `crc → mul → xs` and
+   `mul → crc → mul`. Exact evaluation can use a precomputed linear map.
+5. **Rotate instead of shift** where it shortens the path, for example
+   `x ^= rotr(x, a)` patterns. Mostly a test of whether low-bit cores
+   (F10/F16) still matter without the triangular structure.
+
+**B3. Search.** For each surviving family: screen (sampled), race with the
+existing racing code once B1 makes it family-agnostic, then exact-verify
+winners. Reuse core and crossover ideas only where the family keeps the
+multiply-then-right-shift structure.
+
+**B4. Report.** Bias, BIC max|z|, collisions, ops, and latency/throughput
+on this machine for each family's best, as a front. A PractRand run would
+help a lot here (needs a C toolchain, so ask first).
+
+**Branch note.** Plan B stays 32-bit and goes on `main`, even though some
+families use 64-bit instructions internally. Anything producing 64-bit
+outputs goes to the `64bit` branch.
+
+## 2026-11-24: exact sweep of m0's top byte (F30)
+- All 256 values of F29's m0 bits 24-31 scored exactly (65 min,
+  `analysis/topbyte_sweep.py`). Best: `[16 4b0332d3 15 549a3597 15]`
+  = 0.09873, a new best, F29's radius-1 neighbour; verified on both exact
+  counters. BIC still 0.60; issue-#12 slightly worse than F29.
+- The byte is not bit-separable: good values are scattered.
+- Next: sweep m1's top byte with m0 = 4b0332d3.

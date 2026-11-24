@@ -1,9 +1,9 @@
 # Intro
 
-**Current best hash:** `[16 cb0332d3 15 549a3597 15]`
-Avalanche bias: **0.09908399853581717**
+**Current best hash:** `[16 4b0332d3 15 549a3597 15]`
+Avalanche bias: **0.09873011186879989**
 
-Spec format: `x ^= x >> 16; x *= 0xcb0332d3; x ^= x >> 15; x *= 0x549a3597; x ^= x >> 15`.
+Spec format: `x ^= x >> 16; x *= 0x4b0332d3; x ^= x >> 15; x *= 0x549a3597; x ^= x >> 15`.
 
 This is a scratchpad for finding better integer hash functions, currently
 targeting lowbias32(). At the time of this writing, well over 100 new functions

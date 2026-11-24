@@ -1161,6 +1161,42 @@ with early acceptance. Total run time was 3.1 h.
 - Not yet: PractRand; hash-prospector `-e`; a local search centred on F29;
   the untested rest of beam-2 chunk 4.
 
+### F30. Exact sweep of m0's top byte finds `[16 4b0332d3 15 549a3597 15]` = 0.09873011186879989 (exact, two independent counters)
+
+2026-11-24. All 256 values of bits 24-31 of m0, with the rest of F29
+fixed, scored exactly: `python analysis/topbyte_sweep.py run "[16 cb0332d3
+15 549a3597 15]" m0 results/ironborn_ideas/topbyte_cb03_m0` (`mixlab exact
+--list`, 12 threads, 65 min), then `summary`. Outputs are in
+`results/ironborn_ideas/topbyte_cb03_m0/`.
+
+| top byte | exact bias | flips from F29 |
+|---|---|---|
+| **4b** | **0.09873011186879989** | 1 (bit 31) |
+| cb (F29) | 0.09908399853581717 | 0 |
+| e0 (F26) | 0.09966791588921688 | 4 |
+| f0 | 0.09994230415343848 | 5 |
+| 0b | 0.10039535220465691 | 2 |
+| b7 | 0.10073628061716855 | 5 |
+| b2 (F25) | 0.10075753534782024 | 5 |
+
+- **New best, 0.09873011186879989**, 0.36% below F29. Same value on
+  `examples/exact_generic.rs` (84 s). It is F29's radius-1 neighbour, which
+  no search had tried: F29 was found by a search centred on F26.
+- With the rest fixed, this byte is now exhausted: 4b is its exact optimum.
+- Issue #12 metric 0.035315: worse than F29 (0.035235) and F25 (0.035309),
+  so the two metrics again prefer different mixers.
+- BIC (2^16, seed 1) unchanged: worst corr 0.60 (in 0 -> out 2,17),
+  max|z| 154.
+- **The byte matters but is not bit-separable.** Bias over the 256 values
+  ranges 0.0987-0.1213 (median 0.1081; 4 values below 0.1, 51 below 0.105).
+  The largest single-bit effect, the difference in mean bias with the bit
+  set versus clear, is only 0.0023 (bit 26), and medians by top nibble range
+  0.1068-0.1108. The good values are scattered (4b, cb, e0, f0, 0b), so the
+  byte acts jointly, not bit by bit. Every top-byte value that earlier local
+  searches accepted (b2, b7, e0, f0, cb) is in the top 7.
+- Not yet: the same sweep of m1's top byte with m0 = `4b0332d3`;
+  PractRand; hash-prospector `-e`.
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the
