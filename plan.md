@@ -509,3 +509,5 @@ with `mixlab eval --exact`.
 - 2026-11-23: gen 3 finished (18/18; half 0.10091, whole 0.10464, uniform 0.11060). 39 hand-picked core pairings (FINDINGS F24): best race 0.10477, no record.
 - 2026-11-23: beam search past radius 2 around F23 (FINDINGS F25): `[16 b20332d3 15 549a3597 15]` = 0.10076, verified on both exact counters; best issue-#12 too. BIC still 0.60.
 - 2026-11-23: local search around F25 (FINDINGS F26): `[16 e00332d3 15 549a3597 15]` = 0.09967, first below 0.1; both exact counters. BIC still 0.60.
+- 2026-11-23: shared properties of good 32-bit mixers (FINDINGS F27): m0 ≡ ±3 mod 8 and high NAF weight hold up on random populations; m1 ≡ ±1 is lineage. Sparse small multiples (3·m0 mod 2^j) predict a two-bit-flip defect (ρ −0.87).
+- 2026-11-23: candidate 64-bit metrics validated at 32 bits (FINDINGS F28, `examples/metrics_validate.rs`): the old record's lineage has a large adjacent two-bit defect (adj2 164 vs 1.1 for F21/F26); the two-bit metric matches PractRand order on 3 mixers, BIC does not. 64-bit pilot: fmix64/Mix13 fail BIC, Moremur fails the bit-reversed counter (18.6).

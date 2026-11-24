@@ -1035,6 +1035,109 @@ early acceptance, so each accepting chunk stopped early (rest untested).
     calibrated scale; modes 0, 3 and 4 are untested.
 - Not yet: hash-prospector `-e`; a local search centred on F26 itself.
 
+### F27. Properties shared by good 32-bit mixers (indicative; lineage-confounded)
+**Method.** `analysis/shared_props32.py` computes multiplier features (popcount,
+NAF weight, bit runs, mod 8, inverse, 2-D spectral figure, pair features) for
+the 2,008 exactly scored 16/15/15 mixers in `results/explored32.csv`. It also
+keeps one mixer per low-16-bit core pair (206) to reduce lineage duplication,
+and compares the 16 elite core pairs (bias < 0.11) against random odd
+multipliers. `analysis/mod8_check.py` re-tests on independent random
+populations (5,000 random 16-bit, 1,200 random 24-bit, all exact).
+
+- **mod 8 class.** All 16 elite pairs have m0 ≡ ±3 and m1 ≡ ±1 (mod 8). The
+  class is negation-invariant, consistent with F12.
+  - m0 ≡ ±3 is also favoured in the random populations: ±1/±1 is worst
+    (share in the best 10%: 0.04–0.05, against 0.15–0.17 for ±3/±3).
+  - m1 ≡ ±1 is **not** supported. The random populations prefer ±3 for m1,
+    races almost never change the class (9 of 650 accepted moves), and
+    flipping bit 1 or 2 of an elite m1 (class change) costs about as much as
+    flipping bits 3–6 (median 1.5–1.8× the bias at 2^26 sampled for both;
+    `analysis/mod8_flip.py`, `results/mod8_flip.csv`). So it is most likely
+    inherited from the 2d97/3597 lineages.
+- **NAF weight.** Elite m1 NAF weight 14.4 against 11.4 for random multipliers;
+  m0 13.0. In the random 16/24-bit populations a higher NAF density goes with
+  lower bias (ρ −0.14 to −0.45). The published 64-bit multipliers sit
+  0.5–1.8 sd above random (fmix64 23, Moremur 24/25, NASAM 26 vs mean 22.1).
+  Most 64-bit references are also ±3 mod 8 (Mix13's m0 is the exception).
+- **Not predictive:** popcount, spectral figure (elite low cores are, if
+  anything, *worse* LCG multipliers, again matching F17), inverse features,
+  and pair features (product, XOR). No single bit position is enriched among
+  the elite.
+- **Sparse small multiples (the useful one; see F28).** If k·m mod 2^j has a
+  very sparse signed-digit form for a small odd k, then a low-weight input
+  difference whose additive value is k·2^i reaches the next xorshift as a
+  sparse difference. For the record's core, 3·0x21f0aaad = 0x65d20007: the low
+  17 bits are 7. The exact screen "NAF density of {m0, 3·m0} mod 2^j, j ≥ 12"
+  predicts the adjacent-two-bit-flip defect with Spearman −0.87 among the 28
+  validation mixers with bias < 0.2. F21's m0 has 5·m0 ≡ 9 (mod 2^17), and its
+  worst two-bit flip is bits (13, 15), a gap of 2, as predicted.
+
+### F28. Candidate 64-bit metrics validated at 32 bits, plus a 64-bit pilot (indicative)
+**Method.** `harness/examples/metrics_validate.rs` scores any-width xmx in
+noise units (ideal ≈ 1; a defect adds ms·n, so it grows with n):
+- counter, bit-reversed counter and high-half counter inputs (2^24 at 32 bits);
+- adjacent two-bit flips (`adj2`), additive differences x vs x+2^i (`add`), and
+  plain avalanche (`sac`), all at 2^22;
+- every two-bit flip {i, j} with j − i ≠ s0 (`two`, 2^18 per pair);
+- BIC at 2^20.
+
+The set is 65 exactly scored mixers, bias 0.0997–16.1, including every elite
+core pair, log-spaced others and the BIC-frontier points
+(`results/metric_validation/`, analysis `analysis/metric_validation.py`).
+
+| metric | ρ vs bias, all | bias < 0.2 (n=28) | < 0.12 (n=19) |
+|---|---|---|---|
+| counter | 0.95 | 0.43 | 0.30 |
+| bit-reversed counter | 0.93 | 0.36 | 0.41 |
+| adj2 | 0.44 | 0.48 | 0.41 |
+| add | 0.61 | 0.26 | 0.24 |
+| sac (2^22) | 0.95 | 0.38 | −0.29 |
+| BIC rms z | 0.60 | 0.07 | −0.08 |
+| BIC worst corr | 0.54 | 0.03 | −0.01 |
+
+- Across the full range everything tracks bias; among good mixers nothing
+  does. These metrics see **different defects**, which is what a 64-bit
+  objective needs.
+- **Two-bit flips expose a large, previously unseen defect in the old record's
+  lineage.** adj2 = 164 for the record, 150–230 for every `aaad`/`f0aaad`
+  m0 core (record, 0.1076, 7870aaad, 5e0f5553, 61f0aaad, 6870aaad), against
+  1.1–1.2 for F21 and F26. The record's worst flip is input bits {14, 15} →
+  output 19 at 53% (`add` 17 vs 1.7). The cause is the sparse 3·m0 (F27).
+- **Two-bit metrics agree with PractRand; BIC does not.** On the three mixers
+  with PractRand runs (bit-reversed counter, 512 MB), clean tests are
+  111 < 122 < 126 for record < F21 < F26. The mean two-bit metric is
+  3.56 > 2.04 > 1.52, the same order; the worst-pair values are 123, 86 and 35.
+  The BIC worst pair goes the other way (0.33, 0.40, 0.60). The bit-reversed
+  counter metric at 2^24 does not separate them (2.6–2.8). n = 3.
+- **Structural two-bit defect.** Flipping {i, i+s0} becomes a single high-bit
+  difference after the first xorshift, for every constant. Some output bits
+  then never or always flip (units up to 6·10^4 at 2^18). The metric excludes
+  these pairs; they cannot be fixed by constants and will also exist at
+  64 bits.
+
+**64-bit pilot** (`results/metric_validation/pilot64.csv`; counters 2^22,
+random 2^22, two-bit 2^20 per pair, BIC 2^20; 6.6 min for 3 mixers):
+
+| mixer | rev counter | BIC worst corr | BIC rms z | two mean / worst | adj2, add, sac |
+|---|---|---|---|---|---|
+| fmix64 | 1.55 | 0.96 (s2 = 33 > 32, F11) | 17.8 | 1.01 / 5.4 | ≈ 1 |
+| Stafford Mix13 | 0.99 | 1.00 (exact pair) | 13.4 | 1.00 / 1.6 | ≈ 1 |
+| Moremur | **18.6** | 0.04 | 1.07 | 1.00 / 1.8 | ≈ 1 |
+
+- At 64 bits, cheap structured metrics still find defects. Each reference
+  fails a different one: fmix64 and Mix13 on BIC, Moremur strongly on the
+  bit-reversed counter. Plain avalanche, adj2 and add are saturated at these
+  sample counts.
+- So a 64-bit scorecard needs several metrics. Candidates: BIC worst pair,
+  bit-reversed counter, the two-bit worst pair at larger n, and the exact
+  sparse-multiple screen as a free pre-filter.
+
+**Limits.** The PractRand comparison is three mixers with one input pattern.
+The two-bit metric has not been run over the whole validation set. Noise
+units have sd ≈ √(2/cells) for an ideal mixer, but replicate seeds were not
+run. The metric code is a harness example, not yet a `mixlab` subcommand with
+a test.
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the
