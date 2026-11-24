@@ -642,7 +642,7 @@ check and recombination of good solutions. Script:
   the record.**
 - So the record is an exhaustive radius-2 local optimum under this move
   set. That holds up to the racing false-drop rate, which F13 measured as
-  zero in 48 races.
+  zero in 48 races. Shift ±2 neighbours, missed by the original generator, were scored exactly later (all ≥ 0.135; `shift2_check.txt`).
 - The closest exact neighbours are all m1 top-nibble variants:
 
   | m1 | bias |
@@ -814,7 +814,7 @@ patience at iteration 21):
   The screen chooses *where to race*, not which child is already best.
 - **Radius-2 check of the new mixer:** all 2,343 neighbours were raced
   (`results/ironborn_ideas/r2_new/`, 26 min, 75 exact checks), and none is
-  better. So it is a radius-2 local optimum, like the old record.
+  better. So it is a radius-2 local optimum, like the old record. Shift ±2 neighbours, missed by the original generator, were scored exactly later (all ≥ 0.135; `shift2_check.txt`).
 - The closest neighbour is `[16 9c013335 15 b35a2d97 15]` = 0.10215, which
   also beats the old record. Next are m0 variants `dc013335` (0.10367),
   `cc013335` (0.10374) and `dd013335` (0.10377).
@@ -911,7 +911,7 @@ All 18 races done (2026-11-23; paused once at 11/18 and resumed).
   none accepted. 66 came close enough to be scored exactly; the best,
   `[16 f00332d3 15 d21a3597 15]` and `[16 b70332d3 15 d21a3597 15]`, are
   0.10108 and 0.10111 (≈ 1000·√ms from the race's exact verification), so
-  the 32d3 neighbourhood also holds two more mixers below F21's 0.10207.
+  the 32d3 neighbourhood also holds two more mixers below F21's 0.10207. Shift ±2 neighbours, missed by the original generator, were scored exactly later (all ≥ 0.135; `shift2_check.txt`).
 - **It is not better on every axis.** Issue #12 metric: 0.035762 vs F21's
   0.035729 (slightly worse). BIC worst-pair correlation 0.60 (in 0 -> out 2,17;
   max|z| 154 at 2^16) vs F21's 0.40 (101). The 0.6022 is identical for every

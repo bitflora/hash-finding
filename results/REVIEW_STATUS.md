@@ -10,8 +10,11 @@ measurements of the corrected implementation.
   byte stream. This does not imply that historical runs used Windows.
 - The radius-2 generator now includes repeated shift moves (shift changes of
   plus or minus two). Earlier generated lists omitted these configurations,
-  so the full radius-2 optimum claims in FINDINGS require supplemental checks.
-  The exact scores already measured remain valid.
+  The exact scores already measured remain valid. Supplemental check
+  (2026-11-23, `results/ironborn_ideas/shift2_check.txt`): the 5 shift +-2
+  neighbours of each of the old record, F21, F23, F25 and F26 were scored
+  exactly; the best is 0.1355 (old record, s0 = 14), far above every centre.
+  So the radius-2 optimum claims for the old record, F21 and F23 stand.
 - Campaign restarts recover the latest archived incumbent even when stopped
   before the current part logged its start. Completed logs are reused.
 - Arbitrary-range SIMD counting now handles tails shorter than eight inputs.
