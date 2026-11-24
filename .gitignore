@@ -14,3 +14,4 @@ __pycache__/
 results/campaign/runner.lock
 results/campaign/PAUSE
 results/campaign/STOP
+.vscode/settings.json
