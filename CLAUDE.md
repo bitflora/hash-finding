@@ -4,6 +4,8 @@
 
 The top of `README.md` records the current best hash and its exact bias. Whenever a new best is found, update it there (and add the finding to `FINDINGS.md`).
 
+Beating the current best is the goal, but every exactly scored 2-round 32-bit mixer below **0.10704** (TheIronBorn's published best) is worth keeping as a starting point for later searches, whatever its shifts or family. Keep them findable: write exact scores where `analysis/collect_explored32.py` picks them up (race logs, `exact`/`bias` CSVs), rerun it after a campaign, and report how many new sub-0.10704 mixers a run produced.
+
 ## Rust harness vs. Python scripts
 
 Anything that *computes* a score lives in the harness (`harness/`, the `mixlab` binary), and Python only *uses* scores.

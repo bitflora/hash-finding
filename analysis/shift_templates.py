@@ -25,7 +25,9 @@ Steps (state lives in results/shift_templates/, override with SHIFT_DIR):
   python analysis/shift_templates.py summary [--bic-seeds 1,2,3,4,5]
       A2/A4 report: per-template race winners (exact), best/median, and BIC at
       2^20 over several seeds for each template's best winner, including the
-      worst pair's location. Writes template_summary.csv.
+      worst pair's location. Writes template_summary.csv, and below_10704.csv:
+      every exactly scored race incumbent (start or accepted step) below
+      0.10704, TheIronBorn's published best, as seeds for later searches.
 
 Builds needed: cargo build --release --bin mixlab --example screen_list
 """
@@ -214,6 +216,36 @@ def bic_runs(spec, seeds):
     return [(float(m[1]), int(m[2]), int(m[3]), int(m[4]), float(m[5])) for m in rx.finditer(out)]
 
 
+KEEP_BELOW = 0.10704  # TheIronBorn's published best; anything under it is kept as a seed
+
+
+def below_threshold():
+    """Every exact incumbent in the campaign's race CSVs (iter,event,config,score;
+    with bits 32 and no --verify-samples, start and accepted scores are exact)."""
+    best = {}
+    for p in sorted(CAMP.glob("T*.csv")):
+        for line in p.read_text().splitlines():
+            f = line.split(",")
+            if len(f) >= 4 and f[1] in ("start", "improved"):
+                b = float(f[3])
+                if b < KEEP_BELOW and (f[2] not in best or b < best[f[2]][0]):
+                    best[f[2]] = (b, p.stem)
+    rows = sorted((b, spec, job) for spec, (b, job) in best.items())
+    with open(D / "below_10704.csv", "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["spec", "bias", "template", "job"])
+        for b, spec, job in rows:
+            s0, _, s1, _, s2 = parse(spec)
+            w.writerow([spec, f"{b:.10f}", f"{s0}/{s1}/{s2}", job])
+    per = defaultdict(int)
+    for _, spec, _ in rows:
+        s0, _, s1, _, s2 = parse(spec)
+        per[f"{s0}/{s1}/{s2}"] += 1
+    print()
+    print(f"{len(rows)} distinct mixers below {KEEP_BELOW} -> {D / 'below_10704.csv'}"
+          + ("" if not per else ": " + ", ".join(f"{t} {n}" for t, n in sorted(per.items(), key=lambda kv: -kv[1]))))
+
+
 def summary():
     seeds = opt("--bic-seeds", "1,2,3,4,5")
     recs = [json.loads(p.read_text()) for p in sorted(CAMP.glob("*.done.json"))]
@@ -242,6 +274,7 @@ def summary():
     for r in rows:
         print(f"{r['template']:<9} {r['races']:>2} {r['best']:9.5f} {r['median']:9.5f} {r['worst']:9.5f} {r['best_spec']:<30} "
               f"{r['bic_max_z']:7.1f} {r['bic_worst_abs_corr']:6.3f}  {r['bic_worst_pairs']}")
+    below_threshold()
 
 
 if __name__ == "__main__":

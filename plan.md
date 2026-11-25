@@ -585,7 +585,12 @@ whether low-bit cores transfer across templates (does a 16/15/15 core stay
 good at 15/15/15?).
 
 **Deliverable.** A FINDINGS entry with a template × (best, median race
-winner, BIC) table, and a README/record update if anything beats 0.09908.
+winner, BIC) table, and a README/record update if anything beats the current
+best (0.09873, F30). Also keep every exactly scored mixer below 0.10704
+(TheIronBorn's published best), whatever its template: `summary` writes them
+to `below_10704.csv`, and `collect_explored32.py` picks up the race logs.
+These are the starting points for A3 and later searches, as the published
+0.107-0.113 mixers were for ours.
 
 **Tooling status (2026-11-24): built, not run.**
 - `mixlab race --fix-shifts` (only multiplier moves) and
