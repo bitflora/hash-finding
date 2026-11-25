@@ -543,8 +543,9 @@ budget, and 15/15/15 is the next best, 10% above it. The A3 gate is not met.
 A4 is done (F35): m0's step follows s1, not s0. F35 also found that 31 of
 the 144 templates have a shift-forced exact BIC pair, and that a native core
 search at 15/15/15 races no better than transplanted cores (best 0.12521).
-Open: a native core search at a clean s1 ≠ 15 template (16/14/15, 15/16/15
-or 16/16/15), the one place F35 says new cores could matter.
+F36 ran that search at 16/14/15: native cores screen better there, but the
+best race (0.14373) is still 0.039 behind 16/15/15. Plan A closes with
+16/15/15 as the template to keep searching.
 
 ### Plan A: other shift templates for 2-round 32-bit xmx
 **Why.** Of the ~1,500 exactly scored configs in `results/explored32.csv`,

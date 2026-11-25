@@ -1462,6 +1462,37 @@ one base mixer each, the F34 winners).
 `collect_explored32.py` gives `explored32.csv` 4,513 specs (was 4,013),
 still 553 below 0.10704.
 
+### F36. Native cores at 16/14/15: better screens, slightly better races, still ≥ 0.039 behind 16/15/15 (exact winners; one campaign)
+
+2026-11-25. F35(c) repeated at 16/14/15, the clean template where s1 ≠ 15
+and F35(b) showed m0's step moving (bits 11/12). Same script, settings and
+budget: `python analysis/native_cores.py <stage> --template 16/14/15`,
+`results/native_cores/16_14_15/` (21,628 pairs, 43,256 stage-1 specs,
+stage 2 on 322 pairs, 45 exact finalists, 26 races; about 1.3 h).
+
+| | 15/15/15 (F35) | 16/14/15 |
+|---|---|---|
+| transplants in stage-2 top 40 (of 30) | 24 | 13 |
+| best exact finalist, native / transplant | 0.17823 / 0.17766 | **0.20476** / 0.22561 |
+| native races (20): best / median | 0.12521 / 0.14377 | 0.14373 / 0.16628 |
+| transplant races (6): best / median | 0.12783 / 0.13031 | 0.15730 / 0.16525 |
+| F34 races at this template: best | 0.11566 | 0.14175 |
+
+- **Where s1 changes, transplanted cores lose their edge in screening.**
+  They fill 13 of the top 40 (24 at 15/15/15), and the best native finalist
+  beats the best transplant by 0.021. The best native races beat the best
+  transplant race by 0.014, but the medians are equal (0.166 vs 0.165), so
+  the race advantage rests on two races.
+- **The template is still far behind.** The best of 26 races (0.14373,
+  `[16 9cbb674b 14 e1972539 15]`) does not beat F34's 0.14175 there, and is
+  0.039 above 16/15/15's F34 best (0.10471) under a comparable budget.
+- Together with F35: core origin matters a little when s1 moves, but not
+  enough to close the gap between templates. The template ranking from F34
+  stands.
+
+**No new sub-0.10704 mixers** (best 0.14373). `explored32.csv` now has
+4,793 specs (was 4,513), still 553 below 0.10704.
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the
