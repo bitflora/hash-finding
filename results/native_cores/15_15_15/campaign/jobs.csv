@@ -1,0 +1,27 @@
+id,campaign,kind,start,seed,args
+N15_15_15_c0_s1,T15_15_15,race,[15 cbf152b5 15 edb732a3 15],1,--fix-shifts
+N15_15_15_c1_s1,T15_15_15,race,[15 0f022667 15 c2b93519 15],1,--fix-shifts
+N15_15_15_c2_s1,T15_15_15,race,[15 c29f332d 15 32b25349 15],1,--fix-shifts
+N15_15_15_c3_s1,T15_15_15,race,[15 681c6553 15 b8d3a735 15],1,--fix-shifts
+N15_15_15_c4_s1,T15_15_15,race,[15 0f02554d 15 c2b9ab99 15],1,--fix-shifts
+N15_15_15_c5_s1,T15_15_15,race,[15 cbf1ccd3 15 edb73527 15],1,--fix-shifts
+N15_15_15_c6_s1,T15_15_15,race,[15 175dd5a9 15 8e3b28d3 15],1,--fix-shifts
+N15_15_15_c7_s1,T15_15_15,race,[15 0f02aaa7 15 c2b932e9 15],1,--fix-shifts
+N15_15_15_c8_s1,T15_15_15,race,[15 c29f5557 15 32b2e2d3 15],1,--fix-shifts
+N15_15_15_c9_s1,T15_15_15,race,[15 0f024aab 15 c2b9cb23 15],1,--fix-shifts
+X15_15_15_c0_s1,T15_15_15,race,[15 c29f3535 15 32b22d97 15],1,--fix-shifts
+X15_15_15_c1_s1,T15_15_15,race,[15 0f02aaad 15 c2b93597 15],1,--fix-shifts
+X15_15_15_c2_s1,T15_15_15,race,[15 0f02b4ad 15 c2b94ae7 15],1,--fix-shifts
+N15_15_15_c0_s2,T15_15_15,race,[15 cbf152b5 15 edb732a3 15],2,--fix-shifts
+N15_15_15_c1_s2,T15_15_15,race,[15 0f022667 15 c2b93519 15],2,--fix-shifts
+N15_15_15_c2_s2,T15_15_15,race,[15 c29f332d 15 32b25349 15],2,--fix-shifts
+N15_15_15_c3_s2,T15_15_15,race,[15 681c6553 15 b8d3a735 15],2,--fix-shifts
+N15_15_15_c4_s2,T15_15_15,race,[15 0f02554d 15 c2b9ab99 15],2,--fix-shifts
+N15_15_15_c5_s2,T15_15_15,race,[15 cbf1ccd3 15 edb73527 15],2,--fix-shifts
+N15_15_15_c6_s2,T15_15_15,race,[15 175dd5a9 15 8e3b28d3 15],2,--fix-shifts
+N15_15_15_c7_s2,T15_15_15,race,[15 0f02aaa7 15 c2b932e9 15],2,--fix-shifts
+N15_15_15_c8_s2,T15_15_15,race,[15 c29f5557 15 32b2e2d3 15],2,--fix-shifts
+N15_15_15_c9_s2,T15_15_15,race,[15 0f024aab 15 c2b9cb23 15],2,--fix-shifts
+X15_15_15_c0_s2,T15_15_15,race,[15 c29f3535 15 32b22d97 15],2,--fix-shifts
+X15_15_15_c1_s2,T15_15_15,race,[15 0f02aaad 15 c2b93597 15],2,--fix-shifts
+X15_15_15_c2_s2,T15_15_15,race,[15 0f02b4ad 15 c2b94ae7 15],2,--fix-shifts

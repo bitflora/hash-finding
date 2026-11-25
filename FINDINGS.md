@@ -1396,6 +1396,72 @@ a random high half (f13f… instead of …013335). Rerunning
 `collect_explored32.py` gives `explored32.csv` 4,013 specs (was 3,365),
 553 of them below 0.10704 (was 551).
 
+### F35. Other templates: 31 of 144 have a shift-forced exact BIC pair, and new cores do not lift 15/15/15 (exact winners; one campaign)
+
+2026-11-25. Follow-up to F34: were the other templates held back because
+every start reused cores tuned at 16/15/15? Three parts, all scored by
+mixlab.
+
+**(a) Exact output pairs are often forced by the shifts.**
+`analysis/exact_pair_scan.py`, `results/exact_pair_scan/`. For all 144
+Plan A templates, 16 random odd multiplier pairs each, `mixlab bic` at 2^16,
+seed 1. In **31 templates every draw** has a pair with |corr| = 1.000, and
+in 5 more some draws do. The 31 include every F34 template that showed an
+exact pair (14/15/15, 18/15/15, 16/13/15, 15/13/15, 14/13/15), so those
+are capped by structure, not by their multipliers. The worst output pair is
+always (k, k+s2); the flipped input bit is s0+s1+2 or s1+2 (for
+example 14/15/15: input 31; 16/13/15: input 15). Clean s2 = 15 templates
+include 16/15/15, 15/15/15, 17/15/15, 16/14/15, 15/16/15 and 16/16/15.
+Sampled at 2^16 with one seed, so "exact" here means |corr| printed as
+1.0000; the mechanism is not derived.
+
+**(b) Bit importance at two more templates** (`bit_sensitivity.py --base`,
+`results/bit_sensitivity_15_15_15/`, `results/bit_sensitivity_16_14_15/`;
+one base mixer each, the F34 winners).
+- 15/15/15: m0's step is at bits 14/15 (flip cost 1.50× vs 1.14×), the
+  same place as at 16/15/15 (F33). Changing s0 did not move it.
+- 16/14/15: the step is at bits 11/12 (1.95× vs 1.22×). With s1 changed,
+  it moved.
+- Core width at 15/15/15: median 0.99 / 0.45 / 0.23 / 0.20 / 0.15 for
+  k = 8 / 12 / 16 / 20 / 24, the same plateau shape as F33.
+
+**(c) Template-native core search at 15/15/15.**
+`analysis/native_cores.py`, `results/native_cores/15_15_15/`.
+- Stage 1: 20,000 random sign-folded core pairs and 1,571 F27-style
+  arithmetic pairs (q ∈ {3,5,7,9,17}), none in `explored32.csv`, plus the
+  30 best 16/15/15 core pairs ("transplant"), each with the same 2 random
+  high halves; sampled at 2^22 (43,256 specs, 11 min).
+- Stage 2: top 300 pairs by stage-1 mean plus all transplants, 8 fresh
+  high halves each, new seed. In the top 40 by median: **24 transplants**
+  (of 30), 9 arithmetic (of 1,571), 7 random (of 20,000).
+- Exact: best extension of the top 40 non-transplant pairs and the top 5
+  transplants. Best native 0.17823, best transplant 0.17766.
+- Races (`--fix-shifts`, campaign defaults: 25 iterations, patience 6,
+  96 neighbours), top 10 native finalists and top 3 transplants, seeds 1, 2:
+
+  | starts | races | best | median | worst |
+  |---|---|---|---|---|
+  | native cores | 20 | 0.12521 `[15 d7f34cd3 15 e9173523 15]` | 0.14377 | 0.16844 |
+  | transplanted 16/15/15 cores | 6 | 0.12783 `[15 a5c2aaad 15 ca3a3597 15]` | 0.13031 | 0.15123 |
+  | F34's 15/15/15 races (for reference) | 6 | 0.11566 | 0.13765 | 0.18517 |
+
+**Reading.**
+- At 15/15/15 the transplanted cores were not a handicap: they dominate
+  the core screen, and their races match the native ones. That fits (b):
+  15/15/15 keeps s1 = 15, and the core seems to follow s1.
+- Searching 21,600 new cores found nothing that races better than F34's
+  start choice did. 15/15/15 still sits ≥ 0.011 above 16/15/15's F34 best
+  under a comparable budget, so the A3 gate stays unmet.
+- Templates with s1 ≠ 15 are where native cores should matter most, but
+  most of them have a forced exact pair (a); 16/14/15, 15/16/15 and
+  16/16/15 are the clean exceptions.
+- Limits: one template, one stage-1 seed, short races, n = 1 base mixer
+  per bit-importance profile.
+
+**No new sub-0.10704 mixers** (best 0.12521). Rerunning
+`collect_explored32.py` gives `explored32.csv` 4,513 specs (was 4,013),
+still 553 below 0.10704.
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the

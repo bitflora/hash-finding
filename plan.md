@@ -539,8 +539,12 @@ with `mixlab eval --exact`.
 Order: finish F29 (top-byte sweep, F21-core beam) → Plan A → Plan B.
 
 *Status 2026-11-25:* A1 and A2 are done (F34). 16/15/15 wins under equal
-budget, and 15/15/15 is the next best, 10% above it. The A3 gate is not met. A4 (bit
-sensitivity at another template) remains open.
+budget, and 15/15/15 is the next best, 10% above it. The A3 gate is not met.
+A4 is done (F35): m0's step follows s1, not s0. F35 also found that 31 of
+the 144 templates have a shift-forced exact BIC pair, and that a native core
+search at 15/15/15 races no better than transplanted cores (best 0.12521).
+Open: a native core search at a clean s1 ≠ 15 template (16/14/15, 15/16/15
+or 16/16/15), the one place F35 says new cores could matter.
 
 ### Plan A: other shift templates for 2-round 32-bit xmx
 **Why.** Of the ~1,500 exactly scored configs in `results/explored32.csv`,
