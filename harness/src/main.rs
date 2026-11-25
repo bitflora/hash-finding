@@ -150,7 +150,7 @@ fn eval_ref(r: &refs::Reference, a: &Args, force_exact: bool) -> String {
 fn eval_xmx(x: &Xmx, a: &Args, force_exact: bool) -> String {
     if (force_exact || a.has("exact")) && (3..=32).contains(&x.bits) {
         let t = Instant::now();
-        let c = if a.has("gpu") { gpu_exact(x) } else { mixlab::fast32::exact_xmx(x, true) };
+        let c = mixlab::exact::exact_xmx(x, true);
         let e = Estimate { exact: true, n: c.n, score: c.score(), debiased: c.score(), ms: c.ms(), se_ms: 0.0, max_abs: c.max_abs() };
         let mut s = format!("{}  [{:.1}s]", fmt_est(&e), t.elapsed().as_secs_f64());
         if a.has("extra") {
@@ -168,6 +168,12 @@ fn eval_xmx(x: &Xmx, a: &Args, force_exact: bool) -> String {
 
 fn main() {
     let a = Args::parse();
+    if a.has("gpu") {
+        match mixlab::exact::use_gpu() {
+            Ok(name) => eprintln!("exact scoring on GPU: {name}"),
+            Err(e) => die(&format!("gpu: {e}")),
+        }
+    }
     match a.cmd.as_str() {
         "refs" => {
             for r in refs::all() {
@@ -293,18 +299,6 @@ fn main() {
 /// 'spec' header skipped), parallel over configs, output in input order.
 /// Bias is printed in Rust's shortest round-trip form, so it parses back to
 /// the identical f64.
-/// Exact counts on the GPU (`--gpu`); exits with a message when the binary
-/// was built without the `gpu` feature or CUDA is unavailable.
-#[cfg(feature = "gpu")]
-fn gpu_exact(x: &Xmx) -> mixlab::bias::Counts {
-    mixlab::gpu::exact_xmx(x).unwrap_or_else(|e| die(&format!("gpu: {e}")))
-}
-
-#[cfg(not(feature = "gpu"))]
-fn gpu_exact(_: &Xmx) -> mixlab::bias::Counts {
-    die("--gpu needs a build with `cargo build --release --features gpu`")
-}
-
 fn exact_list_cmd(a: &Args) {
     use rayon::prelude::*;
     use std::io::{BufRead, BufReader, Read};
@@ -329,11 +323,9 @@ fn exact_list_cmd(a: &Args) {
         cfgs.push(Xmx::parse(bits, t).unwrap_or_else(|e| die(&format!("{path}:{}: {e}", i + 1))));
     }
     let t = Instant::now();
-    let scores: Vec<(f64, f64)> = if a.has("gpu") {
-        if inverse {
-            die("--gpu does not support --inverse");
-        }
-        cfgs.iter().map(|x| gpu_exact(x)).map(|c| (c.score(), c.max_abs())).collect()
+    let scores: Vec<(f64, f64)> = if mixlab::exact::gpu_enabled() && !inverse {
+        // one config at a time: each GPU call already uses the whole device
+        cfgs.iter().map(mixlab::search::exact_score_serial).collect()
     } else {
         cfgs.par_iter()
             .map(|x| if inverse { mixlab::search::exact_inverse_score_serial(x) } else { mixlab::search::exact_score_serial(x) })
@@ -395,7 +387,7 @@ fn surrogate_cmd(a: &Args) {
             m
         };
         if a.has("compare") && (3..=32).contains(&bits) {
-            let c = mixlab::fast32::exact_xmx(&x, true);
+            let c = mixlab::exact::exact_xmx(&x, true);
             let ex: Vec<f64> = c.diffs().collect();
             let pe: Vec<f64> = pm.iter().map(|v| v.abs()).collect();
             let ee: Vec<f64> = ex.iter().map(|v| v.abs()).collect();
@@ -675,8 +667,8 @@ fn paired_cmd(a: &Args) {
     eprintln!("sampling done [{:.0}s]", t.elapsed().as_secs_f64());
     let truth: Option<(f64, Vec<f64>)> = (a.has("truth") && bits <= 32).then(|| {
         let t = Instant::now();
-        let tb = mixlab::fast32::exact_xmx(&base, true).ms();
-        let to: Vec<f64> = others.par_iter().map(|x| mixlab::fast32::exact_xmx(x, false).ms()).collect();
+        let tb = mixlab::exact::exact_xmx(&base, true).ms();
+        let to: Vec<f64> = others.par_iter().map(|x| mixlab::exact::exact_xmx(x, false).ms()).collect();
         eprintln!("exact truth done [{:.0}s]", t.elapsed().as_secs_f64());
         (tb, to)
     });
@@ -734,7 +726,7 @@ fn design_cmd(a: &Args) {
     let reps = a.num("reps", 32) as usize;
     let seed = a.num("seed", 1);
     let k = a.num("k", 8) as u32;
-    let truth = (a.has("truth") && bits <= 32).then(|| mixlab::fast32::exact_xmx(&x, true).ms());
+    let truth = (a.has("truth") && bits <= 32).then(|| mixlab::exact::exact_xmx(&x, true).ms());
     println!("{x}  n=2^{:.0} reps={reps}  (ms x1e9; plain-sampling noise floor 1/n = {:.4})", (n as f64).log2(), 1e9 / n as f64);
     if let Some(t) = truth {
         println!("  exact ms = {:.4}", t * 1e9);
@@ -778,7 +770,7 @@ fn race_cmd(a: &Args) {
             .filter(|l| !l.trim().is_empty() && !l.starts_with('#'))
             .map(|l| Xmx::parse(bits, l.split(',').next().unwrap().trim_matches('"')).unwrap_or_else(|e| die(&e)))
             .collect();
-        let inc = if cfg.verify_samples.is_none() { mixlab::fast32::exact_xmx(&start, true).ms() } else { die("--candidates needs bits<=32") };
+        let inc = if cfg.verify_samples.is_none() { mixlab::exact::exact_xmx(&start, true).ms() } else { die("--candidates needs bits<=32") };
         let r = race(&cfg, inc, 0.0, cands, 1);
         println!("{cfg:?}
 incumbent {start} ms={:.6e}", inc);
@@ -815,7 +807,7 @@ incumbent {start} ms={:.6e}", inc);
 }
 
 fn exact_ms(x: &Xmx) -> f64 {
-    mixlab::fast32::exact_xmx(x, true).ms()
+    mixlab::exact::exact_xmx(x, true).ms()
 }
 
 /// Racing trajectories against exact truth, for offline threshold validation.

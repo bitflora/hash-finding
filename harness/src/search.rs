@@ -35,7 +35,7 @@ pub fn config_from_index(bits: u32, rounds: usize, mut idx: u128) -> Xmx {
 
 pub fn exact_score_serial(x: &Xmx) -> (f64, f64) {
     let c = if x.bits >= 3 && x.bits <= 32 {
-        crate::fast32::exact_xmx(x, false)
+        crate::exact::exact_xmx(x, false)
     } else {
         with_mixer!(x, f => exact_serial(&f, x.bits))
     };
@@ -173,7 +173,7 @@ fn ms_sampled_serial(x: &Xmx, n: u64, seed: u64) -> f64 {
 
 fn final_ms(x: &Xmx, cfg: &SearchCfg) -> f64 {
     match cfg.final_samples {
-        None if x.bits >= 3 && x.bits <= 32 => crate::fast32::exact_xmx(x, true).ms(),
+        None if x.bits >= 3 && x.bits <= 32 => crate::exact::exact_xmx(x, true).ms(),
         None => with_mixer!(x, f => exact(&f, x.bits).ms()),
         // fixed seed: common random numbers across all final comparisons
         Some(n) => with_mixer!(x, f => sampled(&f, x.bits, n, stream_seed(cfg.seed, 0xf1a1)).ms_debiased()),

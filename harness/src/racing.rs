@@ -232,7 +232,7 @@ pub fn sample_counts(x: &Xmx, n: u64, seed: u64) -> Counts {
 /// Verified ms of a candidate: exact, or a fresh sample.
 fn verify(x: &Xmx, cfg: &RaceCfg, salt: u64) -> (f64, u64) {
     match cfg.verify_samples {
-        None if x.bits >= 3 => (crate::fast32::exact_xmx(x, true).ms(), 0),
+        None if x.bits >= 3 => (crate::exact::exact_xmx(x, true).ms(), 0),
         None => (with_mixer!(x, f => crate::bias::exact(&f, x.bits).ms()), 0),
         Some(n) => {
             let s = stream_seed(cfg.seed ^ 0x7e51f1, salt);
@@ -467,7 +467,7 @@ mod tests {
         let x = Xmx::parse(8, "[4 ad 3 97 4]").unwrap();
         let cfg = RaceCfg { bits: 8, n0: 16, cap: 37, z: 100.0, verify_samples: None, seed: 2, max_last_shift: None, fix_low_bits: None, max_bic_corr: None, fix_shifts: false };
         assert!(race_threshold(&cfg, 96) > race_threshold(&cfg, 1));
-        let ms = crate::fast32::exact_xmx(&x, false).ms();
+        let ms = crate::exact::exact_xmx(&x, false).ms();
         let result = race(&cfg, ms, 0.0, vec![x], 1);
         assert_eq!(result.inputs, 37);
         assert_eq!(result.decisions[0].n, 37);

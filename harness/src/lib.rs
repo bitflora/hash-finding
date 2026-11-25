@@ -6,6 +6,7 @@
 //! `score = 1000 * sqrt(mean(diff^2))`.
 
 pub mod bias;
+pub mod exact;
 pub mod extra;
 pub mod fast32;
 #[cfg(feature = "gpu")]

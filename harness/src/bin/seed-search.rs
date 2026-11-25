@@ -15,10 +15,10 @@ use std::{
 
 const HELP: &str = "seed-search --source spectral|random|matched|mixer --bits 32|64 --out FILE.csv
   [--count 64] [--seed 1] [--shifts 15,16,17] [--min-mult-bits B]
-  [--samples p18] [--verify 0] [--verify-samples p26] [--generate-only]
+  [--samples p18] [--verify 0] [--verify-samples p26] [--generate-only] [--gpu]
 Default minimum multiplier length is B (full width); lower it to include short table constants.
 CSV is compatible with mixlab race --candidates (32 bits). Verification is exact at 32 bits,
-fresh sampled at 64 bits. Fixed-budget screening can miss good candidates; no record claims.";
+fresh sampled at 64 bits; --gpu runs the exact verification on the GPU. Fixed-budget screening can miss good candidates; no record claims.";
 
 fn number(s: &str) -> Result<u64, String> {
     if let Some(p) = s.strip_prefix('p') {
@@ -132,7 +132,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             println!("{HELP}");
             return Ok(());
         }
-        if k == "--generate-only" {
+        if k == "--generate-only" || k == "--gpu" {
             kv.insert(k, String::new());
             continue;
         }
@@ -188,6 +188,9 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         return Err("--verify exceeds --count".into());
     }
     let generate = kv.contains_key("--generate-only");
+    if kv.contains_key("--gpu") {
+        eprintln!("exact verification on GPU: {}", mixlab::exact::use_gpu()?);
+    }
     if generate && verify != 0 {
         return Err("--generate-only cannot verify".into());
     }
@@ -249,7 +252,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         for &(_, i) in ranked.iter().take(verify as usize) {
             let x = &candidates[i];
             let (stage, n, s, ms, se) = if bits == 32 {
-                let c = mixlab::fast32::exact_xmx(x, true);
+                let c = mixlab::exact::exact_xmx(x, true);
                 ("exact", c.n, 0, c.ms(), 0.0)
             } else {
                 let s = stream_seed(seed ^ 0x564552494659, i as u64);

@@ -232,8 +232,12 @@ samples before claiming anything.
 
 ### GPU exact scoring (prototype, `gpu.rs`)
 
-`cargo build --release --features gpu` adds `--gpu` to `eval --exact` and
-`exact --list` (8–32 bits, 1–4 rounds, not `--inverse`). The CUDA kernel
+`cargo build --release --features gpu` adds a global `--gpu` flag (also on
+`seed-search`). Every exact score then runs on the GPU: `eval --exact`,
+`exact --list` (but not `--inverse`), race and search verification, traces,
+`paired --truth` and `surrogate --compare`. This covers 8–32 bits and 1–4
+rounds; narrower mixers stay on the CPU. The switch lives in `exact.rs`.
+Sampled racing still runs on the CPU. The CUDA kernel
 (`gpu_kernel.cu`) uses the same counting scheme as `fast32.rs` and is compiled
 at runtime by NVRTC. It needs an NVIDIA GPU and the CUDA 13.x Toolkit with its
 NVRTC DLL on PATH. `cargo test --release --features gpu --test gpu` checks
@@ -244,6 +248,12 @@ the machine otherwise idle: exact 32-bit, 2-round scores take about 0.9 s per
 configuration in `exact --list --gpu` (18 configurations in 16.2 s). The CPU
 takes 14.2 s for one `eval --exact`, or 19 s per configuration in
 `exact --list` (6 in 114.9 s). That is a 15–21× speedup, with identical CSV output.
+
+Whole runs (3 iterations, 32 neighbours, seed 11, from
+`[16 21f0aaad 15 735a2d97 15]`) produce identical logs on both backends:
+- `race` takes 31 s on the GPU and 171 s on the CPU, 5.5× faster. On the GPU
+  about two thirds of the time is now the CPU-side sampled racing.
+- `search` takes 9 s on the GPU and 102 s on the CPU, 11× faster.
 
 The hybrid B estimator computes joint carry correlations in O(bits) per
 sample using `Cov(c_k, c_{k+s}) = 2^-s Var(c_k)`, with stack storage for carry
