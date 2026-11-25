@@ -538,6 +538,10 @@ with `mixlab eval --exact`.
 ## Planned (not started): shift templates, then cheaper mixers
 Order: finish F29 (top-byte sweep, F21-core beam) → Plan A → Plan B.
 
+*Status 2026-11-25:* A1 and A2 are done (F34). 16/15/15 wins under equal
+budget, and 15/15/15 is the next best, 10% above it. The A3 gate is not met. A4 (bit
+sensitivity at another template) remains open.
+
 ### Plan A: other shift templates for 2-round 32-bit xmx
 **Why.** Of the ~1,500 exactly scored configs in `results/explored32.csv`,
 995 use 16/15/15. Most others are ±1 shift moves on multipliers tuned for

@@ -1337,6 +1337,65 @@ flips), all already scored in F30-F32. Rerunning
 `explored32.csv` now has 3,365 specs, 551 of them below 0.10704 (was
 1,498 and 54).
 
+### F34. Plan A, equal-budget races at 9 shift templates: 16/15/15 still wins by ≥0.011 (exact winners; 6 races per template)
+
+2026-11-25. Plan A steps A1-A2 (plan.md), `analysis/shift_templates.py`;
+everything is in `results/shift_templates/` (54 races, ~1.5 h on the GPU
+backend).
+
+**A1 screen.** 144 templates (s0 13-18, s1 12-17, s2 12-15) × 84 starts
+(64 random odd pairs, plus the 20 best known low-16-bit core pairs with
+random high halves), sampled bias at 2^22. Ranked by the 10th percentile
+over all starts, 16/15/15 came first, then 17/15/15, 15/15/15, 15/13/15,
+18/15/15, 16/13/15, 14/15/15, 14/13/15 and 16/14/15
+(`templates_ranked.csv`). The ranking is tilted toward the control because
+the core starts reuse cores tuned at 16/15/15. On random starts alone the
+best p10s were 16/13/15, 17/13/15 and 16/12/15.
+
+**A2 races.** For the top 8 templates plus 16/15/15, the 3 best starts
+(best core start, best random start, best start from another core)
+× seeds 1, 2. Settings: `--fix-shifts`, 25 iterations, patience 6,
+96 neighbours. Every winner was scored exactly.
+
+| template | best | median | worst | best spec | BIC worst \|corr\| (2^20, 5 seeds) |
+|---|---|---|---|---|---|
+| 16/15/15 | **0.10471** | 0.12493 | 0.13271 | `[16 f13f3335 15 cca5d269 15]` | 0.656 |
+| 15/15/15 | 0.11566 | 0.13765 | 0.18517 | `[15 c6f05553 15 7b5a2d97 15]` | 0.335 |
+| 14/15/15 | 0.12879 | 0.14021 | 0.15730 | `[14 c60d1553 15 4c572da3 15]` | 1.000 |
+| 17/15/15 | 0.12908 | 0.13643 | 0.17282 | `[17 a20cb335 15 4d6e2d97 15]` | 0.402 |
+| 18/15/15 | 0.12959 | 0.14992 | 0.20555 | `[18 f9bc2aad 15 2da9d269 15]` | 1.000 |
+| 16/14/15 | 0.14175 | 0.16420 | 0.17760 | `[16 0a3c7335 14 4668ed67 15]` | 0.313 |
+| 16/13/15 | 0.15132 | 0.15983 | 0.17588 | `[16 404132cb 13 f1a9b69b 15]` | 1.000 |
+| 15/13/15 | 0.16513 | 0.18025 | 0.19353 | `[15 3f587293 13 cea34975 15]` | 1.000 |
+| 14/13/15 | 0.18015 | 0.19673 | 0.21400 | `[14 6b183335 13 cb9ad26d 15]` | 1.000 |
+
+- **Under equal budget, 16/15/15 is the best template.** Its best race
+  beats the next template (15/15/15) by 0.011, and its median is lower than
+  every other template's median. Changing only s0 (14, 15, 17, 18) costs
+  less than changing s1 (13, 14). Every s1 ≠ 15 template stays above 0.14.
+- **Plan A's A3 gate is not met.** A3 needs another template's best within
+  ~5% of the control's (≤ 0.110), and 15/15/15's 0.11566 is 10% above.
+- **Exact output-bit pairs.** Five of the nine best winners have a worst
+  BIC pair with |corr| = 1.000 (|z| = 1024 = √n). These are 14/15/15,
+  18/15/15, 16/13/15, 15/13/15 and 14/13/15. In every template the worst
+  output pair is (2, 17), which is s2 = 15 apart. 16/15/15, 15/15/15 and
+  17/15/15 avoid an exact pair. Whether this is structural for those
+  shift combinations (in the spirit of F3/F11) or specific to these
+  multipliers is not yet derived.
+- **Limits.** Each race has one seed per start, there are 6 races per
+  template, and the budget is short. 16/15/15's record (F30, 0.09873) took
+  far more effort than this, so the claim is only about equal budget. All
+  templates keep s2 = 15, because no s2 ≤ 14 template reached A1's top 9.
+
+**Sub-0.10704 mixers: 2 new**, both 16/15/15 from race T16_15_15_k0_s1:
+`[16 f13f3335 15 cca5d269 15]` = 0.1047107021 and
+`[16 b13f3335 15 cca5d269 15]` = 0.1066765664 (`below_10704.csv`). Their
+core pairing (…3335 / …d269) is already known: the F21/F22 crossover
+family has 7 others below 0.10704, best 0.10344. The race reached it from
+a random high half (f13f… instead of …013335). Rerunning
+`collect_explored32.py` gives `explored32.csv` 4,013 specs (was 3,365),
+553 of them below 0.10704 (was 551).
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the
