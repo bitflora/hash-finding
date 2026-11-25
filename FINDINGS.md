@@ -1223,8 +1223,57 @@ and the rest fixed: `python analysis/topbyte_sweep.py run "[16 4b0332d3 15
   0.002. The 6 best values all have low nibble 4 (`x4`), as do 11 of the
   top 20. The m1 high half F20-F26 settled on (`549a`, also `d49a`) fits
   this pattern.
-- Not yet: a joint search over both top bytes, or bits 16-23; PractRand;
-  hash-prospector `-e`.
+- Not yet: a joint search over both top bytes (done: F32), or bits 16-23;
+  PractRand; hash-prospector `-e`.
+
+### F32. Joint sweep of both top bytes: no pair beats F30; the two bytes act almost additively (exact finalists; sampled screen)
+
+2026-11-24/25. All 65,536 (m0 top byte, m1 top byte) pairs around F30,
+everything else fixed. `analysis/joint_topbyte_sweep.py`, outputs in
+`results/ironborn_ideas/joint_topbyte_4b03/`.
+
+**Calibration first.** The 511 specs F30/F31 scored exactly were screened
+with two seeds per budget. The worst sampled rank (of 511) of a true top-10
+spec was 271 at 2^24, 160 at 2^26 and 29 at 2^28. The 2^24 screen was
+therefore dropped.
+
+**Pipeline.** Screen all pairs at 2^26 (seed 3101, 4.7 h); rescreen the
+best 4,096 with fresh samples at 2^28 (seed 3102, 1.7 h); score the best 64
+exactly (22 min). Then, because the screen had missed F29, exactly score
+the 24 not-yet-scored two-byte pairs with the best additive prediction
+(below; 8 min). 88 new exact scores in all.
+
+| m0 byte / m1 byte | exact bias | source |
+|---|---|---|
+| **4b / 54 (F30)** | **0.09873011186879989** | finalist |
+| 4b / d4 | 0.09905794251693231 | finalist (= F31 runner-up) |
+| cb / 54 (F29) | 0.09908399853581717 | missed by the screen |
+| cb / d4 | 0.09936563208435061 | additive check |
+| e0 / 54 (F26) | 0.09966791588921688 | finalist |
+| f0 / 54 | 0.09994230415343848 | missed by the screen |
+| e0 / d4 | 0.10004414175138568 | finalist |
+| f0 / d4 | 0.10004911977533627 | additive check |
+
+- **No new best.** Every exactly scored pair is worse than F30. Of the 6
+  known pairs below 0.1, all use m0 byte 4b, cb, e0 or f0 and m1 byte 54 or
+  d4, the best single-byte values of F30 and F31.
+- **The two bytes act almost additively.** Predict a pair's bias as F30's
+  bias plus each byte's change from F30 in its single-byte sweep. For the 69
+  two-byte pairs scored exactly, the error is at most 7.7e-4 (median about
+  1.5e-4), small next to the byte effects (up to 0.022 for m0, 0.13 for
+  m1). Under this model F30 is the joint optimum, which is consistent with
+  the alternating sweeps stopping at F30 after one round.
+- **Limits.** The sampled screen is noisy: F30 ranked 178 in the screen and
+  33 in the rescreen, and F29 and `f0/54` did not reach the 64 finalists. A
+  pair that is much better than additive and ranked poorly in both screens
+  is not excluded. The residual range matters here. The cheapest two-byte
+  move from F30 (cb with d4) is predicted to cost only 6.8e-4, and the
+  most negative residual seen was -7.7e-4. So the residuals alone do not
+  rule out a better pair. The 24 best-predicted unscored pairs were scored
+  exactly for that reason. None beats F30, and the closest ones have small
+  residuals (cb/d4: -4.6e-5).
+- Not yet: the same treatment of bits 16-23; PractRand; hash-prospector
+  `-e`.
 
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs

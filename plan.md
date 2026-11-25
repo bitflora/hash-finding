@@ -666,3 +666,11 @@ outputs goes to the `64bit` branch.
   optimal (next best d4 0.09906). No new best; the alternating byte sweeps
   converged after one round. m1's byte is driven by its low bits (low
   nibble 4 is best), unlike m0's.
+
+## 2026-11-24/25: joint sweep of both top bytes (F32)
+- Calibrated the sampled screen on the 511 known exact specs (2^24 too
+  noisy), then screened all 65,536 top-byte pairs at 2^26, rescreened the
+  best 4,096 at 2^28, and scored 64 + 24 (additive-model picks) exactly.
+- No new best: F30 stays at 0.09873. The bytes act almost additively
+  (residuals under 8e-4), so F30 is the joint optimum under that model.
+- Next: bits 16-23, or validation of F30 (PractRand, hash-prospector -e).
