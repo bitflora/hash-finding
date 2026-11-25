@@ -1275,6 +1275,68 @@ the 24 not-yet-scored two-byte pairs with the best additive prediction
 - Not yet: the same treatment of bits 16-23; PractRand; hash-prospector
   `-e`.
 
+### F33. Bit-position importance around F30: m0 steps down at bit 15, m1 at bit 22; the "16-bit core" is half real (exact; one base mixer, one template)
+
+2026-11-25. Is the low-16-bit core (F10, F14, F16) a property of
+multiplication, or of the 16/15/15 shifts? Earlier tests only ever split
+at 16. `analysis/bit_sensitivity.py`; data and summary in
+`results/bit_sensitivity/` (103 exact scores, 35 min).
+
+**Method.** (a) All 62 single-bit flips of F30's multipliers (bits 1-31;
+bit 0 would make them even). (b) Keep the low k bits of both multipliers,
+k = 8, 12, 16, 20, 24, and draw the rest at random: 8 draws, the same
+draws for every k (paired).
+
+**(a) Single flips, bias / F30's bias.**
+
+| bits | m0 median (range) | m1 median (range) |
+|---|---|---|
+| 1-14 | 1.75 (1.35-2.41) | 1.81 (1.31-4.95), bits 1-21 |
+| 15-21 | 1.24 (1.18-1.41) | (included above) |
+| 22-31 | 1.09 (1.00-1.28) | 1.11 (1.00-1.17) |
+
+- **m0 has a step between bits 14 and 15.** Every flip of bits 8-14
+  (min 1.53) costs more than every flip of bits 15-21 (max 1.41). The step
+  sits at s1 = 15 and next to s0 = 16, so it may be tied to the shifts.
+- **m1 has no step at 16.** Bits 16-21 cost almost as much as low bits
+  (median 1.60, range 1.36-2.51); the step is between 21 and 22 (min 1.31
+  vs max 1.17).
+- Above bit 22, both multipliers fall off smoothly toward 1.0 at bit 31,
+  which fits F30-F32's small, additive top-byte effects.
+
+**(b) Core width, exact bias of the 8 draws.**
+
+| k | min | median | max | better than k−4, paired |
+|---|---|---|---|---|
+| 8 | 0.243 | 1.433 | 2.989 | — |
+| 12 | 0.243 | 0.739 | 1.556 | 5/8 |
+| 16 | 0.152 | 0.204 | 2.030 | 7/8 |
+| 20 | 0.139 | 0.200 | 0.451 | 4/8 |
+| 24 | 0.116 | 0.131 | 0.159 | 8/8 |
+
+- Bits 12-15 bring the big gain (median 0.74 → 0.20); bits 16-19 bring
+  none (4 of 8 draws better); bits 20-23 bring a reliable one (8/8).
+- So m1's bits 16-21 matter singly in F30's context (a), but kept on a
+  random background they do not help (b). Their good values depend on the
+  bits above them, while bits 0-15 are good whatever lies above. F30's core
+  with random high halves (median 0.204) is better than the record's (F16,
+  0.269 over 16 draws).
+
+**Reading.** Multiplication alone predicts a smooth decline with bit
+position (bit j of m reaches only product bits ≥ j and input bits ≤ 31−j).
+That holds above bit 22. Below it there are steps that a smooth slope does
+not explain: m0's at 14/15, and the core-width plateau at 16-20. That
+plateau is why a 16-bit cut looked natural. Whether the steps move with the
+shifts is not settled by one template; repeating (a) and (b) at a
+non-16/15/15 template in Plan A step A4 would settle it
+(`bit_sensitivity.py --base SPEC`).
+
+**No new sub-0.10704 mixers.** 9 of the 103 are below 0.10704 (top-bit
+flips), all already scored in F30-F32. Rerunning
+`collect_explored32.py` also picked up the campaigns since 2026-11-22:
+`explored32.csv` now has 3,365 specs, 551 of them below 0.10704 (was
+1,498 and 54).
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the

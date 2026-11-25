@@ -582,7 +582,10 @@ within that template (F21 method), then a radius-2 beam around its winner.
 **A4. Structure.** For each template's winners: BIC at 2^20 over 5 seeds.
 Check whether the worst pair sits at (k, k+s2) as F10/F11 predict, and
 whether low-bit cores transfer across templates (does a 16/15/15 core stay
-good at 15/15/15?).
+good at 15/15/15?). Also run `analysis/bit_sensitivity.py --base SPEC` on
+each template's best winner: F33 found steps in bit importance at m0 bit
+14/15 and m1 bit 21/22 under 16/15/15, and only another template can show
+whether they move with the shifts.
 
 **Deliverable.** A FINDINGS entry with a template × (best, median race
 winner, BIC) table, and a README/record update if anything beats the current
