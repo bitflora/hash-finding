@@ -249,7 +249,7 @@ def run(hours, max_jobs):
 def status():
     jobs = load_jobs()
     done = [j for j in jobs if done_rec(j)]
-    for c in ("frontier", "multi"):
+    for c in dict.fromkeys(j["campaign"] for j in jobs):  # campaigns in job order
         a = [j for j in jobs if j["campaign"] == c]
         print(f"{c:<9} {sum(1 for j in a if done_rec(j)):3d}/{len(a)} done")
     if LOCK.exists():
@@ -284,7 +284,7 @@ def summary():
         if "bic_rms_z" not in r:
             r["bic_rms_z"], r["bic_worst_corr"] = bic(r["best"])
             (D / f"{r['id']}.done.json").write_text(json.dumps(r, indent=1))
-    for c in ("frontier", "multi"):
+    for c in dict.fromkeys(r["campaign"] for r in recs):
         rs = sorted((r for r in recs if r["campaign"] == c), key=lambda r: r["bias"])
         print(f"\n== {c} ({len(rs)} done)")
         print(f"{'id':<28} {'start':>8} {'best spec':<30} {'bias':>9} {'worst':>6} {'rmsz':>5} {'min':>4}")

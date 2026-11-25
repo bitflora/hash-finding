@@ -178,6 +178,9 @@ pub struct RaceCfg {
     /// race_search only: skip neighbours whose sampled BIC worst |corr|
     /// (2^16 inputs) exceeds this (FINDINGS F15). The start is not filtered.
     pub max_bic_corr: Option<f64>,
+    /// race_search only: never move the shifts; only multiplier moves are
+    /// raced (Plan A, shift-template comparison). The start's shifts are kept.
+    pub fix_shifts: bool,
 }
 
 /// Worst |corr| over all (input bit, output pair) at 2^16 sampled inputs.
@@ -381,6 +384,9 @@ pub fn race_search(
             if cfg.max_last_shift.is_some_and(|m| y.shifts.last().is_some_and(|&s| s >= m)) {
                 continue;
             }
+            if cfg.fix_shifts && y.shifts != cur.shifts {
+                continue;
+            }
             if let Some(k) = cfg.fix_low_bits {
                 let lo = (1u64 << k) - 1;
                 if y.mults.iter().zip(&cur.mults).any(|(a, b)| (a ^ b) & lo != 0) {
@@ -459,7 +465,7 @@ mod tests {
     #[test]
     fn multiple_looks_raise_threshold_and_cap_is_respected() {
         let x = Xmx::parse(8, "[4 ad 3 97 4]").unwrap();
-        let cfg = RaceCfg { bits: 8, n0: 16, cap: 37, z: 100.0, verify_samples: None, seed: 2, max_last_shift: None, fix_low_bits: None, max_bic_corr: None };
+        let cfg = RaceCfg { bits: 8, n0: 16, cap: 37, z: 100.0, verify_samples: None, seed: 2, max_last_shift: None, fix_low_bits: None, max_bic_corr: None, fix_shifts: false };
         assert!(race_threshold(&cfg, 96) > race_threshold(&cfg, 1));
         let ms = crate::fast32::exact_xmx(&x, false).ms();
         let result = race(&cfg, ms, 0.0, vec![x], 1);
@@ -471,7 +477,7 @@ mod tests {
     #[test]
     fn early_acceptance_does_not_blacklist_unfinished_candidates() {
         let x = Xmx::parse(8, "[4 ad 3 97 4]").unwrap();
-        let cfg = RaceCfg { bits: 8, n0: 32, cap: 32, z: 100.0, verify_samples: None, seed: 1, max_last_shift: None, fix_low_bits: None, max_bic_corr: None };
+        let cfg = RaceCfg { bits: 8, n0: 32, cap: 32, z: 100.0, verify_samples: None, seed: 1, max_last_shift: None, fix_low_bits: None, max_bic_corr: None, fix_shifts: false };
         // All candidates beat the deliberately poor incumbent; only one is verified.
         let y = Xmx::parse(8, "[4 b5 3 2d 4]").unwrap();
         let result = race(&cfg, 1.0, 0.0, vec![x.clone(), y.clone()], 1);

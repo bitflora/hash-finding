@@ -24,10 +24,12 @@ USAGE:
                 [--levels 16,18,20] [--final-samples LOG2] [--seed S] --out FILE.csv
   mixlab surrogate --bits B --spec SPEC [--compare]           # analytic (sampling-free) bias prediction
   mixlab surrogate --bits 32 --list FILE.csv [--baseline p20] # rank-correlate vs published exact biases
+  mixlab surrogate --bits B --score-list FILE [--out F.csv]  # batch surrogate bias, CSV spec,surrogate_bias (- = stdin)
   mixlab surrogate --bits 16 --random N [--top 0.1] [--baseline p12] [--seed S] [--out F.csv]
   mixlab scale  (--list FILE.csv | --bits 24 --random N) [--widths 12,16,20,24] [--maps offset:low,prop:high] [--truth]
                 [--baseline] [--seed S] --out F.csv   # exact small-width projections vs 32-bit exact
   mixlab race   --bits B --start SPEC [--iters N] [--neighbors K] [--n0 p14] [--cap p28] [--z 3] [--patience P] [--max-s2 S] [--fix-low-bits K] [--max-bic-corr C]
+                [--fix-shifts]  # only multiplier moves; the start's shifts never change
                 [--verify-samples p31] [--candidates FILE] [--patience P] [--seed S] --out F.csv  # sequential racing search
   mixlab trace  --bits B (--start SPEC --path L | --list FILE.csv --bases N) [--neighbours K] [--reps R]
                 [--n0 p14] [--cap p28] [--zmax 6] [--max-s2 S] [--seed S] [--resume B:R] --out F.csv  # racing trajectories vs exact truth
@@ -393,6 +395,27 @@ fn surrogate_cmd(a: &Args) {
         }
         return;
     }
+    if let Some(path) = a.get("score-list") {
+        // Batch scoring, no truth column: first CSV column is the spec; a
+        // header line starting with "spec" is skipped. Output: spec,surrogate_bias.
+        let text = if path == "-" { std::io::read_to_string(std::io::stdin()).expect("read stdin") } else { std::fs::read_to_string(path).expect("read list") };
+        let configs: Vec<Xmx> = text
+            .lines()
+            .map(|l| l.split(',').next().unwrap().trim().trim_matches('"'))
+            .filter(|s| !s.is_empty() && !s.starts_with('#') && !s.starts_with("spec"))
+            .map(|s| Xmx::parse(bits, s).unwrap_or_else(|e| die(&e)))
+            .collect();
+        let pred: Vec<f64> = configs.par_iter().map(surrogate::score).collect();
+        let mut out: Box<dyn Write> = match a.get("out") {
+            Some(f) => Box::new(BufWriter::new(File::create(f).expect("create output"))),
+            None => Box::new(std::io::stdout().lock()),
+        };
+        writeln!(out, "spec,surrogate_bias").unwrap();
+        for (x, p) in configs.iter().zip(&pred) {
+            writeln!(out, "{x},{p:.10}").unwrap();
+        }
+        return;
+    }
     let baseline = a.get("baseline").map(|v| parse_num(v).unwrap_or_else(|| die("bad --baseline")));
     let (configs, truth): (Vec<Xmx>, Vec<f64>) = if let Some(path) = a.get("list") {
         let text = std::fs::read_to_string(path).expect("read list");
@@ -725,6 +748,7 @@ fn race_cmd(a: &Args) {
         max_last_shift: a.get("max-s2").map(|v| v.parse().unwrap_or_else(|_| die("bad --max-s2"))),
         fix_low_bits: a.get("fix-low-bits").map(|v| v.parse().unwrap_or_else(|_| die("bad --fix-low-bits"))),
         max_bic_corr: a.get("max-bic-corr").map(|v| v.parse().unwrap_or_else(|_| die("bad --max-bic-corr"))),
+        fix_shifts: a.has("fix-shifts"),
     };
     let t = Instant::now();
     if let Some(path) = a.get("candidates") {

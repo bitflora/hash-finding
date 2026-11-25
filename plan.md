@@ -587,6 +587,20 @@ good at 15/15/15?).
 **Deliverable.** A FINDINGS entry with a template × (best, median race
 winner, BIC) table, and a README/record update if anything beats 0.09908.
 
+**Tooling status (2026-11-24): built, not run.**
+- `mixlab race --fix-shifts` (only multiplier moves) and
+  `mixlab surrogate --score-list FILE` (batch surrogate, CSV
+  spec,surrogate_bias), both tested in `harness/tests/shift_templates.rs`.
+- `analysis/shift_templates.py`: `starts` → `screen` → `rank` → `jobs` →
+  (`campaign.py run` with `CAMPAIGN_DIR=results/shift_templates/campaign`) →
+  `summary`. 144 templates × (64 random + 20 known cores) = 12,096 starts;
+  screened at 2^22 by `examples/screen_list`. `jobs` takes the top 6 plus
+  16/15/15: 3 starts × 2 seeds each = 42 races, interleaved so a pause
+  leaves every template with the same number of finished races.
+- `campaign.py` status/summary now list whatever campaigns its jobs.csv has.
+- Rebuild `examples/screen_list` before `screen` if its source has changed
+  (it was locked by a running job when this was built; the source is unchanged).
+
 ### Plan B: fewer instructions, similar quality
 **Goal.** A front of quality (exact bias, BIC, the F11 defect) against speed,
 not a single winner. Reference point: the current best 2-round xmx is
