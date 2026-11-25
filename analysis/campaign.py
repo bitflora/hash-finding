@@ -25,7 +25,8 @@ import csv, json, os, random, re, subprocess, sys, time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-D = Path(os.environ.get("CAMPAIGN_DIR", ROOT / "results" / "campaign"))
+# Absolute, because mixlab runs with cwd=harness/ and gets paths under D.
+D = Path(os.environ.get("CAMPAIGN_DIR", ROOT / "results" / "campaign")).resolve()
 BIN = ROOT / "harness" / "target" / "release" / ("mixlab.exe" if os.name == "nt" else "mixlab")
 JOBS = D / "jobs.csv"
 LOCK, PAUSE, STOP = D / "runner.lock", D / "PAUSE", D / "STOP"

@@ -37,7 +37,8 @@ from pathlib import Path
 from statistics import median
 
 ROOT = Path(__file__).resolve().parent.parent
-D = Path(os.environ.get("SHIFT_DIR", ROOT / "results" / "shift_templates"))
+# Absolute, because mixlab runs with cwd=harness/ and gets paths under D.
+D = Path(os.environ.get("SHIFT_DIR", ROOT / "results" / "shift_templates")).resolve()
 CAMP = D / "campaign"
 EXE = ".exe" if os.name == "nt" else ""
 MIXLAB = ROOT / "harness" / "target" / "release" / f"mixlab{EXE}"
