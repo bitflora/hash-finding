@@ -150,7 +150,7 @@ fn eval_ref(r: &refs::Reference, a: &Args, force_exact: bool) -> String {
 fn eval_xmx(x: &Xmx, a: &Args, force_exact: bool) -> String {
     if (force_exact || a.has("exact")) && (3..=32).contains(&x.bits) {
         let t = Instant::now();
-        let c = mixlab::fast32::exact_xmx(x, true);
+        let c = if a.has("gpu") { gpu_exact(x) } else { mixlab::fast32::exact_xmx(x, true) };
         let e = Estimate { exact: true, n: c.n, score: c.score(), debiased: c.score(), ms: c.ms(), se_ms: 0.0, max_abs: c.max_abs() };
         let mut s = format!("{}  [{:.1}s]", fmt_est(&e), t.elapsed().as_secs_f64());
         if a.has("extra") {
@@ -293,6 +293,18 @@ fn main() {
 /// 'spec' header skipped), parallel over configs, output in input order.
 /// Bias is printed in Rust's shortest round-trip form, so it parses back to
 /// the identical f64.
+/// Exact counts on the GPU (`--gpu`); exits with a message when the binary
+/// was built without the `gpu` feature or CUDA is unavailable.
+#[cfg(feature = "gpu")]
+fn gpu_exact(x: &Xmx) -> mixlab::bias::Counts {
+    mixlab::gpu::exact_xmx(x).unwrap_or_else(|e| die(&format!("gpu: {e}")))
+}
+
+#[cfg(not(feature = "gpu"))]
+fn gpu_exact(_: &Xmx) -> mixlab::bias::Counts {
+    die("--gpu needs a build with `cargo build --release --features gpu`")
+}
+
 fn exact_list_cmd(a: &Args) {
     use rayon::prelude::*;
     use std::io::{BufRead, BufReader, Read};
@@ -317,10 +329,16 @@ fn exact_list_cmd(a: &Args) {
         cfgs.push(Xmx::parse(bits, t).unwrap_or_else(|e| die(&format!("{path}:{}: {e}", i + 1))));
     }
     let t = Instant::now();
-    let scores: Vec<(f64, f64)> = cfgs
-        .par_iter()
-        .map(|x| if inverse { mixlab::search::exact_inverse_score_serial(x) } else { mixlab::search::exact_score_serial(x) })
-        .collect();
+    let scores: Vec<(f64, f64)> = if a.has("gpu") {
+        if inverse {
+            die("--gpu does not support --inverse");
+        }
+        cfgs.iter().map(|x| gpu_exact(x)).map(|c| (c.score(), c.max_abs())).collect()
+    } else {
+        cfgs.par_iter()
+            .map(|x| if inverse { mixlab::search::exact_inverse_score_serial(x) } else { mixlab::search::exact_score_serial(x) })
+            .collect()
+    };
     let out: Box<dyn Write> = match a.get("out") {
         Some(p) => Box::new(File::create(p).unwrap_or_else(|e| die(&format!("create {p}: {e}")))),
         None => Box::new(std::io::stdout().lock()),

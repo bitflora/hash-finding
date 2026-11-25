@@ -230,6 +230,21 @@ samples before claiming anything.
   2-round configurations in 5.2 s, parallel across configurations).
 - 64-bit sampled, 2³⁰ inputs: about 80–120 s per mixer.
 
+### GPU exact scoring (prototype, `gpu.rs`)
+
+`cargo build --release --features gpu` adds `--gpu` to `eval --exact` and
+`exact --list` (8–32 bits, 1–4 rounds, not `--inverse`). The CUDA kernel
+(`gpu_kernel.cu`) uses the same counting scheme as `fast32.rs` and is compiled
+at runtime by NVRTC. It needs an NVIDIA GPU and the CUDA 13.x Toolkit with its
+NVRTC DLL on PATH. `cargo test --release --features gpu --test gpu` checks
+that the counts equal `fast32` exactly.
+
+Measured on the laptop RTX 3050 (CUDA 13.0) against the 5600H CPU path, with
+the machine otherwise idle: exact 32-bit, 2-round scores take about 0.9 s per
+configuration in `exact --list --gpu` (18 configurations in 16.2 s). The CPU
+takes 14.2 s for one `eval --exact`, or 19 s per configuration in
+`exact --list` (6 in 114.9 s). That is a 15–21× speedup, with identical CSV output.
+
 The hybrid B estimator computes joint carry correlations in O(bits) per
 sample using `Cov(c_k, c_{k+s}) = 2^-s Var(c_k)`, with stack storage for carry
 marginals. Previously it replayed the carry chain per output bit and allocated

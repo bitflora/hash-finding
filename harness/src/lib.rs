@@ -8,6 +8,8 @@
 pub mod bias;
 pub mod extra;
 pub mod fast32;
+#[cfg(feature = "gpu")]
+pub mod gpu;
 pub mod mixers;
 pub mod racing;
 pub mod refs;
