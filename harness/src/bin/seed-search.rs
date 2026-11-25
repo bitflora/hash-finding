@@ -15,10 +15,10 @@ use std::{
 
 const HELP: &str = "seed-search --source spectral|random|matched|mixer --bits 32|64 --out FILE.csv
   [--count 64] [--seed 1] [--shifts 15,16,17] [--min-mult-bits B]
-  [--samples p18] [--verify 0] [--verify-samples p26] [--generate-only] [--gpu]
+  [--samples p18] [--verify 0] [--verify-samples p26] [--generate-only] [--gpu|--cpu]
 Default minimum multiplier length is B (full width); lower it to include short table constants.
 CSV is compatible with mixlab race --candidates (32 bits). Verification is exact at 32 bits,
-fresh sampled at 64 bits; --gpu runs the exact verification on the GPU. Fixed-budget screening can miss good candidates; no record claims.";
+fresh sampled at 64 bits; exact verification uses the GPU when available (--gpu requires it, --cpu avoids it). Fixed-budget screening can miss good candidates; no record claims.";
 
 fn number(s: &str) -> Result<u64, String> {
     if let Some(p) = s.strip_prefix('p') {
@@ -132,7 +132,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             println!("{HELP}");
             return Ok(());
         }
-        if k == "--generate-only" || k == "--gpu" {
+        if k == "--generate-only" || k == "--gpu" || k == "--cpu" {
             kv.insert(k, String::new());
             continue;
         }
@@ -188,8 +188,15 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         return Err("--verify exceeds --count".into());
     }
     let generate = kv.contains_key("--generate-only");
-    if kv.contains_key("--gpu") {
-        eprintln!("exact verification on GPU: {}", mixlab::exact::use_gpu()?);
+    let backend = if kv.contains_key("--cpu") {
+        mixlab::exact::Backend::Cpu
+    } else if kv.contains_key("--gpu") {
+        mixlab::exact::Backend::Gpu
+    } else {
+        mixlab::exact::Backend::Auto
+    };
+    if let Some(name) = mixlab::exact::set_backend(backend)? {
+        eprintln!("exact verification on GPU: {name}");
     }
     if generate && verify != 0 {
         return Err("--generate-only cannot verify".into());

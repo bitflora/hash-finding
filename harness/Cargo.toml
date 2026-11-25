@@ -7,10 +7,12 @@ description = "Evaluation and search harness for multiply-xorshift integer mixer
 
 [dependencies]
 rayon = "1.10"
-# GPU backend (`--features gpu`): CUDA driver + NVRTC, loaded at runtime.
+# GPU backend (default feature `gpu`): CUDA driver + NVRTC, loaded at runtime,
+# so builds need no CUDA install and run on the CPU without one.
 cudarc = { version = "0.19.10", optional = true, default-features = false, features = ["std", "driver", "nvrtc", "dynamic-loading", "cuda-13000"] }
 
 [features]
+default = ["gpu"]
 gpu = ["dep:cudarc"]
 
 [profile.release]

@@ -219,9 +219,24 @@ pub struct RaceResult {
     pub exact_evals: usize,
 }
 
-/// `bias::sampled` counts for an xmx mixer; the SIMD path (identical inputs
-/// and counts) for widths 3..=32.
+/// `bias::sampled` counts for an xmx mixer, on the selected backend
+/// (`crate::exact`); all backends give identical counts.
 pub fn sample_counts(x: &Xmx, n: u64, seed: u64) -> Counts {
+    crate::exact::sampled_batch(std::slice::from_ref(x), n, &[seed]).pop().unwrap()
+}
+
+/// Add `inc` fresh samples (seed `seed(i)`) to each alive candidate's counts,
+/// all candidates in one batch.
+fn sample_more(alive: Vec<(usize, Counts)>, cands: &[Xmx], inc: u64, seed: impl Fn(usize) -> u64) -> Vec<(usize, Counts)> {
+    let xs: Vec<Xmx> = alive.iter().map(|(i, _)| cands[*i].clone()).collect();
+    let seeds: Vec<u64> = alive.iter().map(|(i, _)| seed(*i)).collect();
+    let more = crate::exact::sampled_batch(&xs, inc, &seeds);
+    alive.into_iter().zip(more).map(|((i, c), m)| (i, c.merge(m))).collect()
+}
+
+/// `bias::sampled` counts on the CPU; the SIMD path (identical inputs and
+/// counts) for widths 3..=32.
+pub fn sample_counts_cpu(x: &Xmx, n: u64, seed: u64) -> Counts {
     if (3..=32).contains(&x.bits) {
         crate::fast32::sampled_xmx(x, n, seed)
     } else {
@@ -290,13 +305,7 @@ pub fn race(cfg: &RaceCfg, inc_ms: f64, inc_var: f64, cands: Vec<Xmx>, salt: u64
     };
     let accepted = loop {
         let cseed = |i: usize| stream_seed(stream_seed(cfg.seed, (salt << 24) ^ i as u64), round);
-        alive = alive
-            .into_par_iter()
-            .map(|(i, c)| {
-                let more = sample_counts(&cands[i], inc, cseed(i));
-                (i, c.merge(more))
-            })
-            .collect();
+        alive = sample_more(alive, &cands, inc, cseed);
         inputs += inc * alive.len() as u64;
         n += inc;
         round += 1;
@@ -516,13 +525,7 @@ pub fn trace(bits: u32, inc_ms: f64, cands: &[Xmx], n0: u64, cap: u64, zmax: f64
     let (mut n, mut inc, mut round) = (0u64, n0, 0u64);
     while !alive.is_empty() {
         let cseed = |i: usize| stream_seed(stream_seed(seed, (salt << 24) ^ i as u64), round);
-        alive = alive
-            .into_par_iter()
-            .map(|(i, c)| {
-                let more = sample_counts(&cands[i], inc, cseed(i));
-                (i, c.merge(more))
-            })
-            .collect();
+        alive = sample_more(alive, &cands, inc, cseed);
         n += inc;
         round += 1;
         let mut still = Vec::new();

@@ -37,7 +37,10 @@ USAGE:
                 [--reps 32] [--truth] [--seed S] [--out F.csv]  # variance of A-B with/without common inputs
 
 Sample counts may be given as 2^k via 'p<k>', e.g. --samples p24.
-Search with bits<=32 uses exact final evaluation unless --final-samples is set.";
+Search with bits<=32 uses exact final evaluation unless --final-samples is set.
+Exact scores and race sampling run on the GPU when one is available (8-32 bits),
+otherwise on the CPU with a note; any command takes --gpu (require the GPU) or
+--cpu (never use it). Both give identical counts.";
 
 struct Args {
     cmd: String,
@@ -166,13 +169,22 @@ fn eval_xmx(x: &Xmx, a: &Args, force_exact: bool) -> String {
     }
 }
 
+use mixlab::exact::Backend;
+
 fn main() {
     let a = Args::parse();
-    if a.has("gpu") {
-        match mixlab::exact::use_gpu() {
-            Ok(name) => eprintln!("exact scoring on GPU: {name}"),
-            Err(e) => die(&format!("gpu: {e}")),
-        }
+    // GPU by default (falling back to the CPU with a note); --cpu / --gpu force one.
+    let backend = if a.has("cpu") {
+        Backend::Cpu
+    } else if a.has("gpu") {
+        Backend::Gpu
+    } else {
+        Backend::Auto
+    };
+    match mixlab::exact::set_backend(backend) {
+        Ok(Some(name)) => eprintln!("scoring on GPU: {name}"),
+        Ok(None) => {}
+        Err(e) => die(&format!("--gpu: {e}")),
     }
     match a.cmd.as_str() {
         "refs" => {
@@ -323,7 +335,7 @@ fn exact_list_cmd(a: &Args) {
         cfgs.push(Xmx::parse(bits, t).unwrap_or_else(|e| die(&format!("{path}:{}: {e}", i + 1))));
     }
     let t = Instant::now();
-    let scores: Vec<(f64, f64)> = if mixlab::exact::gpu_enabled() && !inverse {
+    let scores: Vec<(f64, f64)> = if !inverse && mixlab::exact::gpu_active() {
         // one config at a time: each GPU call already uses the whole device
         cfgs.iter().map(mixlab::search::exact_score_serial).collect()
     } else {
