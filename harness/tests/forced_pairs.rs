@@ -1,5 +1,5 @@
 //! The shift-forced exact-pair rule (FINDINGS F37) against exhaustive truth.
-use mixlab::forced::{exact_pairs_exhaustive, forced_pairs, ExactPair};
+use mixlab::forced::{exact_pairs_exhaustive, forced_pairs, forced_pairs_rounds, shifts_clean, ExactPair};
 use mixlab::mixers::{mask, Xmx};
 use mixlab::rng::Xoshiro256;
 use std::collections::BTreeSet;
@@ -15,62 +15,95 @@ fn holds(f: &Xmx, p: &ExactPair, x: u64) -> bool {
     ((d >> p.out_lo & 1) == (d >> p.out_hi & 1)) == (p.sign > 0)
 }
 
-/// For every shift triple with s2 <= n/2 and `draws` random multiplier pairs:
+/// Every shift list of a `rounds`-round mixer at width `bits`, with each
+/// shift in 1..bits and the last one <= bits/2.
+fn templates(bits: u32, rounds: usize) -> Vec<Vec<u32>> {
+    let mut all = vec![vec![]];
+    for k in 0..=rounds {
+        let top = if k == rounds { bits / 2 } else { bits - 1 };
+        all = all
+            .into_iter()
+            .flat_map(|t: Vec<u32>| (1..=top).map(move |s| [t.clone(), vec![s]].concat()))
+            .collect();
+    }
+    all
+}
+
+/// For every template and `draws` random multiplier lists:
 /// - every predicted relation holds for every input of every draw;
 /// - every predicted pair is a genuine correlation (neither bit constant) in
 ///   at least one draw (a special multiplier such as 1 + 2^k can make a bit
 ///   constant);
 /// - every pair exact in all draws is predicted.
-fn check_width(bits: u32, draws: usize) -> (usize, usize) {
-    let mut rng = Xoshiro256::new(0xf0_7ced + bits as u64);
-    let (mut templates, mut forced) = (0, 0);
-    for s0 in 1..bits {
-        for s1 in 1..bits {
-            for s2 in 1..=bits / 2 {
-                let want: BTreeSet<ExactPair> = forced_pairs(bits, s0, s1, s2).into_iter().collect();
-                let mut common: Option<BTreeSet<ExactPair>> = None;
-                let mut union = BTreeSet::new();
-                for _ in 0..draws {
-                    let f = Xmx::new(bits, vec![s0, s1, s2], vec![odd(&mut rng, bits), odd(&mut rng, bits)]).unwrap();
-                    for p in &want {
-                        assert!((0..=mask(bits)).all(|x| holds(&f, p, x)), "{f}: {p:?} does not always hold");
-                    }
-                    let got: BTreeSet<ExactPair> = exact_pairs_exhaustive(&f).into_iter().collect();
-                    union.extend(got.iter().copied());
-                    common = Some(match common {
-                        None => got,
-                        Some(c) => c.intersection(&got).copied().collect(),
-                    });
-                }
-                let label = format!("{bits}-bit {s0}/{s1}/{s2}");
-                let never: Vec<_> = want.difference(&union).collect();
-                assert!(never.is_empty(), "{label}: predicted but never a correlation: {never:?}");
-                let extra: Vec<_> = common.unwrap().difference(&want).copied().collect();
-                assert!(extra.is_empty(), "{label}: exact in every draw but not predicted: {extra:?}");
-                templates += 1;
-                forced += !want.is_empty() as usize;
+fn check_width(bits: u32, rounds: usize, draws: usize) -> (usize, usize) {
+    let mut rng = Xoshiro256::new(0xf0_7ced + bits as u64 + 100 * rounds as u64);
+    let (mut count, mut forced) = (0, 0);
+    for shifts in templates(bits, rounds) {
+        let want: BTreeSet<ExactPair> = forced_pairs_rounds(bits, &shifts).into_iter().collect();
+        let mut common: Option<BTreeSet<ExactPair>> = None;
+        let mut union = BTreeSet::new();
+        for _ in 0..draws {
+            let mults = (0..rounds).map(|_| odd(&mut rng, bits)).collect();
+            let f = Xmx::new(bits, shifts.clone(), mults).unwrap();
+            for p in &want {
+                assert!((0..=mask(bits)).all(|x| holds(&f, p, x)), "{f}: {p:?} does not always hold");
             }
+            let got: BTreeSet<ExactPair> = exact_pairs_exhaustive(&f).into_iter().collect();
+            union.extend(got.iter().copied());
+            common = Some(match common {
+                None => got,
+                Some(c) => c.intersection(&got).copied().collect(),
+            });
         }
+        let label = format!("{bits}-bit {shifts:?}");
+        let never: Vec<_> = want.difference(&union).collect();
+        assert!(never.is_empty(), "{label}: predicted but never a correlation: {never:?}");
+        let extra: Vec<_> = common.unwrap().difference(&want).copied().collect();
+        assert!(extra.is_empty(), "{label}: exact in every draw but not predicted: {extra:?}");
+        count += 1;
+        forced += !want.is_empty() as usize;
     }
-    (templates, forced)
+    (count, forced)
 }
 
 #[test]
 fn rule_matches_exhaustive_truth_at_8_bits() {
-    let (t, f) = check_width(8, 12);
+    let (t, f) = check_width(8, 2, 12);
     eprintln!("8-bit: {f} of {t} templates forced");
 }
 
 #[test]
 fn rule_matches_exhaustive_truth_at_10_bits() {
-    let (t, f) = check_width(10, 12);
+    let (t, f) = check_width(10, 2, 12);
     eprintln!("10-bit: {f} of {t} templates forced");
 }
 
 #[test]
 fn rule_matches_exhaustive_truth_at_12_bits() {
-    let (t, f) = check_width(12, 12);
+    let (t, f) = check_width(12, 2, 12);
     eprintln!("12-bit: {f} of {t} templates forced");
+}
+
+#[test]
+fn one_round_rule_matches_exhaustive_truth() {
+    for bits in [8, 10, 12, 14] {
+        let (t, f) = check_width(bits, 1, 12);
+        eprintln!("{bits}-bit 1-round: {f} of {t} templates forced");
+    }
+}
+
+#[test]
+fn three_round_rule_matches_exhaustive_truth() {
+    for bits in [8, 10] {
+        let (t, f) = check_width(bits, 3, 12);
+        eprintln!("{bits}-bit 3-round: {f} of {t} templates forced");
+    }
+}
+
+#[test]
+fn four_round_rule_matches_exhaustive_truth_at_8_bits() {
+    let (t, f) = check_width(8, 4, 8);
+    eprintln!("8-bit 4-round: {f} of {t} templates forced");
 }
 
 /// At 32 bits, each predicted relation holds on random inputs.
@@ -119,4 +152,13 @@ fn forced_cli() {
     let grid = run(&["forced", "--bits", "8", "--cpu"]);
     assert_eq!(grid.lines().count(), 1 + 7 * 7 * 4);
     assert!(grid.contains("\n2/1/4,"));
+}
+
+/// triple32 and mx3 are clean; 2-round splitmix64 / Stafford Mix13 is not.
+#[test]
+fn published_three_and_two_round_shifts() {
+    assert!(shifts_clean(32, &[17, 11, 15, 14]), "triple32");
+    assert!(shifts_clean(64, &[32, 29, 32, 29]), "mx3");
+    let p = forced_pairs_rounds(64, &[30, 27, 31]);
+    assert!(p.contains(&ExactPair { input: 29, out_lo: 2, out_hi: 33, sign: -1 }), "{p:?}");
 }

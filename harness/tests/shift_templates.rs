@@ -4,6 +4,10 @@ use mixlab::racing::{race_search, RaceCfg};
 use std::process::Command;
 
 fn cfg(fix_shifts: bool) -> RaceCfg {
+    cfg_with(fix_shifts, false)
+}
+
+fn cfg_with(fix_shifts: bool, clean_shifts: bool) -> RaceCfg {
     RaceCfg {
         bits: 8,
         n0: 1 << 8,
@@ -15,6 +19,7 @@ fn cfg(fix_shifts: bool) -> RaceCfg {
         fix_low_bits: None,
         max_bic_corr: None,
         fix_shifts,
+        clean_shifts,
     }
 }
 
@@ -66,4 +71,48 @@ fn surrogate_score_list_matches_library_scores() {
         assert_eq!(s, x.to_string());
         assert_eq!(v, format!("{:.10}", mixlab::surrogate::score(&x)));
     }
+}
+
+/// Incumbents of a free race with or without --clean-shifts.
+fn incumbents_clean(clean: bool, start: &Xmx, seed: u64) -> Vec<Xmx> {
+    let mut seen = Vec::new();
+    let c = RaceCfg { seed, ..cfg_with(false, clean) };
+    race_search(&c, start.clone(), 40, 24, 1000, |line| {
+        let f: Vec<&str> = line.split(',').collect();
+        if f.len() >= 3 && (f[1] == "start" || f[1] == "improved") {
+            seen.push(Xmx::parse(8, f[2]).unwrap());
+        }
+    });
+    seen
+}
+
+#[test]
+fn clean_shifts_never_enters_a_forced_template() {
+    use mixlab::forced::shifts_clean;
+    // At 8 bits, bias pulls free races toward s2 = 4 = n/2, where most
+    // templates are forced (FINDINGS F11).
+    let start = Xmx::parse(8, "[4 ad 3 97 3]").unwrap();
+    assert!(shifts_clean(8, &start.shifts));
+    let mut free_forced = 0;
+    for seed in 1..=4 {
+        let guarded = incumbents_clean(true, &start, seed);
+        assert!(guarded.len() >= 2, "guarded race never improved: {guarded:?}");
+        for x in &guarded {
+            assert!(shifts_clean(8, &x.shifts), "seed {seed}: guarded race reached forced {x}");
+        }
+        free_forced += incumbents_clean(false, &start, seed).iter().filter(|x| !shifts_clean(8, &x.shifts)).count();
+    }
+    assert!(free_forced > 0, "free races never reached a forced template, so the test shows nothing");
+}
+
+#[test]
+fn clean_shifts_cli_flag_is_accepted() {
+    let dir = std::env::temp_dir().join(format!("mixlab_clean_{}", std::process::id()));
+    let out = Command::new(env!("CARGO_BIN_EXE_mixlab"))
+        .args(["race", "--bits", "8", "--start", "[4 ad 3 97 3]", "--iters", "3", "--neighbors", "8", "--clean-shifts", "--cpu", "--out"])
+        .arg(&dir)
+        .output()
+        .unwrap();
+    assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+    let _ = std::fs::remove_file(&dir);
 }

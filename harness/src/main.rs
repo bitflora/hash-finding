@@ -19,8 +19,8 @@ USAGE:
   mixlab exact  --bits B --list FILE [--inverse] [--out F.csv]  # batch exact bias, one spec per line (- = stdin);
                                                                # --inverse scores f^-1 (bits <= 24); CSV spec,bias,max_abs
   mixlab bic    --bits B --spec SPEC [--samples p16] [--seeds 1,2,3]   # sampled BIC, one line per seed
-  mixlab forced --bits B [--shifts S0/S1/S2]  # shift-forced exact output pairs (F37); no --shifts: every
-                                               # template with s2 <= B/2, CSV template,pairs
+  mixlab forced --bits B [--shifts S0/S1/S2[/S3..]]  # shift-forced exact output pairs (F37, F39), any rounds;
+                                               # no --shifts: every 2-round template with s2 <= B/2, CSV template,pairs
   mixlab sweep  --bits B [--rounds R] (--exhaustive | --random N) [--seed S] --out FILE.csv
   mixlab search --bits B [--rounds R] [--start SPEC] [--iters N] [--neighbors K]
                 [--levels 16,18,20] [--final-samples LOG2] [--seed S] --out FILE.csv
@@ -32,6 +32,7 @@ USAGE:
                 [--baseline] [--seed S] --out F.csv   # exact small-width projections vs 32-bit exact
   mixlab race   --bits B --start SPEC [--iters N] [--neighbors K] [--n0 p14] [--cap p28] [--z 3] [--patience P] [--max-s2 S] [--fix-low-bits K] [--max-bic-corr C]
                 [--fix-shifts]  # only multiplier moves; the start's shifts never change
+                [--clean-shifts]  # never move to shifts that force an exact output pair (F37, F39)
                 [--verify-samples p31] [--candidates FILE] [--patience P] [--seed S] --out F.csv  # sequential racing search
   mixlab trace  --bits B (--start SPEC --path L | --list FILE.csv --bases N) [--neighbours K] [--reps R]
                 [--n0 p14] [--cap p28] [--zmax 6] [--max-s2 S] [--seed S] [--resume B:R] --out F.csv  # racing trajectories vs exact truth
@@ -774,6 +775,7 @@ fn race_cmd(a: &Args) {
         fix_low_bits: a.get("fix-low-bits").map(|v| v.parse().unwrap_or_else(|_| die("bad --fix-low-bits"))),
         max_bic_corr: a.get("max-bic-corr").map(|v| v.parse().unwrap_or_else(|_| die("bad --max-bic-corr"))),
         fix_shifts: a.has("fix-shifts"),
+        clean_shifts: a.has("clean-shifts"),
     };
     let t = Instant::now();
     if let Some(path) = a.get("candidates") {
@@ -1012,17 +1014,17 @@ mod tests {
 
 /// `mixlab forced`: exact output pairs that the shifts alone force (F37).
 fn forced_cmd(a: &Args) {
-    use mixlab::forced::forced_pairs;
+    use mixlab::forced::{forced_pairs, forced_pairs_rounds};
     let bits = a.num("bits", 32) as u32;
     if let Some(t) = a.get("shifts") {
         let s: Vec<u32> = t
             .split('/')
             .map(|v| v.parse().unwrap_or_else(|_| die(&format!("bad shift {v}"))))
             .collect();
-        if s.len() != 3 || s.iter().any(|&v| v == 0 || v >= bits) {
-            die("--shifts needs S0/S1/S2, each in 1..bits");
+        if s.len() < 2 || s.len() > 5 || s.iter().any(|&v| v == 0 || v >= bits) {
+            die("--shifts needs S0/S1[/S2...] (1-4 rounds), each in 1..bits");
         }
-        let pairs = forced_pairs(bits, s[0], s[1], s[2]);
+        let pairs = forced_pairs_rounds(bits, &s);
         if pairs.is_empty() {
             println!("{t}: no forced pair");
         }

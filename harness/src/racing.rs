@@ -181,6 +181,10 @@ pub struct RaceCfg {
     /// race_search only: never move the shifts; only multiplier moves are
     /// raced (Plan A, shift-template comparison). The start's shifts are kept.
     pub fix_shifts: bool,
+    /// race_search only: skip neighbours whose shifts force an exact output
+    /// pair for any multipliers (FINDINGS F37/F39, `forced::shifts_clean`).
+    /// The start is not filtered, but a forced start is logged.
+    pub clean_shifts: bool,
 }
 
 /// Worst |corr| over all (input bit, output pair) at 2^16 sampled inputs.
@@ -377,6 +381,9 @@ pub fn race_search(
     let mut total_exact = 0usize;
     let mut stale = 0usize;
     let mut bic_skipped = 0usize;
+    if cfg.clean_shifts && !crate::forced::shifts_clean(cur.bits, &cur.shifts) {
+        log(&format!("0,start_forced,{cur},,the start's shifts force an exact output pair"));
+    }
     if cfg.max_bic_corr.is_some() {
         log(&format!("0,start_bic,{cur},{:.4},worst |corr| at 2^16", bic_worst_corr(&cur, cfg.seed ^ 0xb1c)));
     }
@@ -394,6 +401,9 @@ pub fn race_search(
                 continue;
             }
             if cfg.fix_shifts && y.shifts != cur.shifts {
+                continue;
+            }
+            if cfg.clean_shifts && y.shifts != cur.shifts && !crate::forced::shifts_clean(y.bits, &y.shifts) {
                 continue;
             }
             if let Some(k) = cfg.fix_low_bits {
@@ -474,7 +484,7 @@ mod tests {
     #[test]
     fn multiple_looks_raise_threshold_and_cap_is_respected() {
         let x = Xmx::parse(8, "[4 ad 3 97 4]").unwrap();
-        let cfg = RaceCfg { bits: 8, n0: 16, cap: 37, z: 100.0, verify_samples: None, seed: 2, max_last_shift: None, fix_low_bits: None, max_bic_corr: None, fix_shifts: false };
+        let cfg = RaceCfg { bits: 8, n0: 16, cap: 37, z: 100.0, verify_samples: None, seed: 2, max_last_shift: None, fix_low_bits: None, max_bic_corr: None, fix_shifts: false, clean_shifts: false };
         assert!(race_threshold(&cfg, 96) > race_threshold(&cfg, 1));
         let ms = crate::exact::exact_xmx(&x, false).ms();
         let result = race(&cfg, ms, 0.0, vec![x], 1);
@@ -486,7 +496,7 @@ mod tests {
     #[test]
     fn early_acceptance_does_not_blacklist_unfinished_candidates() {
         let x = Xmx::parse(8, "[4 ad 3 97 4]").unwrap();
-        let cfg = RaceCfg { bits: 8, n0: 32, cap: 32, z: 100.0, verify_samples: None, seed: 1, max_last_shift: None, fix_low_bits: None, max_bic_corr: None, fix_shifts: false };
+        let cfg = RaceCfg { bits: 8, n0: 32, cap: 32, z: 100.0, verify_samples: None, seed: 1, max_last_shift: None, fix_low_bits: None, max_bic_corr: None, fix_shifts: false, clean_shifts: false };
         // All candidates beat the deliberately poor incumbent; only one is verified.
         let y = Xmx::parse(8, "[4 b5 3 2d 4]").unwrap();
         let result = race(&cfg, 1.0, 0.0, vec![x.clone(), y.clone()], 1);

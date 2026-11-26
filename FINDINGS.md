@@ -1570,6 +1570,65 @@ regardless of multipliers.
 
 No mixers were scored, so there are no new sub-0.10704 mixers.
 
+### F39. The forced-pair rule extends to any number of rounds, and races can now avoid forced templates (solid: exhaustive at 8-14 bits for 1-4 rounds)
+
+2026-11-25. Generalises F37. Code: `forced::forced_pairs_rounds`,
+`forced::shifts_clean`, `mixlab forced --shifts S0/S1/S2/S3...`,
+`mixlab race --clean-shifts`; tests in `harness/tests/forced_pairs.rs` and
+`harness/tests/shift_templates.rs`.
+
+**Rule.** For a k-round xmx with shifts s0, s1, …, sk, follow c, the
+lowest bit at which a run with input bit i flipped differs from the
+original:
+- The first xorshift gives c = i − s0 (if i ≥ s0) or c = i.
+- Every odd multiply keeps c (F37).
+- A middle xorshift s gives c → c − s if c ≥ s. Bit c − s then mixes the
+  changed bit c into an unchanged bit, and every lower bit mixes two
+  unchanged bits. If c < s, the bits below c pick up the multiply's
+  unpredictable changes above c, and nothing stays forced.
+- After the last multiply, the final xorshift s_k forces (j, j + s_k) for
+  max(0, n − 2·s_k) ≤ j < n − s_k with j ≤ c < j + s_k. The correlation is
+  −1 when j = c and +1 when j < c.
+
+So a template is forced only if
+max(s0 − 1, n − 1 − s0) ≥ s1 + … + s_{k−1} + max(0, n − 2·s_k): the first
+xorshift must leave a change high enough to survive every middle shift.
+With 2 rounds this is F37; with 1 round there are no middle shifts.
+
+**Checks** (the F37 protocol, 12 random multiplier lists per template; 8
+for 4 rounds). Every predicted relation holds for every input. Every
+predicted pair is a real correlation in some draw. Every pair exact in all
+draws is predicted.
+- 1 round at 8, 10, 12 and 14 bits, every template with s1 ≤ n/2: 178 of
+  230 forced.
+- 2 rounds at 8, 10 and 12 bits (F37).
+- 3 rounds at 8 and 10 bits: 332 of 5,017 forced.
+- 4 rounds at 8 bits: 79 of 9,604 forced.
+
+At these widths, no other multiplier-independent exact pair exists for
+1-4 rounds.
+
+**Published mixers.**
+- triple32 `[17 ed5ad4bb 11 ac4c1b51 15 31848bab 14]` is clean with a wide
+  margin: it would need c ≥ 11 + 15 + 4 = 30 after the first xorshift, and
+  can reach at most 16.
+- mx3's 64-bit shifts 32/29/32/29 are clean.
+- In general, three or more rounds with shifts near n/2 are clean, because
+  the middle shifts add up past anything the first xorshift can leave. The
+  defect is a 1- and 2-round problem.
+
+**Race guard.** `mixlab race --clean-shifts` (`RaceCfg::clean_shifts`)
+skips every neighbour whose shifts are forced, and logs a `start_forced`
+line if the start itself is. This replaces `--max-s2` as the defect guard:
+`--max-s2 16` only covers F11's s2 ≥ n/2 case, while the 31 forced F35
+templates have s2 ≤ 15. In the 8-bit test, free races from `[4 ad 3 97 3]`
+reach forced templates, and the same races with the flag never do. The
+flag is opt-in, so earlier campaigns reproduce unchanged. Races with
+`--fix-shifts` at a clean template (all Plan A work on 16/15/15) cannot
+reach a forced template anyway.
+
+No mixers were scored, so there are no new sub-0.10704 mixers.
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the
@@ -1604,7 +1663,8 @@ No mixers were scored, so there are no new sub-0.10704 mixers.
   always-valid / alpha-spending boundary?
 - Is the novelty claim in F9 correct? Are there published 2-round 32-bit
   constants between 0.1070 and 0.1153 outside the 21f0aaad lineage?
-- Does the F3 derivation hold for all shift triples, including s1 ≥ s0?
+- ~~Does the F3 derivation hold for all shift triples, including s1 ≥ s0?~~
+  Answered by F37/F39: the general rule covers every shift list.
 - Is F5's conclusion (no Markov-style model can predict 2-round bias)
   overstated, given that only two mixers were ablated?
 

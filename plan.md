@@ -548,7 +548,8 @@ best race (0.14373) is still 0.039 behind 16/15/15. Plan A closes with
 16/15/15 as the template to keep searching.
 F37 derives the forced pairs:
 at 32 bits a template is clean iff s0 + s1 >= 2*s2 and s0 - s1 <= 32 - 2*s2
-(`mixlab forced`).
+(`mixlab forced`). F39 extends the rule to any number of rounds and adds
+`mixlab race --clean-shifts`.
 
 ### Plan A: other shift templates for 2-round 32-bit xmx
 **Why.** Of the ~1,500 exactly scored configs in `results/explored32.csv`,

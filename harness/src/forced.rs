@@ -42,24 +42,52 @@ pub struct ExactPair {
 /// The exact pairs the shifts alone force on `[s0 m0 s1 m1 s2]` at width
 /// `bits`, for any odd multipliers. Sorted.
 pub fn forced_pairs(bits: u32, s0: u32, s1: u32, s2: u32) -> Vec<ExactPair> {
+    forced_pairs_rounds(bits, &[s0, s1, s2])
+}
+
+/// The k-round form of `forced_pairs` (FINDINGS F39), for shifts
+/// `[s0, s1, ..., sk]` of a k-round xmx (k >= 1).
+///
+/// Track c, the lowest bit at which the flipped run differs. The first
+/// xorshift of a single flipped input bit i gives c = i - s0 (i >= s0) or
+/// c = i, and each odd multiply keeps c. A middle xorshift s maps c to
+/// c - s if c >= s (bit c - s mixes the changed bit c into an unchanged
+/// one, and every lower bit mixes two unchanged bits). If c < s, bits below
+/// c pick up the random changes above c, and nothing stays forced. After the
+/// last multiply y first differs at c, and the final xorshift s forces
+/// (j, j+s) for max(0, n - 2s) <= j < n - s with j <= c < j + s.
+pub fn forced_pairs_rounds(bits: u32, shifts: &[u32]) -> Vec<ExactPair> {
+    assert!(shifts.len() >= 2, "need at least one round");
     let n = bits as i64;
-    let (s0, s1, s2) = (s0 as i64, s1 as i64, s2 as i64);
+    let s: Vec<i64> = shifts.iter().map(|&v| v as i64).collect();
+    let last = *s.last().unwrap();
     let mut out = Vec::new();
-    for i in 0..n {
-        let a = if i >= s0 { i - s0 } else { i };
-        for j in (n - 2 * s2).max(0)..(n - s2) {
-            if a >= s1 + j && a < s1 + j + s2 {
+    'input: for i in 0..n {
+        let mut c = if i >= s[0] { i - s[0] } else { i };
+        for &m in &s[1..s.len() - 1] {
+            if c < m {
+                continue 'input;
+            }
+            c -= m;
+        }
+        for j in (n - 2 * last).max(0)..(n - last) {
+            if j <= c && c < j + last {
                 out.push(ExactPair {
                     input: i as u32,
                     out_lo: j as u32,
-                    out_hi: (j + s2) as u32,
-                    sign: if a == s1 + j { -1 } else { 1 },
+                    out_hi: (j + last) as u32,
+                    sign: if j == c { -1 } else { 1 },
                 });
             }
         }
     }
     out.sort();
     out
+}
+
+/// True when no output pair is forced by the shifts alone.
+pub fn shifts_clean(bits: u32, shifts: &[u32]) -> bool {
+    forced_pairs_rounds(bits, shifts).is_empty()
 }
 
 /// Every exact pair of `f` at width `bits` (<= 20), by exhaustion over all
