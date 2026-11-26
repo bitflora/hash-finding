@@ -708,3 +708,11 @@ start bias does not predict race outcome (Spearman 0.07). The current best
 multi-seed races from the sweep's best and most distinct winners
 (e63f2ab3/7291c9a9, 354b/52e7), and the memetic loop seeded with them.
 
+## 2026-11-26: F43 family follow-up (F45)
+Multi-seed races showed F43's best was a lucky race, but radius-3 checks
+plus an iterated radius-3 climb took the new 354b/52e7 family to
+`[16 87c0cab5 15 62b9ad19 15]` = 0.10018, a second basin 1.5% above the
+current best. Next: crossover between this family and the current best's
+lineage (F21 method), the full joint top-byte sweep when the CPU is free,
+and more F43-style sweep races, since one of 1,005 found this basin.
+

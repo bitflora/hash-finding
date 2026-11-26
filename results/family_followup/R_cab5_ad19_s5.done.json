@@ -1,0 +1,11 @@
+{
+ "id": "R_cab5_ad19_s5",
+ "campaign": "cab5_ad19",
+ "args": "--fix-shifts",
+ "start": "[16 0f02d5b5 15 c2b9add9 15]",
+ "best": "[16 cf02d535 15 92a1ad99 15]",
+ "bias": 0.1332496539,
+ "parts": [],
+ "start_bias": 0.2554394251,
+ "seconds": 15
+}

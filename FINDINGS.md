@@ -1761,6 +1761,59 @@ may repeat) gives 52,601 neighbours. Each was raced against the centre
 **Sub-0.10704 mixers: 32 new**, all radius-3 neighbours of F30
 (0.09906-0.10703).
 
+### F45. Follow-up of the F43 families: the new 354b/52e7 family climbs to `[16 87c0cab5 15 62b9ad19 15]` = 0.10018 (exact; one climb)
+
+2026-11-26. `analysis/family_followup.py`, `results/family_followup/`.
+The two most interesting F43 winners, `2ab3/c9a9` (0.10394) and
+`cab5/ad19` (folded 354b/52e7, both halves unseen before F43; 0.10672).
+
+**Multi-seed races** (`--fix-shifts`, campaign budget; 40 jobs, 10 min):
+
+| family | sweep | R: restart from F43 start, seeds 2-9 | C: continue from winner, seeds 2-9 | K: winner's low-16 core, 8 exact high halves â†’ race (4 jobs) |
+|---|---|---|---|---|
+| 2ab3/c9a9 | 0.10394 | best 0.10649, median 0.13874 | all 0.10394 | best 0.11487, median 0.12281 |
+| cab5/ad19 | 0.10672 | best 0.10565, median 0.12424 | best 0.10618 (`a340cab5`) | best 0.12134, median 0.12706 |
+
+- F43's 0.10394 was a lucky race: none of 8 restarts from its start got
+  below 0.106. Racing from either winner with new seeds barely moves it.
+- Neither family's quality sits in its low 16 bits alone (K arm 0.115+),
+  which fits F33 (m1 bits 16-21 matter in context).
+- The best cab5 restart drifted to a different core,
+  `[16 6900d535 15 92b9b519 15]` = 0.10565.
+
+**Radius-3 checks** (`gen_radius2_cands.py ... 3`, every neighbour raced,
+accepted and near-miss neighbours scored exactly; 767 exact):
+- `[16 e63f2ab3 15 7291c9a9 15]` and `[16 6900d535 15 92b9b519 15]` are
+  radius-3 optima.
+- `[16 a340cab5 15 a2b9ad19 15]` is not: m0 top-byte moves win, and
+  `[16 87c0cab5 15 a2b9ad19 15]` = **0.10056** exact.
+
+**Iterated radius-3 climb** from 0.10056 (`climb.sh`): step 1 moves m1's
+top bits to `62b9ad19` = **0.10018**; step 2 finds nothing better (best
+neighbour 0.10023). Exact sweeps of each top byte (256 each) and of the
+16 Ã— 16 best byte pairs: 0.10018 is optimal in all three.
+
+| | spec | exact bias | BIC worst \|corr\| (2^20) |
+|---|---|---|---|
+| current best (F30) | `[16 4b0332d3 15 549a3597 15]` | 0.09873 | 0.602 |
+| **new family best** | `[16 87c0cab5 15 62b9ad19 15]` | **0.10018** | 0.667 (3 seeds) |
+
+- **A second basin.** 0.10018 is 1.5% above the current best, from a core
+  pair (354b/52e7) that no earlier search had touched, and it got there
+  in one sweep race plus 3 local-search steps (about 20 min in all). The
+  current best's lineage took F20-F30.
+- **The same top-byte effect.** As in F29-F30, the last 5% came from
+  m0's and m1's top bits, after the low bits had settled.
+- **Limits.** One climb; racing verdicts for the ~50k worse neighbours per
+  step (F13 drop rate); the joint top-byte check covered only the 16 best
+  values of each byte (F32 found the bytes act almost additively). The
+  full 65,536-pair joint sweep was started and stopped, because another
+  session's CPU campaign was running on all cores (`joint_p24_partial.csv`).
+
+**Sub-0.10704 mixers: 232 new** (188 now in the cab5 family, 47 in
+2ab3). `explored32.csv` now has 20,555 specs (was 18,416), 823 below
+0.10704 (was 591).
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the

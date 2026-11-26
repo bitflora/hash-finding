@@ -1,0 +1,11 @@
+{
+ "id": "C_2ab3_c9a9_s6",
+ "campaign": "2ab3_c9a9",
+ "args": "--fix-shifts",
+ "start": "[16 e63f2ab3 15 7291c9a9 15]",
+ "best": "[16 e63f2ab3 15 7291c9a9 15]",
+ "bias": 0.1039426216,
+ "parts": [],
+ "start_bias": 0.1039426216,
+ "seconds": 5
+}

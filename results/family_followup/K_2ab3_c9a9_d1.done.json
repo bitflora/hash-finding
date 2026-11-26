@@ -1,0 +1,13 @@
+{
+ "id": "K_2ab3_c9a9_d1",
+ "campaign": "2ab3_c9a9",
+ "args": "--fix-shifts",
+ "core_best_draw": "[16 21612ab3 15 ccedc9a9 15]",
+ "core_best_draw_bias": 0.17445634779120864,
+ "start": "[16 21612ab3 15 ccedc9a9 15]",
+ "best": "[16 a1c32ab3 15 4c6dc9a9 15]",
+ "bias": 0.1260753449,
+ "parts": [],
+ "start_bias": 0.1744563478,
+ "seconds": 29
+}

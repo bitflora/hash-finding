@@ -1,0 +1,13 @@
+{
+ "id": "K_cab5_ad19_d0",
+ "campaign": "cab5_ad19",
+ "args": "--fix-shifts",
+ "core_best_draw": "[16 6787cab5 15 60edad19 15]",
+ "core_best_draw_bias": 0.1850478322181163,
+ "start": "[16 6787cab5 15 60edad19 15]",
+ "best": "[16 a786cab5 15 33c9ad19 15]",
+ "bias": 0.125103881,
+ "parts": [],
+ "start_bias": 0.1850478322,
+ "seconds": 27
+}
