@@ -1937,6 +1937,53 @@ sweep (F14) from the new winners.
 2, 3, 5 and the PractRand check (4) remain.
 
 ## 6. State of the repository
+### F46. Parity-free templates do not race better: 16/16/15 is far behind 16/15/15 (exact winners; 20 races)
+
+2026-11-26. Tests whether removing F40's forced parity buys bias.
+
+**Parity scan.** `mixlab forced --bits 32 --shifts S0/S1/S2 --parity` over
+all 405 templates with s0, s1 in 12-20 and s2 in 12-16:
+
+| shortest forced parity | templates | meaning |
+|---|---:|---|
+| 2 | 120 | the F37 forced pairs |
+| 3 | 160 | F37-clean, still a forced 3-bit parity (16/15/15, 15/15/15, 17/15/15, 15/16/15, 17/16/15, 16/15/14) |
+| none | 125 | no forced parity under the F39 prefix rule |
+
+The 125 are exactly **s0 ≤ s1 and s0 + s1 ≥ 32**, 25 per s2 value, the same
+band for every s2 from 12 to 16. This is read off the grid, not derived.
+Before this campaign `explored32.csv` held 1-2 specs for each of these
+templates (16/16/15: 2, best 0.191).
+
+**Races.** F38's protocol at 16/16/15: the 10 best random starts of F34's
+2^22 screen, seeds 3 and 4, `--fix-shifts`, 25 iterations, patience 6, 96
+neighbours, run with `--cpu` (about 2 h, alongside another GPU campaign, so
+wall times are not comparable). `CAMPAIGN_DIR=results/shift_templates/random_16_16_15`.
+
+| template | races | best | median | worst |
+|---|---|---|---|---|
+| 16/15/15 (F38) | 20 | 0.11561 | 0.13983 | 0.16909 |
+| 15/15/15 (F38) | 20 | 0.13663 | 0.16296 | 0.20987 |
+| 16/16/15 | 20 | **0.16261** `[16 a6f95535 16 a1b25947 15]` | 0.20109 | 0.30144 |
+
+- **16/16/15 is worse than both.** Median gap to 16/15/15 is 0.061, and even
+  its best race is 0.047 above 16/15/15's best.
+- **No family.** The winners share no core; the second best is
+  `[16 20239657 16 f4d734a3 15]` (0.16379).
+- **BIC** (2^20, 5 seeds, best winner): worst |corr| 0.335 at pairs (0, 17)
+  and (1, 17); no exact pair.
+- **Reading.** Having no forced parity under F40's rule does not predict
+  low bias in 2-round xmx; the record template carries a weight-3 parity
+  and wins by a wide margin. The other parity-free templates (16/16/14,
+  15/17/15, 16/17/15, ...) were not raced.
+- **Limits.** One template raced; random starts only (F35/F36: cores follow
+  s1, so native cores might help, and F36 saw gains of about 0.01 at
+  16/14/15); one screen seed picks the starts; the parity scan is the
+  prefix rule only (F40's caveat).
+
+**No new sub-0.10704 mixers** (best 0.16261). `collect_explored32.py` now
+reports 20,570 exact specs.
+
 - Each findings section is committed together with the work it describes;
   `git log` is the authoritative record. Commit subjects cite the F-numbers
   above.

@@ -1,0 +1,2 @@
+template,races,best,median,worst,best_spec,bic_max_z,bic_worst_abs_corr,bic_worst_pairs
+16/16/15,20,0.1626139451,0.2010891242,0.3014374103,[16 a6f95535 16 a1b25947 15],343.42,0.3354,"0->2,17 1->2,17"
