@@ -104,21 +104,23 @@ pub fn exact_pairs_exhaustive(f: &Xmx) -> Vec<ExactPair> {
         // ever 1, ever0[j] likewise for 0.
         let mut ever1 = vec![0u64; bits as usize];
         let mut ever0 = vec![0u64; bits as usize];
-        for x in 0..=msk {
-            let d = ys[x as usize] ^ ys[(x ^ (1 << i)) as usize];
-            for j in 0..bits as usize {
-                let dj = if d >> j & 1 == 1 { d ^ msk } else { d };
-                ever1[j] |= dj;
-                ever0[j] |= !dj & msk;
-            }
-        }
         // Output bits whose own flip varies (a constant bit has no correlation).
         let mut seen1 = 0u64;
         let mut seen0 = 0u64;
-        for x in 0..=msk {
-            let d = ys[x as usize] ^ ys[(x ^ (1 << i)) as usize];
-            seen1 |= d;
-            seen0 |= !d & msk;
+        // Corresponding indices in the two halves differ only in input bit i.
+        let half = 1usize << i;
+        for block in ys.chunks_exact(2 * half) {
+            let (low, high) = block.split_at(half);
+            for (&a, &b) in low.iter().zip(high) {
+                let d = a ^ b;
+                seen1 |= d;
+                seen0 |= !d & msk;
+                for j in 0..bits as usize {
+                    let dj = if d >> j & 1 == 1 { d ^ msk } else { d };
+                    ever1[j] |= dj;
+                    ever0[j] |= !dj & msk;
+                }
+            }
         }
         let varies = seen1 & seen0;
         for j in 0..bits {

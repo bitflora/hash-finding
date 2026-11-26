@@ -381,6 +381,7 @@ pub fn race_search(
     let mut total_exact = 0usize;
     let mut stale = 0usize;
     let mut bic_skipped = 0usize;
+    let mut bic_rejected = HashSet::new();
     if cfg.clean_shifts && !crate::forced::shifts_clean(cur.bits, &cur.shifts) {
         log(&format!("0,start_forced,{cur},,the start's shifts force an exact output pair"));
     }
@@ -412,18 +413,24 @@ pub fn race_search(
                     continue;
                 }
             }
-            if seen.contains(&y.to_string()) {
+            let key = y.to_string();
+            if seen.contains(&key) {
                 continue;
             }
             if let Some(c) = cfg.max_bic_corr {
+                // The BIC seed and cutoff are fixed throughout this search.
+                if bic_rejected.contains(&key) {
+                    bic_skipped += 1;
+                    continue;
+                }
                 if bic_worst_corr(&y, cfg.seed ^ 0xb1c) > c {
+                    bic_rejected.insert(key);
                     bic_skipped += 1;
                     continue;
                 }
             }
-            if seen.insert(y.to_string()) {
-                cands.push(y);
-            }
+            seen.insert(key);
+            cands.push(y);
         }
         if cands.is_empty() {
             log(&format!("{it},exhausted,{cur},{:.10},", ms_to_score(cur_ms)));
