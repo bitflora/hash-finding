@@ -1672,6 +1672,129 @@ reach a forced template anyway.
 
 No mixers were scored, so there are no new sub-0.10704 mixers.
 
+### F40. The shortest forced parity has weight three for every recorded sub-0.10704 mixer
+
+`mixlab forced --parity --spec SPEC` reports the smallest number of output
+bits whose XOR has a fixed response to a single input-bit flip under the
+F39 rule. It prints every witness tied at that weight. The score depends on
+the shift schedule and holds for any odd multipliers.
+
+If the lowest difference reaching the final xorshift is bit `c`, the first
+`c+1` pre-shift bits have fixed differences. The inverse final shift of
+distance `s` expresses pre-shift bit `j` as the XOR of output bits
+`j, j+s, j+2s, ...`. Within each residue class modulo `s`, XORing adjacent
+fixed rows gives singletons. Keep the last fixed row as a suffix. These
+singletons and suffixes form a basis on disjoint supports, so the smallest
+basis mask is the minimum over every nonempty combination.
+
+| 32-bit mixer | Exact avalanche bias | Shortest forced parity | Witness |
+|---|---:|---:|---|
+| F30 `[16 4b0332d3 15 549a3597 15]` | 0.09873 | 3 | Input 15 or 31 flips XOR of outputs 0, 15, 30 |
+| F21 `[16 9c013335 15 335a2d97 15]` | 0.10207 | 3 | Same as F30 |
+| F18 `[16 6870aaad 15 f452f593 14]` | 0.13168 | 3 | Input 15 or 31 flips XOR of outputs 0, 14, 28 |
+| `lowbias32` | 0.17353 | 2 | Input 15 or 31 flips XOR of outputs 0, 16 |
+| `[16 de0f5553 16 735a2d97 15]` | 0.19136 | None found | Best bias among such two-round entries in `explored32.csv` |
+| `triple32` | 0.02089 | None found | Three-round reference |
+
+The 5,349 entries in `results/explored32.csv` cover 37 shift schedules.
+Of those entries, 4,786 have weight three, 552 have weight two, and 11
+have no witness under this rule. All 553
+entries below 0.10704 use 16/15/15 and share F30's witness. The check
+therefore gives no new ordering among those leaders. F18's candidate has
+the same weight as F30 despite a much lower measured worst pair correlation,
+so both measurements are useful. A schedule with no witness can still have
+dependencies outside the propagated-prefix rule.
+
+### F41. Two-bit input differences force output parities even in triple32
+
+The F39/F40 proof extends to a fixed XOR input mask `d`. The first
+xorshift turns it into `d ^ (d >> s0)`. Let `a` be the index of the lowest
+set bit in that mask. Every odd multiplication preserves that index. If
+`a` is at least the sum of the middle shifts, the lowest difference just
+before the final xorshift is `c = a - sum(middle shifts)`. Pre-shift bits
+below `c` stay fixed and bit `c` always flips. The inverse final
+xorshift recovers each such bit `j` as the XOR of output bits
+`j, j+s, j+2s, ...`, where `s` is the final shift. If `a` is below
+the sum, this rule yields no witness.
+
+In both examples below the two input flips cancel the low copy made by
+the first xorshift, leaving bit 31 as the only difference. Bit indices
+are zero-based from the least significant bit.
+
+| Mixer | Input bits flipped together | Pre-final lowest difference | Fixed output responses |
+|---|---|---:|---|
+| F30 `[16 4b0332d3 15 549a3597 15]` | 15, 31 | 16 | Bit 0 stays fixed. Bit 1 always flips. |
+| `triple32 [17 ed5ad4bb 11 ac4c1b51 15 31848bab 14]` | 14, 31 | 5 | XOR of bits 4 and 18 stays fixed. XOR of bits 5 and 19 always flips. |
+
+These responses hold for every input and every choice of odd multipliers
+at the listed schedules. Spot checks matched all four predictions on
+100,000 uniform 32-bit inputs per mixer using Python's
+`random.Random(39)` and the listed constants.
+
+The rule gives the following results over all 496 weight-two input masks
+at width 32. Each mask is counted once, at its shortest forced output
+parity under F40's basis argument. When `0 <= c < s`, that weight is
+`1 + floor((31 - c) / s)`. When `c >= s`, two fixed inverse rows
+spaced by `s` XOR to a singleton.
+
+| Schedule | Weight 1 | Weight 2 | Weight 3 | No witness under the rule |
+|---|---:|---:|---:|---:|
+| `16/15/15` (F30) | 2 | 13 | 1 | 480 |
+| `16/15/14` (F18) | 3 | 10 | 3 | 480 |
+| `16/16/15` | 1 | 13 | 2 | 480 |
+| `17/11/15/14` (triple32) | 0 | 2 | 4 | 490 |
+
+Report input-mask weight alongside output-parity weight in future
+structural screens. Both `16/16/15` and `triple32` have no single-bit
+witness under F40, yet both have two-bit witnesses. A candidate experiment
+is to put an invertible rotate-XOR layer between the multiplies and measure
+forced parities, avalanche bias, and throughput. Applying another invertible
+linear layer only at the output preserves the fixed linear response under
+a change of output mask. See the rotate-XOR controls `rrmxmx` and `nasam`
+in `harness/src/refs.rs`.
+
+### F42. Round traces for MD5, SHA-256, and SHA3-256
+
+An instrumented Python run used 128 random 32-byte messages from
+`random.Random(39).randbytes(32)`. Each message was compared with two
+variants, separately flipping the low bit of byte 0 and byte 31. All final
+digests matched Python's `hashlib`. The table gives mean Hamming distances
+of the working state for the byte-0 flip. An update is one of MD5's 64
+steps, one SHA-256 round, or one Keccak-f[1600] round.
+
+| Algorithm | State bits | After 1 update | After 2 | After 3 | After 8 |
+|---|---:|---:|---:|---:|---:|
+| MD5 | 128 | 1.09 | 3.30 | 6.98 | 55.15 |
+| SHA-256 | 256 | 3.65 | 25.95 | 56.95 | 127.27 |
+| SHA3-256's Keccak permutation | 1,600 | 21.99 | 335.86 | 800.45 | 798.55 |
+
+- MD5 injects the changed message word through addition and rotation
+  into one working word. For byte 0, all four working words differed
+  after four steps. The byte-31 flip first entered at step 8.
+  [MD5 specification](https://www.rfc-editor.org/rfc/rfc1321.html)
+- SHA-256 injects the changed message word into `T1`, which updates two
+  working words. For byte 0, all eight working words differed after
+  four rounds. The byte-31 flip first entered at round 8.
+  [SHA-256 processing specification](https://www.rfc-editor.org/rfc/rfc6234.html#section-6.2)
+- Keccak absorbs both tested bytes before the first round. The column
+  mixing step `θ` spreads a one-bit difference to exactly 11 bits.
+  The rotations `ρ` and lane permutation `π` preserve that count.
+  The nonlinear step `χ` produced 16–28 changed bits for the byte-0
+  flip in round one. The round constant added by `ι) cancels in the XOR
+  difference.
+  [Keccak specification](https://keccak.team/keccak_specs_summary.html)
+
+Keccak's designers also tested differences that cancel in the column
+parities. Two changed bits in the same column leave every column parity
+unchanged, so `θ` passes that difference through unchanged. The
+rotations and lane permutation can then move those changes into different
+columns. This is the design lesson behind F41. Test input differences
+chosen to cancel in the early mixing layer, and track whether later
+layers disperse them. The table samples ordinary diffusion at two bit
+positions and establishes no all-input property for the full digests.
+[Keccak reference, §§2.4.3 and 4](https://keccak.team/files/Keccak-reference-3.0.pdf)
+· [On Alignment in Keccak](https://keccak.team/files/KeccakAlignment.pdf)
+
 ### F43. A 1,005-race sweep from unseen cores at 16/15/15: 6 new sub-0.10704 mixers (best 0.10394), and races drift back to the known basin (exact winners; one race per start)
 
 2026-11-25, on the new hardware (F38). Do good 16/15/15 mixers exist
@@ -1813,6 +1936,53 @@ neighbour 0.10023). Exact sweeps of each top byte (256 each) and of the
 **Sub-0.10704 mixers: 232 new** (188 now in the cab5 family, 47 in
 2ab3). `explored32.csv` now has 20,555 specs (was 18,416), 823 below
 0.10704 (was 591).
+
+### F46. Parity-free templates do not race better: 16/16/15 is far behind 16/15/15 (exact winners; 20 races)
+
+2026-11-26. Tests whether removing F40's forced parity buys bias.
+
+**Parity scan.** `mixlab forced --bits 32 --shifts S0/S1/S2 --parity` over
+all 405 templates with s0, s1 in 12-20 and s2 in 12-16:
+
+| shortest forced parity | templates | meaning |
+|---|---:|---|
+| 2 | 120 | the F37 forced pairs |
+| 3 | 160 | F37-clean, still a forced 3-bit parity (16/15/15, 15/15/15, 17/15/15, 15/16/15, 17/16/15, 16/15/14) |
+| none | 125 | no forced parity under the F39 prefix rule |
+
+The 125 are exactly **s0 ≤ s1 and s0 + s1 ≥ 32**, 25 per s2 value, the same
+band for every s2 from 12 to 16. This is read off the grid, not derived.
+Before this campaign `explored32.csv` held 1-2 specs for each of these
+templates (16/16/15: 2, best 0.191).
+
+**Races.** F38's protocol at 16/16/15: the 10 best random starts of F34's
+2^22 screen, seeds 3 and 4, `--fix-shifts`, 25 iterations, patience 6, 96
+neighbours, run with `--cpu` (about 2 h, alongside another GPU campaign, so
+wall times are not comparable). `CAMPAIGN_DIR=results/shift_templates/random_16_16_15`.
+
+| template | races | best | median | worst |
+|---|---|---|---|---|
+| 16/15/15 (F38) | 20 | 0.11561 | 0.13983 | 0.16909 |
+| 15/15/15 (F38) | 20 | 0.13663 | 0.16296 | 0.20987 |
+| 16/16/15 | 20 | **0.16261** `[16 a6f95535 16 a1b25947 15]` | 0.20109 | 0.30144 |
+
+- **16/16/15 is worse than both.** Median gap to 16/15/15 is 0.061, and even
+  its best race is 0.047 above 16/15/15's best.
+- **No family.** The winners share no core; the second best is
+  `[16 20239657 16 f4d734a3 15]` (0.16379).
+- **BIC** (2^20, 5 seeds, best winner): worst |corr| 0.335 at pairs (0, 17)
+  and (1, 17); no exact pair.
+- **Reading.** Having no forced parity under F40's rule does not predict
+  low bias in 2-round xmx; the record template carries a weight-3 parity
+  and wins by a wide margin. The other parity-free templates (16/16/14,
+  15/17/15, 16/17/15, ...) were not raced.
+- **Limits.** One template raced; random starts only (F35/F36: cores follow
+  s1, so native cores might help, and F36 saw gains of about 0.01 at
+  16/14/15); one screen seed picks the starts; the parity scan is the
+  prefix rule only (F40's caveat).
+
+**No new sub-0.10704 mixers** (best 0.16261). `collect_explored32.py` now
+reports 20,570 exact specs.
 
 ### F47. The gaps in the atlas are empty: crosses between families fail, and quality collapses within a few bits of the best (exact; 16 crosses, 1,287 probes)
 
@@ -2071,53 +2241,6 @@ sweep (F14) from the new winners.
 2, 3, 5 and the PractRand check (4) remain.
 
 ## 6. State of the repository
-### F46. Parity-free templates do not race better: 16/16/15 is far behind 16/15/15 (exact winners; 20 races)
-
-2026-11-26. Tests whether removing F40's forced parity buys bias.
-
-**Parity scan.** `mixlab forced --bits 32 --shifts S0/S1/S2 --parity` over
-all 405 templates with s0, s1 in 12-20 and s2 in 12-16:
-
-| shortest forced parity | templates | meaning |
-|---|---:|---|
-| 2 | 120 | the F37 forced pairs |
-| 3 | 160 | F37-clean, still a forced 3-bit parity (16/15/15, 15/15/15, 17/15/15, 15/16/15, 17/16/15, 16/15/14) |
-| none | 125 | no forced parity under the F39 prefix rule |
-
-The 125 are exactly **s0 ≤ s1 and s0 + s1 ≥ 32**, 25 per s2 value, the same
-band for every s2 from 12 to 16. This is read off the grid, not derived.
-Before this campaign `explored32.csv` held 1-2 specs for each of these
-templates (16/16/15: 2, best 0.191).
-
-**Races.** F38's protocol at 16/16/15: the 10 best random starts of F34's
-2^22 screen, seeds 3 and 4, `--fix-shifts`, 25 iterations, patience 6, 96
-neighbours, run with `--cpu` (about 2 h, alongside another GPU campaign, so
-wall times are not comparable). `CAMPAIGN_DIR=results/shift_templates/random_16_16_15`.
-
-| template | races | best | median | worst |
-|---|---|---|---|---|
-| 16/15/15 (F38) | 20 | 0.11561 | 0.13983 | 0.16909 |
-| 15/15/15 (F38) | 20 | 0.13663 | 0.16296 | 0.20987 |
-| 16/16/15 | 20 | **0.16261** `[16 a6f95535 16 a1b25947 15]` | 0.20109 | 0.30144 |
-
-- **16/16/15 is worse than both.** Median gap to 16/15/15 is 0.061, and even
-  its best race is 0.047 above 16/15/15's best.
-- **No family.** The winners share no core; the second best is
-  `[16 20239657 16 f4d734a3 15]` (0.16379).
-- **BIC** (2^20, 5 seeds, best winner): worst |corr| 0.335 at pairs (0, 17)
-  and (1, 17); no exact pair.
-- **Reading.** Having no forced parity under F40's rule does not predict
-  low bias in 2-round xmx; the record template carries a weight-3 parity
-  and wins by a wide margin. The other parity-free templates (16/16/14,
-  15/17/15, 16/17/15, ...) were not raced.
-- **Limits.** One template raced; random starts only (F35/F36: cores follow
-  s1, so native cores might help, and F36 saw gains of about 0.01 at
-  16/14/15); one screen seed picks the starts; the parity scan is the
-  prefix rule only (F40's caveat).
-
-**No new sub-0.10704 mixers** (best 0.16261). `collect_explored32.py` now
-reports 20,570 exact specs.
-
 - Each findings section is committed together with the work it describes;
   `git log` is the authoritative record. Commit subjects cite the F-numbers
   above.

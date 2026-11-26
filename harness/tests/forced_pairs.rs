@@ -1,5 +1,8 @@
 //! The shift-forced exact-pair rule (FINDINGS F37) against exhaustive truth.
-use mixlab::forced::{exact_pairs_exhaustive, forced_pairs, forced_pairs_rounds, shifts_clean, ExactPair};
+use mixlab::forced::{
+    exact_pairs_exhaustive, forced_pairs, forced_pairs_rounds, shifts_clean,
+    shortest_forced_parities, ExactPair, ForcedParity,
+};
 use mixlab::mixers::{mask, Xmx};
 use mixlab::rng::Xoshiro256;
 use std::collections::BTreeSet;
@@ -149,6 +152,15 @@ fn forced_cli() {
     };
     assert_eq!(run(&["forced", "--bits", "32", "--shifts", "14/15/15", "--cpu"]), "14/15/15: input 31 -> out 2,17 corr -1\n");
     assert_eq!(run(&["forced", "--bits", "32", "--shifts", "16/15/15", "--cpu"]), "16/15/15: no forced pair\n");
+    let spec = "[16 4b0332d3 15 549a3597 15]";
+    assert_eq!(
+        run(&["forced", "--spec", spec, "--parity"]),
+        format!("{spec}: shortest forced parity weight 3\n  input 15 -> out 0,15,30 parity flip 1\n  input 31 -> out 0,15,30 parity flip 1\n")
+    );
+    assert_eq!(
+        run(&["forced", "--shifts", "17/11/15/14", "--parity"]),
+        "17/11/15/14: no forced parity from the F39 prefix rule\n"
+    );
     let grid = run(&["forced", "--bits", "8", "--cpu"]);
     assert_eq!(grid.lines().count(), 1 + 7 * 7 * 4);
     assert!(grid.contains("\n2/1/4,"));
@@ -161,4 +173,64 @@ fn published_three_and_two_round_shifts() {
     assert!(shifts_clean(64, &[32, 29, 32, 29]), "mx3");
     let p = forced_pairs_rounds(64, &[30, 27, 31]);
     assert!(p.contains(&ExactPair { input: 29, out_lo: 2, out_hi: 33, sign: -1 }), "{p:?}");
+}
+
+#[test]
+fn shortest_parities_match_brute_force_at_8_bits() {
+    let bits = 8;
+    let mut rng = Xoshiro256::new(39);
+    for rounds in 1..=3 {
+        for mut shifts in templates(bits, rounds).into_iter().filter(|s| s[rounds] == 1) {
+            for last in 1..bits {
+                shifts[rounds] = last;
+                let middle: u32 = shifts[1..rounds].iter().sum();
+                let mut expected = Vec::new();
+                for input in 0..bits {
+                    let first = if input < shifts[0] { input } else { input - shifts[0] };
+                    let Some(c) = first.checked_sub(middle) else {
+                        continue;
+                    };
+                    for output_mask in 1..=mask(bits) {
+                        let before = (output_mask ^ (output_mask << last)) & mask(bits);
+                        if before >> c <= 1 {
+                            expected.push((
+                                output_mask.count_ones(),
+                                input,
+                                output_mask,
+                                before >> c == 1,
+                            ));
+                        }
+                    }
+                }
+                expected.sort_unstable();
+                if let Some(&(weight, ..)) = expected.first() {
+                    expected.retain(|p| p.0 == weight);
+                }
+                let got = shortest_forced_parities(bits, &shifts);
+                let mut actual: Vec<_> = got
+                    .iter()
+                    .map(|p| (p.output_mask.count_ones(), p.input, p.output_mask, p.flips))
+                    .collect();
+                actual.sort_unstable();
+                assert_eq!(actual, expected, "{shifts:?}");
+
+                let mults = (0..rounds).map(|_| odd(&mut rng, bits)).collect();
+                let f = Xmx::new(bits, shifts.clone(), mults).unwrap();
+                for p in got {
+                    assert!((0..=mask(bits)).all(|x| {
+                        let delta = f.apply(x) ^ f.apply(x ^ (1 << p.input));
+                        ((delta & p.output_mask).count_ones() % 2 != 0) == p.flips
+                    }), "{f}: {p:?}");
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn shortest_parity_can_span_a_full_64_bit_word() {
+    assert_eq!(
+        shortest_forced_parities(64, &[32, 31, 1]),
+        [31, 63].map(|input| ForcedParity { input, output_mask: u64::MAX, flips: true })
+    );
 }

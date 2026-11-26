@@ -39,6 +39,64 @@ pub struct ExactPair {
     pub sign: i8,
 }
 
+/// A parity of the output difference fixed by the propagated low-bit prefix.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ForcedParity {
+    pub input: u32,
+    pub output_mask: u64,
+    pub flips: bool,
+}
+
+fn lowest_before_final(input: u32, shifts: &[u32]) -> Option<u32> {
+    let mut lowest = input.checked_sub(shifts[0]).unwrap_or(input);
+    for &shift in &shifts[1..shifts.len() - 1] {
+        lowest = lowest.checked_sub(shift)?;
+    }
+    Some(lowest)
+}
+
+/// All minimum-weight nonempty output parities implied by the F39 prefix.
+///
+/// If the lowest difference before the final shift is c, pre-shift bits below
+/// c never flip and bit c always flips. In the inverse of the last xorshift,
+/// pre-shift bit j is the XOR of output bits j, j+s, j+2s, ... . Within each
+/// residue class modulo s, replace consecutive fixed inverse rows by their
+/// XORs (singletons), keeping the final fixed row as a suffix. These masks
+/// have disjoint support, so combining them cannot produce a smaller mask.
+/// An empty result means no parity follows from this prefix rule.
+pub fn shortest_forced_parities(bits: u32, shifts: &[u32]) -> Vec<ForcedParity> {
+    assert!((2..=64).contains(&bits));
+    assert!(shifts.len() >= 2 && shifts.iter().all(|s| (1..bits).contains(s)));
+    let last = shifts[shifts.len() - 1];
+    let mut shortest = bits + 1;
+    let mut parities = Vec::new();
+    for input in 0..bits {
+        let Some(lowest) = lowest_before_final(input, shifts) else {
+            continue;
+        };
+        for j in 0..=lowest {
+            let output_mask: u64 = if j + last <= lowest {
+                1 << j
+            } else {
+                (j..bits).step_by(last as usize).fold(0, |mask, bit| mask | (1 << bit))
+            };
+            let weight = output_mask.count_ones();
+            if weight < shortest {
+                shortest = weight;
+                parities.clear();
+            }
+            if weight == shortest {
+                parities.push(ForcedParity {
+                    input,
+                    output_mask,
+                    flips: j == lowest || j + last == lowest,
+                });
+            }
+        }
+    }
+    parities
+}
+
 /// The exact pairs the shifts alone force on `[s0 m0 s1 m1 s2]` at width
 /// `bits`, for any odd multipliers. Sorted.
 pub fn forced_pairs(bits: u32, s0: u32, s1: u32, s2: u32) -> Vec<ExactPair> {
@@ -59,21 +117,16 @@ pub fn forced_pairs(bits: u32, s0: u32, s1: u32, s2: u32) -> Vec<ExactPair> {
 pub fn forced_pairs_rounds(bits: u32, shifts: &[u32]) -> Vec<ExactPair> {
     assert!(shifts.len() >= 2, "need at least one round");
     let n = bits as i64;
-    let s: Vec<i64> = shifts.iter().map(|&v| v as i64).collect();
-    let last = *s.last().unwrap();
+    let last = i64::from(shifts[shifts.len() - 1]);
     let mut out = Vec::new();
-    'input: for i in 0..n {
-        let mut c = if i >= s[0] { i - s[0] } else { i };
-        for &m in &s[1..s.len() - 1] {
-            if c < m {
-                continue 'input;
-            }
-            c -= m;
-        }
+    for i in 0..bits {
+        let Some(c) = lowest_before_final(i, shifts).map(i64::from) else {
+            continue;
+        };
         for j in (n - 2 * last).max(0)..(n - last) {
             if j <= c && c < j + last {
                 out.push(ExactPair {
-                    input: i as u32,
+                    input: i,
                     out_lo: j as u32,
                     out_hi: (j + last) as u32,
                     sign: if j == c { -1 } else { 1 },

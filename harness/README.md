@@ -90,6 +90,7 @@ mixlab sweep  --bits 16 --random 100000 --seed 1 --out ../results/sweep16.csv
 mixlab search --bits 32 --start "[16 21f0aaad 15 735a2d97 15]" --iters 40 --seed 1 --out ../results/search32.csv
 mixlab search --bits 64 --rounds 2 --iters 100 --final-samples 26 --seed 1 --out ../results/search64.csv
 mixlab forced --bits 32 --shifts 14/15/15   # exact output pairs the shifts force for any multipliers (F37)
+mixlab forced --bits 32 --spec "[16 4b0332d3 15 549a3597 15]" --parity
 mixlab forced --bits 32                    # CSV template,pairs for every template with s2 <= bits/2
 ```
 

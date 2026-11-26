@@ -19,8 +19,9 @@ USAGE:
   mixlab exact  --bits B --list FILE [--inverse] [--out F.csv]  # batch exact bias, one spec per line (- = stdin);
                                                                # --inverse scores f^-1 (bits <= 24); CSV spec,bias,max_abs
   mixlab bic    --bits B --spec SPEC [--samples p16] [--seeds 1,2,3]   # sampled BIC, one line per seed
-  mixlab forced --bits B [--shifts S0/S1/S2[/S3..]]  # shift-forced exact output pairs (F37, F39), any rounds;
-                                               # no --shifts: every 2-round template with s2 <= B/2, CSV template,pairs
+  mixlab forced --bits B [--shifts S0/S1[/S2..] | --spec SPEC] [--parity]
+                                               # --parity: shortest forced output parity for one schedule
+                                               # no schedule: every 2-round template with s2 <= B/2, CSV template,pairs
   mixlab sweep  --bits B [--rounds R] (--exhaustive | --random N) [--seed S] --out FILE.csv
   mixlab search --bits B [--rounds R] [--start SPEC] [--iters N] [--neighbors K]
                 [--levels 16,18,20] [--final-samples LOG2] [--seed S] --out FILE.csv
@@ -1012,17 +1013,51 @@ mod tests {
     }
 }
 
-/// `mixlab forced`: exact output pairs that the shifts alone force (F37).
+/// `mixlab forced`: exact output pairs or shortest forced output parities.
 fn forced_cmd(a: &Args) {
-    use mixlab::forced::{forced_pairs, forced_pairs_rounds};
+    use mixlab::forced::{forced_pairs, forced_pairs_rounds, shortest_forced_parities};
     let bits = a.num("bits", 32) as u32;
-    if let Some(t) = a.get("shifts") {
+    let shifts = a.get("shifts");
+    let spec = a.get("spec");
+    let parity = a.has("parity");
+    if shifts.is_some() && spec.is_some() {
+        die("choose either --shifts or --spec");
+    }
+    if parity && (!(2..=64).contains(&bits) || (shifts.is_none() && spec.is_none())) {
+        die("--parity needs 2..=64 bits and either --shifts or --spec");
+    }
+    let schedule = if let Some(t) = shifts {
         let s: Vec<u32> = t
             .split('/')
             .map(|v| v.parse().unwrap_or_else(|_| die(&format!("bad shift {v}"))))
             .collect();
         if s.len() < 2 || s.len() > 5 || s.iter().any(|&v| v == 0 || v >= bits) {
             die("--shifts needs S0/S1[/S2...] (1-4 rounds), each in 1..bits");
+        }
+        Some((t.to_string(), s))
+    } else {
+        spec.map(|t| {
+            let x = Xmx::parse(bits, t).unwrap_or_else(|e| die(&e));
+            (x.to_string(), x.shifts)
+        })
+    };
+    if let Some((t, s)) = schedule {
+        if parity {
+            let parities = shortest_forced_parities(bits, &s);
+            if let Some(first) = parities.first() {
+                println!("{t}: shortest forced parity weight {}", first.output_mask.count_ones());
+                for p in parities {
+                    let output = (0..bits)
+                        .filter(|&bit| p.output_mask & (1 << bit) != 0)
+                        .map(|bit| bit.to_string())
+                        .collect::<Vec<_>>()
+                        .join(",");
+                    println!("  input {} -> out {output} parity flip {}", p.input, u8::from(p.flips));
+                }
+            } else {
+                println!("{t}: no forced parity from the F39 prefix rule");
+            }
+            return;
         }
         let pairs = forced_pairs_rounds(bits, &s);
         if pairs.is_empty() {
