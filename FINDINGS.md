@@ -2118,7 +2118,7 @@ core; best `[16 8ffb32d3 15 d49a3597 15]` = 0.10093). `explored32.csv`
 now has 23,232 specs, 849 below 0.10704. `collect_explored32.py` labels
 these races as "Mid-distance races".
 
-### F49. 16-bit: a 6x faster exact kernel, and memetic races from random starts re-find TheIronBorn's `[8 a3d3 7 4b2d 9]` and nothing better (exact; 8 races)
+### F49. 16-bit: a 6x faster exact kernel; TheIronBorn's `[8 a3d3 7 4b2d 9]` = 7.25294 is the exact optimum of 8/7/9, and nothing on 11 other exhausted triples comes within 4% (exact; 8 races, 12 exhaustive triples)
 
 2026-11-26. **Kernel.** `harness/src/fast16.rs` scores widths 9-16 in 32
 u16 lanes with explicit AVX-512BW intrinsics (`vpmullw`), with a portable
