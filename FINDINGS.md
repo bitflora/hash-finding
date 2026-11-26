@@ -2118,7 +2118,7 @@ core; best `[16 8ffb32d3 15 d49a3597 15]` = 0.10093). `explored32.csv`
 now has 23,232 specs, 849 below 0.10704. `collect_explored32.py` labels
 these races as "Mid-distance races".
 
-### F49. 16-bit: a 6x faster exact kernel; TheIronBorn's `[8 a3d3 7 4b2d 9]` = 7.25294 is the exact optimum of 8/7/9, and nothing on 11 other exhausted triples comes within 4% (exact; 8 races, 12 exhaustive triples)
+### F49. 16-bit: a 6x faster exact kernel; TheIronBorn's `[8 a3d3 7 4b2d 9]` = 7.25294 is the exact optimum of 8/7/9, and nothing on 12 other exhausted triples comes within 4% (exact; 8 races, 12 exhaustive triples)
 
 2026-11-26. **Kernel.** `harness/src/fast16.rs` scores widths 9-16 in 32
 u16 lanes with explicit AVX-512BW intrinsics (`vpmullw`), with a portable
@@ -2180,6 +2180,7 @@ runner-up triples are the next 12 by best race score.
 | 8/7/9 | `[8 a3d3 7 4b2d 9]` | **7.25294** | 7.25294 | 239 |
 | 8/7/7 | `[8 dc53 7 64d3 7]` | 7.56300 | 7.74078 | 42 |
 | 6/7/9 | `[6 5c23 7 52d3 9]` | 7.56831 | 7.56831 | 74 |
+| 7/7/8 | `[7 84d3 7 2f2d 8]` | 7.75270 | 8.6458 | 4 |
 | 9/7/7 | `[9 f11b 7 d34b 7]` | 7.81745 | 7.81745 | 3 |
 | 9/6/8 | `[9 c363 6 3693 8]` | 7.85868 | 7.85868 | 4 |
 | 7/7/7 | `[7 5257 7 f525 7]` | 7.93444 | 8.5444 | 4 |
@@ -2189,8 +2190,6 @@ runner-up triples are the next 12 by best race score.
 | 9/7/8 | none <= 8 | | 8.2585 | 0 |
 | 8/6/8 | none <= 8 | | 8.2639 | 0 |
 | 7/6/8 | none <= 8 | | 8.4434 | 0 |
-
-(7/7/8, the 12th runner-up, was still running when this was written.)
 
 - **TheIronBorn's `[8 a3d3 7 4b2d 9]` is the exact optimum of 8/7/9.**
   No other triple searched gets below 7.56. The two next best, 8/7/7 and
