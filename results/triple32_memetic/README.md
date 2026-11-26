@@ -57,3 +57,76 @@ python analysis/triple32_memetic.py results/triple32_memetic/repro_exact --refin
 
 The commands use new run directories. Both Python invocations accept `--cpu`
 for the CPU counter.
+
+## Upper-bit follow-up race
+
+The follow-up starts from the exact refinement leader. It crosses all 32
+settings of the upper five bits of the first multiplier with all 32 settings
+of the third. For the 16 best pairs, it then sweeps the upper five bits of the
+middle multiplier. The final generation checks single-bit multiplier flips
+and one-step shift moves around the eight best measured configurations.
+Each stage reuses existing exact scores and exhaustively scores fresh specs.
+
+The [follow-up leaderboard](cap_race_01/leaderboard.csv) adds 1,984 exact
+scores, of which 188 beat the published `triple32`. The strongest new spec,
+`[17 ad5ad4bb 11 ac4c1b51 15 89848bab 14]`, scored **0.020249484873719303**.
+The campaign leader remains at **0.02024134502581794**.
+
+```sh
+python analysis/triple32_cap_race.py results/triple32_memetic/repro_caps --from-run results/triple32_memetic/repro_exact
+```
+
+## Two-step neighborhood
+
+A step flips one of bits 1–31 of an odd multiplier or moves one of the four
+shift counts by one. The check starts at
+`[17 ad5ad4bb 11 ac4c1b51 15 b9848bab 14]` and covers all distinct
+configurations reachable in one or two steps. It reuses prior exact scores
+and scores each remaining configuration over all `2^32` inputs.
+
+The [exact neighborhood](extended_radius_two/neighborhood.csv) contains
+101 one-step and 5,054 two-step neighbors. The run added 4,808 exact scores
+and reused 347. The starting configuration was the unique lowest-bias
+configuration in the neighborhood. The closest challenger was two steps
+away, `[17 ad5ad4bb 11 ac4c1b51 15 89848bab 14]`, at
+**0.020249484873719303**.
+
+## Generations seeded from the 76 winners
+
+Each of four generations generates mutations and crossovers from all 76
+original winners. Crossovers draw their second parent from the current
+population. Each generation also mutates around the leading candidates,
+rescreens the shortlist with fresh inputs, and uses exact scores to select
+the next population.
+
+The [seeded leaderboard](extended_seeded/leaderboard.csv) combines the 76
+parents and the 128 new exact scores. The best new spec was
+`[17 2d5ad4bb 11 ac4c1b51 15 a5848bab 14]` at **0.02087557933450556**,
+slightly below published `triple32`.
+
+## Other published shift schedules
+
+The schedule race covers the 26 distinct alternatives in the original
+41-seed list. It holds each schedule fixed while testing mutations and
+crossovers around its published multipliers and around the prior record's
+multipliers transplanted into that schedule. Each transplant and up to six
+sample-selected finalists per schedule receive an exact score.
+
+The second pass crosses the upper two bits of the first and third multipliers
+around each schedule's best candidate and separately sweeps the same two bits
+of its middle multiplier. The two passes added 594 exact scores. New
+candidates improved on the published seed for 25 schedules. Including prior
+exact results, all 26 schedules have an improvement over their published
+baseline. The [schedule leaderboard](extended_shifts/schedules_polished.csv)
+is led by `[16 64767aad 12 daa18229 16 09e53beb 16]` at
+**0.021088757206867165**.
+
+```sh
+python analysis/triple32_extended.py radius_two
+python analysis/triple32_extended.py seeded
+python analysis/triple32_extended.py shifts
+python analysis/triple32_extended.py shift_polish
+```
+
+The commands use the original campaign and upper-bit follow-up leaderboards
+above as inputs.
