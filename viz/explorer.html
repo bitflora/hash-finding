@@ -128,7 +128,7 @@ tr.pick:hover td { background: var(--bg); }
 <div class="wrap">
   <header>
     <h1>Mixer Bit Atlas</h1>
-    <p class="lede">Every exactly scored 2-round 32-bit mixer <code>[s0 m0 s1 m1 s2]</code> in <code>mixing-functions/results/</code>, laid out bit by bit. Rows are mixers sorted by avalanche bias (lower is better). Columns are the 64 multiplier bits. If certain bits matter, the good rows at the top will agree on them.</p>
+    <p class="lede">Every exactly scored 2-round 32-bit mixer <code>[s0 m0 s1 m1 s2]</code> in <code>results/</code>, laid out bit by bit. Rows are mixers sorted by avalanche bias (lower is better). Columns are the 64 multiplier bits. If certain bits matter, the good rows at the top will agree on them.</p>
   </header>
 
   <div class="controls" role="group" aria-label="View controls">
@@ -151,7 +151,7 @@ tr.pick:hover td { background: var(--bg); }
     <div class="ctl"><span>Reference mixer</span>
       <div class="refline">
         <span class="spec" id="ref-spec">—</span>
-        <button id="ref-best" type="button">Best (F21)</button>
+        <button id="ref-best" type="button">Best (F30)</button>
         <button id="ref-record" type="button">Old record</button>
       </div>
     </div>
@@ -250,7 +250,7 @@ tr.pick:hover td { background: var(--bg); }
 <script>
 (() => {
   const RECORD = "[16 21f0aaad 15 735a2d97 15]";
-  const BEST = "[16 9c013335 15 335a2d97 15]";
+  const BEST = "[16 4b0332d3 15 549a3597 15]";
   const $ = (id) => document.getElementById(id);
   const state = { tmpl: "16,15,15", mode: "value", fold: true, ref: -1, dist: "all", hl: 2, cap: 0.3, order: "best", minc: 1, steps: false, hoverRow: -1, hoverPt: -1 };
   let ALL = [], ORIGINS = [], EDGES = [], SCREENED = {}, view = [], colors = {};

@@ -42,6 +42,7 @@ ORIGINS = [
     ("Campaign races", lambda s: s.startswith("campaign/")),
     ("Negation races", lambda s: s.startswith("negation_races/")),
     ("Seed search", lambda s: s.startswith("seed_search")),
+    ("Probes", lambda s: s.startswith("distance_profile/") or s.startswith("atlas_untried_crosses")),
     ("Other races", lambda s: True),
 ]
 

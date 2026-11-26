@@ -1814,6 +1814,80 @@ neighbour 0.10023). Exact sweeps of each top byte (256 each) and of the
 2ab3). `explored32.csv` now has 20,555 specs (was 18,416), 823 below
 0.10704 (was 591).
 
+### F47. The gaps in the atlas are empty: crosses between families fail, and quality collapses within a few bits of the best (exact; 16 crosses, 1,287 probes)
+
+2026-11-26. Prompted by the Mixer Bit Atlas (`viz/explorer.html`) after
+`collect_explored32.py` picked up F43-F46 (1,497 → 20,570 specs). Its
+"bias against distance from the reference" panel at 16/15/15 shows clumps:
+columns at fixed low-16 distances, and three clumps at all-64 distance from
+F30. This tests whether the gaps between them hide good mixers.
+
+**What the clumps are** (distance from F30, negation folded on bit 31 as
+the atlas does):
+
+| all-64 distance | specs | best | median | sub-0.10704 | what they are |
+|---|---:|---|---|---:|---|
+| 0-11 | 568 | 0.09873 | 0.110 | 131 | F30's own family (crossover children, radius-3 neighbours) |
+| 12-19 | 210 | 0.10830 | 0.14 | 0 | thin |
+| 20-43 | 16,873 | 0.09906 | 0.154 | 548 | race winners from unrelated starts; two unrelated 64-bit words differ in ~32 bits, so they pile up there |
+| 48-59 | 474 | 0.10004 | 0.108 | 143 | almost all F30's family in mirrored form (core pair cd2d/ca69: 435): `34fccd2d` = −(`4b0332d3` ^ 0x80000000), core `cd2d` = `32d3` ^ `fffe` |
+
+The low-16 columns are the same effect: crossover children carry family
+cores unchanged, so their core distance to F30 takes a few fixed values
+(0, 11, 15, 30 = mirrored core). The 48-59 clump is a display artifact of
+folding on bit 31 alone; the core matrix already merges c and c ^ `fffe`.
+
+**Whole-multiplier crosses between families.** The atlas's core matrix
+lists 71 never-tried pairs among the 12 best m0 and 12 best m1 cores; its
+top suggestions cross F30 with F45. The 12 suggested children plus 4 more
+F30 × F45 crosses (`results/atlas_untried_crosses.txt`, `mixlab exact
+--list`, 2 s): **all 16 lie between 0.10924 and 0.17443.** Best
+`[16 783f354b 15 549a3597 15]` = 0.10924 (F45's m0 with F30's m1); F30's
+m0 with F45's m1 `62b9ad19` = 0.12888. m0 and m1 are co-adapted: a strong
+m1 does not carry over to another family's m0. The matrix's "untried
+strong pairs" heuristic is a poor guide.
+
+**Distance profile of F30.** `analysis/distance_profile.py` draws random
+mutants of `[16 4b0332d3 15 549a3597 15]` with exactly k flipped bits
+(never bit 0), in bits 1-31 of both multipliers ("any"), 1-15 ("low") or
+16-31 ("high"); 40 per (region, k), duplicates dropped, 1,287 specs, all
+exact (`results/distance_profile/best_f30.*`, 145 s on the GPU).
+
+| k | any: best / median | high only: best / median | low only: best / median |
+|---:|---|---|---|
+| 1 | 0.09908 / 0.139 | 0.09906 / 0.110 | 0.13354 / 0.151 |
+| 2 | 0.10797 / 0.156 | 0.10013 / 0.125 | 0.13036 / 0.250 |
+| 3 | 0.12412 / 0.234 | 0.10583 / 0.155 | 0.13766 / 0.387 |
+| 4 | 0.16638 / 0.292 | 0.11112 / 0.155 | 0.17704 / 0.436 |
+| 8 | 0.22697 / 0.666 | 0.12251 / 0.239 | 0.24642 / 1.461 |
+| 16 | 0.29416 / 1.466 | 0.15497 / 0.282 | 0.45731 / 2.318 |
+| 24 | 0.61564 / 1.881 | 0.15301 / 0.228 | 0.24521 / 0.925 |
+
+(k = 1 has only 30/13/10 distinct mutants.) Sub-0.10704 probes: 13, all at
+k ≤ 3, almost all top-bit flips F44 had already found.
+
+- **The gaps hold bad mixers.** By k = 4 no probe is within 0.004 of
+  0.10704; at k ≥ 8 the median is that of a random mixer. The 20-43
+  clump's median of 0.154 comes from racing, not from that region being
+  good. There are about 5 × 10^14 mixers at distance 16; sampling them at
+  random is not a search.
+- **The cleanest direct test of the low-bit core so far.** One flipped
+  core bit (bits 1-15) already costs ≥ 0.035 (best 0.13354). One flipped
+  high bit often costs nothing; even 24 high flips keep the median at
+  0.23, far better than 24 low flips' 0.93. This fits F10/F16, and F33's
+  caveat that some high bits matter in context.
+- **Limits.** One centre (F30); 40 draws per cell; folding on bit 31 in
+  the distance table.
+
+**Atlas.** `collect_explored32.py` now labels `distance_profile/` and
+`atlas_untried_crosses*` as a "Probes" origin, so they can be
+highlighted in the scatter, where they fill the gaps well above the race
+floor.
+
+**Sub-0.10704 mixers: 1 new**, `[16 4f0332d3 15 749a3597 15]` = 0.10585
+(a k = 2 high-bit probe). `explored32.csv` now has 21,806 specs, 824 below
+0.10704.
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the
