@@ -1,9 +1,12 @@
 # Intro
 
-**Current best hash:** `[16 4b0332d3 15 549a3597 15]`
+**Current best two-round hash:** `[16 4b0332d3 15 549a3597 15]`
 Avalanche bias: **0.09873011186879989**
 
 Spec format: `x ^= x >> 16; x *= 0x4b0332d3; x ^= x >> 15; x *= 0x549a3597; x ^= x >> 15`.
+
+**Current best three-round hash:** `[17 ad5ad4bb 11 ac4c1b51 15 b9848bab 14]`
+Exact avalanche bias: **0.02024134502581794** ([campaign results](results/triple32_memetic/README.md))
 
 This is a scratchpad for finding better integer hash functions, currently
 targeting lowbias32(). At the time of this writing, well over 100 new functions
@@ -27,6 +30,11 @@ avalanche bias, with additional statistical yardsticks.
   (`results/REVIEW_STATUS.md` tracks the status of saved experiments)
 - `viz/` — `explorer.html`, an interactive browser for the explored 32-bit
   mixers (`explored32.json`)
+
+## Three-round 32-bit research
+
+The [triple32 memetic search](results/triple32_memetic/README.md) has its own
+seed list, exact leaderboard, and reproduction commands.
 
 ## Building and running
 
