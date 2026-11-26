@@ -8,6 +8,7 @@
 pub mod bias;
 pub mod exact;
 pub mod extra;
+pub mod fast16;
 pub mod fast32;
 pub mod forced;
 #[cfg(feature = "gpu")]

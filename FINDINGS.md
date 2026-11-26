@@ -2118,6 +2118,97 @@ core; best `[16 8ffb32d3 15 d49a3597 15]` = 0.10093). `explored32.csv`
 now has 23,232 specs, 849 below 0.10704. `collect_explored32.py` labels
 these races as "Mid-distance races".
 
+### F49. 16-bit: a 6x faster exact kernel, and memetic races from random starts re-find TheIronBorn's `[8 a3d3 7 4b2d 9]` and nothing better (exact; 8 races)
+
+2026-11-26. **Kernel.** `harness/src/fast16.rs` scores widths 9-16 in 32
+u16 lanes with explicit AVX-512BW intrinsics (`vpmullw`), with a portable
+fallback. It tabulates y = x ^ (x >> s0) and h(x) once, then does one
+Harley-Seal pass per input bit. Counts are bit-identical to `fast32`
+(`tests/fast16.rs`, widths 9-16, 1-4 rounds; the fallback was tested with
+`-C target-cpu=x86-64-v3`). Throughput for 16-bit 2-round on 24 threads:
+
+| path | configs/s |
+|---|---:|
+| GPU (one launch per config; what `exact --list` used by default) | ~5,700 |
+| `fast32` CPU | ~26,000 |
+| `fast16`, array form (LLVM left it scalar) | ~32,000 |
+| **`fast16`, AVX-512BW intrinsics** | **~158,000** |
+
+The array form compiled to scalar `imull`, and the emitted assembly has
+no vector multiplies for `fast32` either, so fast32's "auto-vectorises"
+note does not hold for this build. `exact::exact_xmx` now sends widths
+9-16 to `fast16` on the CPU unless `--gpu` is given. Per row, the
+kernel's `exact_ms_bounded` stops once the rows done so far exceed a
+bound, but no command uses it yet.
+
+**Races.** `analysis/memetic16.py`: 8 races (seed 1), each from 256 random
+2-round mixers with shifts 4-12. Every generation exactly scores 3,000
+crossover/mutation children plus the full 1-flip neighbourhood of the top
+16 and the 2-flip neighbourhood of the best. The population is 64, with at
+most 16 per shift triple; each race has patience 40. In total 682,908
+distinct configs over 821 shift triples were scored in a few minutes.
+Results are in `results/memetic16/run1/` (`exact.csv.gz` holds every score).
+
+| race | best | bias | gen of best |
+|---:|---|---:|---:|
+| 2, 7 | `[8 a3d3 7 4b2d 9]` | **7.25294** | 27, 23 |
+| 4 | `[8 84d3 7 34d3 9]` | 7.55857 | 9 |
+| 5 | `[8 8c4b 7 3cd3 9]` | 7.71893 | 6 |
+| 0 | `[8 242d 7 2ccb 9]` | 7.72804 | 10 |
+| 1 | `[8 53cb 7 1b2d 7]` | 7.74078 | 6 |
+| 6 | `[9 f11b 7 d34b 7]` | 7.81745 | 18 |
+| 3 | `[9 7b35 7 eccb 8]` | 8.25851 | 5 |
+
+- Two independent races end exactly on TheIronBorn's published mixer
+  (hash-prospector #19, 7.25294). No scored config is below it. The best
+  of the other shift triples is `[6 5c23 7 52d3 9]` = 7.56831.
+- hash-prospector's `hash16_xm2` (8.59051) is beaten within a few
+  generations by every race.
+- Every race but 3 ends at s1 = 7, and 5 of 8 at 8/7/9.
+
+**Exhaustive check.** `mixlab exhaust --bits 16 --shifts S0/S1/S2
+--max-score 8` scores all 2^30 odd multiplier pairs of one triple with
+`exact_ms_bounded`, and keeps every mixer whose bias is <= 8. Rows are
+taken from the top input bit down. The test is `exhaust2_matches_brute_force`
+(10 bits, all pairs). The run on 8/7/9 took 1,301 s; the others took
+15-25 min each, 24 threads. `analysis/queue_exhaust16.sh` queues triples.
+Every kept mixer is in `results/exhaust16/s<S0>_<S1>_<S2>.csv`. The
+runner-up triples are the next 12 by best race score.
+
+| triple | exact optimum (all 2^30 pairs) | bias | race best | kept (<= 8) |
+|---|---|---:|---:|---:|
+| 8/7/9 | `[8 a3d3 7 4b2d 9]` | **7.25294** | 7.25294 | 239 |
+| 8/7/7 | `[8 dc53 7 64d3 7]` | 7.56300 | 7.74078 | 42 |
+| 6/7/9 | `[6 5c23 7 52d3 9]` | 7.56831 | 7.56831 | 74 |
+| 9/7/7 | `[9 f11b 7 d34b 7]` | 7.81745 | 7.81745 | 3 |
+| 9/6/8 | `[9 c363 6 3693 8]` | 7.85868 | 7.85868 | 4 |
+| 7/7/7 | `[7 5257 7 f525 7]` | 7.93444 | 8.5444 | 4 |
+| 7/7/9 | `[7 5c23 7 2b2d 9]` | 7.93566 | 7.93566 | 6 |
+| 9/7/9 | `[9 f2cb 7 f2d3 9]` | 7.96778 | 8.0820 | 2 |
+| 8/7/8 | `[8 e3db 7 c5a9 8]` | 7.99459 | 8.0288 | 1 |
+| 9/7/8 | none <= 8 | | 8.2585 | 0 |
+| 8/6/8 | none <= 8 | | 8.2639 | 0 |
+| 7/6/8 | none <= 8 | | 8.4434 | 0 |
+
+(7/7/8, the 12th runner-up, was still running when this was written.)
+
+- **TheIronBorn's `[8 a3d3 7 4b2d 9]` is the exact optimum of 8/7/9.**
+  No other triple searched gets below 7.56. The two next best, 8/7/7 and
+  6/7/9, are 4.3% worse.
+- Races found the exact optimum on 5 of the 6 triples they had searched
+  closely (best race score < 8). On weakly sampled triples they stopped
+  0.03-0.6 above it.
+- The triples are already sparse at 8.0: only 8/7/9 (239), 6/7/9 (74)
+  and 8/7/7 (42) have more than a handful of mixers below 8.
+
+**Reading.** TheIronBorn's mixer is the best 2-round 16-bit mixer on
+every shift triple searched exhaustively. Over the remaining triples it
+is very likely, though not proven, to be the global 2-round optimum:
+races reached 821 triples, and none came within 0.3 of it outside
+8/7/9. Proving it for all 3,375 triples at ~22 min each would take
+about 52 days on this machine. Covering shifts 5-11 (343 triples) would
+take about 5 days.
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the

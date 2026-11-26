@@ -1,6 +1,8 @@
 //! Fast exact avalanche counting for xmx mixers of width 3..=32.
-//! Evaluates 8 consecutive inputs at once in u32 lanes (auto-vectorises to
-//! AVX2 with target-cpu=native) and counts with branch-free bit-sliced
+//! Evaluates 8 consecutive inputs at once in u32 lanes (written for
+//! auto-vectorisation, but the 2026-11-26 build's assembly has no vector
+//! multiplies; see FINDINGS F49 and `fast16` for an intrinsics version) and
+//! counts with branch-free bit-sliced
 //! counters. The default path compresses 16 consecutive 8-input groups per
 //! input bit with a Harley-Seal carry-save adder tree (~5 ops per word) before
 //! rippling the weight-16 carries into 8 planes; the original ripple counter

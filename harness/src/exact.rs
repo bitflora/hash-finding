@@ -83,9 +83,33 @@ fn gpu() -> Option<&'static std::sync::Mutex<crate::gpu::Gpu>> {
     }
 }
 
+/// Widths 9..=16 are scored with `fast16` on the CPU unless `--gpu` was
+/// asked for: one GPU launch per 2^16-input mixer costs more than the whole
+/// CPU evaluation (16-bit 2-round: ~5.7k configs/s on the GPU against
+/// ~26k/s for `fast32` and more for `fast16`, 24 threads, 2026-11-26).
+fn small_on_cpu(x: &Xmx) -> bool {
+    crate::fast16::supports(x) && backend() != Backend::Gpu
+}
+
+/// Whether `exact_xmx(x, _)` will run on the GPU, so batch callers know to
+/// score one mixer at a time rather than in parallel.
+pub fn exact_on_gpu(x: &Xmx) -> bool {
+    !small_on_cpu(x) && gpu_active() && {
+        #[cfg(feature = "gpu")]
+        {
+            crate::gpu::supports(x)
+        }
+        #[cfg(not(feature = "gpu"))]
+        false
+    }
+}
+
 /// Exact counts for an xmx mixer with 3 <= bits <= 32. `parallel` only
 /// affects the CPU path (the GPU is always fully used).
 pub fn exact_xmx(x: &Xmx, parallel: bool) -> Counts {
+    if small_on_cpu(x) {
+        return crate::fast16::exact_xmx(x);
+    }
     #[cfg(feature = "gpu")]
     if crate::gpu::supports(x) {
         if let Some(g) = gpu() {

@@ -1,0 +1,9 @@
+race 0: best [8 242d 7 2ccb 9] 7.728038 at gen 10 (stopped gen 50)
+race 1: best [8 53cb 7 1b2d 7] 7.740779 at gen 6 (stopped gen 46)
+race 2: best [8 a3d3 7 4b2d 9] 7.252938 at gen 27 (stopped gen 67)
+race 3: best [9 7b35 7 eccb 8] 8.258509 at gen 5 (stopped gen 45)
+race 4: best [8 84d3 7 34d3 9] 7.558566 at gen 9 (stopped gen 49)
+race 5: best [8 8c4b 7 3cd3 9] 7.718930 at gen 6 (stopped gen 46)
+race 6: best [9 f11b 7 d34b 7] 7.817453 at gen 18 (stopped gen 58)
+race 7: best [8 a3d3 7 4b2d 9] 7.252938 at gen 23 (stopped gen 63)
+scored 682908 distinct configs; race bests: [7.2529, 7.2529, 7.5586, 7.7189, 7.728, 7.7408, 7.8175, 8.2585]

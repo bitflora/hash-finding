@@ -18,6 +18,8 @@ USAGE:
   mixlab eval   (--name REF | --bits B --spec \"[s m s m s]\") [--exact] [--samples N] [--seed S] [--extra]
   mixlab exact  --bits B --list FILE [--inverse] [--out F.csv]  # batch exact bias, one spec per line (- = stdin);
                                                                # --inverse scores f^-1 (bits <= 24); CSV spec,bias,max_abs
+  mixlab exhaust --bits B --shifts S0/S1/S2 --max-score X [--m0 LO:HI] --out F.csv
+                # every 2-round [S0 m0 S1 m1 S2] at 9..=16 bits with exact bias <= X (fast16, pruned); CSV spec,bias
   mixlab bic    --bits B --spec SPEC [--samples p16] [--seeds 1,2,3]   # sampled BIC, one line per seed
   mixlab forced --bits B [--shifts S0/S1[/S2..] | --spec SPEC] [--parity]
                                                # --parity: shortest forced output parity for one schedule
@@ -299,6 +301,7 @@ fn main() {
             println!("best {best}  score {score:.10}");
         }
         "exact" => exact_list_cmd(&a),
+        "exhaust" => exhaust_cmd(&a),
         "surrogate" => surrogate_cmd(&a),
         "forced" => forced_cmd(&a),
         "scale" => scale_cmd(&a),
@@ -310,6 +313,77 @@ fn main() {
             println!("{USAGE}");
         }
     }
+}
+
+/// Exhaustive 2-round search over all odd multiplier pairs for one shift
+/// triple (optionally an m0 slice, half-open hex or decimal range), keeping
+/// every mixer whose exact bias is <= --max-score.
+fn exhaust_cmd(a: &Args) {
+    let bits = a.num("bits", 16) as u32;
+    if !(9..=16).contains(&bits) {
+        die("exhaust needs --bits 9..=16");
+    }
+    let sh: Vec<u32> = a
+        .get("shifts")
+        .unwrap_or_else(|| die("need --shifts S0/S1/S2"))
+        .split('/')
+        .map(|t| t.parse().unwrap_or_else(|_| die("bad --shifts")))
+        .collect();
+    let shifts: [u32; 3] = sh.try_into().unwrap_or_else(|_| die("--shifts needs three values"));
+    if shifts.iter().any(|&s| s == 0 || s >= bits) {
+        die("shifts must be in 1..bits");
+    }
+    let max: f64 = a.get("max-score").unwrap_or_else(|| die("need --max-score X")).parse().unwrap_or_else(|_| die("bad --max-score"));
+    let limit_ms = (max / 1000.0).powi(2);
+    let parse_m = |t: &str| {
+        let t = t.trim();
+        match t.strip_prefix("0x") {
+            Some(h) => u64::from_str_radix(h, 16),
+            None => t.parse(),
+        }
+        .unwrap_or_else(|_| die("bad --m0 bound"))
+    };
+    let range = match a.get("m0") {
+        Some(r) => {
+            let (lo, hi) = r.split_once(':').unwrap_or_else(|| die("--m0 needs LO:HI"));
+            parse_m(lo)..parse_m(hi).min(1 << bits)
+        }
+        None => 0..1u64 << bits,
+    };
+    let out = a.get("out").unwrap_or_else(|| die("need --out"));
+    let n_m0 = range.clone().filter(|m| m & 1 == 1).count() as u64;
+    let t = Instant::now();
+    let hits = mixlab::fast16::exhaust2(bits, shifts, range.clone(), limit_ms, |d| {
+        if d % 256 == 0 || d == n_m0 {
+            let el = t.elapsed().as_secs_f64();
+            eprint!("\r{d}/{n_m0} m0  [{el:.0}s, eta {:.0}s]   ", el / d as f64 * (n_m0 - d) as f64);
+        }
+    });
+    let mut w = BufWriter::new(File::create(out).unwrap_or_else(|e| die(&format!("create {out}: {e}"))));
+    writeln!(w, "spec,bias").unwrap();
+    let w16 = (bits as usize).div_ceil(4);
+    let mut best: Option<(String, f64)> = None;
+    for (m0, m1, ms) in &hits {
+        let spec = format!("[{} {m0:0w16$x} {} {m1:0w16$x} {}]", shifts[0], shifts[1], shifts[2]);
+        let score = 1000.0 * ms.sqrt();
+        writeln!(w, "{spec},{score}").unwrap();
+        if best.as_ref().is_none_or(|b| score < b.1) {
+            best = Some((spec, score));
+        }
+    }
+    w.flush().unwrap();
+    eprintln!(
+        "\n{}/{}/{} m0 {:#x}..{:#x}: {} pairs scored, {} with bias <= {max}, best {}  [{:.0}s]",
+        shifts[0],
+        shifts[1],
+        shifts[2],
+        range.start,
+        range.end,
+        n_m0 << (bits - 1),
+        hits.len(),
+        best.map_or("none".into(), |(s, v)| format!("{s} = {v}")),
+        t.elapsed().as_secs_f64()
+    );
 }
 
 /// Batch exact scoring: specs one per line (blank lines, '#' comments and a
@@ -340,7 +414,7 @@ fn exact_list_cmd(a: &Args) {
         cfgs.push(Xmx::parse(bits, t).unwrap_or_else(|e| die(&format!("{path}:{}: {e}", i + 1))));
     }
     let t = Instant::now();
-    let scores: Vec<(f64, f64)> = if !inverse && mixlab::exact::gpu_active() {
+    let scores: Vec<(f64, f64)> = if !inverse && cfgs.first().is_some_and(mixlab::exact::exact_on_gpu) {
         // one config at a time: each GPU call already uses the whole device
         cfgs.iter().map(mixlab::search::exact_score_serial).collect()
     } else {
