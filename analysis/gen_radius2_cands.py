@@ -1,15 +1,16 @@
-"""Every radius-1 and radius-2 neighbour of a 32-bit 2-round mixer.
+"""Every neighbour within radius R (default 2) of a 32-bit 2-round mixer.
 
 A move is one of: flip bit k (1..31) of m0 or m1, or shift s0/s1/s2 by +-1
-(TheIronBorn's move set, issue #19). Radius 2 includes repeated moves,
+(TheIronBorn's move set, issue #19). Radius >= 2 includes repeated moves,
 so a shift may change by +-2. Cancelling moves are deduplicated away.
 s2 is capped at 16, as in the campaign.
 Writes N chunk files <out>_kK.csv for `mixlab race --candidates`.
-Usage: python gen_radius2_cands.py "[16 21f0aaad 15 735a2d97 15]" OUTPREFIX CHUNKS
+Usage: python gen_radius2_cands.py "[16 21f0aaad 15 735a2d97 15]" OUTPREFIX CHUNKS [R]
 """
 import itertools, sys
 
 spec, out, chunks = sys.argv[1], sys.argv[2], int(sys.argv[3])
+radius = int(sys.argv[4]) if len(sys.argv) > 4 else 2
 s0, m0, s1, m1, s2 = spec.strip("[]").split()
 base = [int(s0), int(m0, 16), int(s1), int(m1, 16), int(s2)]
 moves = [("bit", i, k) for i in (1, 3) for k in range(1, 32)]
@@ -24,7 +25,7 @@ def apply(ms):
     return tuple(c)
 
 seen, rows = {tuple(base)}, []
-for r in (1, 2):
+for r in range(1, radius + 1):
     for ms in itertools.combinations_with_replacement(moves, r):
         c = apply(ms)
         if c and c not in seen:

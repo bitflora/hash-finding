@@ -1,0 +1,18 @@
+# RaceCfg { bits: 32, n0: 16384, cap: 268435456, z: 3.0, verify_samples: None, seed: 1, max_last_shift: None, fix_low_bits: None, max_bic_corr: None, fix_shifts: true }
+iter,event,config,score,detail
+0,start,[16 c9305553 15 2904dadd 15],0.2229518978,sd=0.000e0
+1,improved,[16 c9305553 15 2b14dacd 15],0.1998331181,k=96 worse=50 rejected=0 unraced=45 median_n_drop=2^22.0 inputs=2^30.1 exact=1 cum_inputs=2^30.1 cum_exact=1 bic_skipped=0
+2,improved,[16 c9205553 15 2b14dacd 15],0.1737600530,k=96 worse=44 rejected=0 unraced=51 median_n_drop=2^23.0 inputs=2^31.1 exact=1 cum_inputs=2^31.6 cum_exact=2 bic_skipped=0
+3,improved,[16 c9205553 15 2a14dacd 15],0.1618857967,k=96 worse=79 rejected=0 unraced=16 median_n_drop=2^23.0 inputs=2^32.8 exact=1 cum_inputs=2^33.3 cum_exact=3 bic_skipped=0
+4,improved,[16 c920d553 15 2a14dacd 15],0.1565493953,k=96 worse=86 rejected=0 unraced=9 median_n_drop=2^23.0 inputs=2^32.4 exact=1 cum_inputs=2^34.0 cum_exact=4 bic_skipped=0
+5,improved,[16 e120d553 15 2a14dacd 15],0.1499999917,k=96 worse=76 rejected=0 unraced=19 median_n_drop=2^24.0 inputs=2^32.9 exact=1 cum_inputs=2^34.5 cum_exact=5 bic_skipped=0
+6,improved,[16 e320d553 15 2a14dacd 15],0.1461084751,k=96 worse=79 rejected=0 unraced=16 median_n_drop=2^24.0 inputs=2^32.9 exact=1 cum_inputs=2^34.9 cum_exact=6 bic_skipped=0
+7,improved,[16 e720d553 15 2a14dacd 15],0.1414588805,k=96 worse=82 rejected=0 unraced=13 median_n_drop=2^24.0 inputs=2^32.8 exact=1 cum_inputs=2^35.2 cum_exact=7 bic_skipped=0
+8,improved,[16 e720d553 15 6a14dacd 15],0.1413520195,k=96 worse=86 rejected=0 unraced=9 median_n_drop=2^24.0 inputs=2^32.6 exact=1 cum_inputs=2^35.4 cum_exact=8 bic_skipped=0
+9,iter,[16 e720d553 15 6a14dacd 15],0.1413520195,k=96 worse=85 rejected=11 unraced=0 median_n_drop=2^24.0 inputs=2^32.6 exact=11 cum_inputs=2^35.6 cum_exact=19 bic_skipped=0
+10,iter,[16 e720d553 15 6a14dacd 15],0.1413520195,k=96 worse=92 rejected=4 unraced=0 median_n_drop=2^24.0 inputs=2^31.9 exact=4 cum_inputs=2^35.7 cum_exact=23 bic_skipped=0
+11,iter,[16 e720d553 15 6a14dacd 15],0.1413520195,k=96 worse=92 rejected=4 unraced=0 median_n_drop=2^23.0 inputs=2^32.0 exact=4 cum_inputs=2^35.8 cum_exact=27 bic_skipped=0
+12,iter,[16 e720d553 15 6a14dacd 15],0.1413520195,k=96 worse=89 rejected=7 unraced=0 median_n_drop=2^23.0 inputs=2^32.0 exact=7 cum_inputs=2^35.9 cum_exact=34 bic_skipped=0
+13,iter,[16 e720d553 15 6a14dacd 15],0.1413520195,k=96 worse=93 rejected=3 unraced=0 median_n_drop=2^23.0 inputs=2^32.0 exact=3 cum_inputs=2^36.0 cum_exact=37 bic_skipped=0
+14,iter,[16 e720d553 15 6a14dacd 15],0.1413520195,k=96 worse=94 rejected=2 unraced=0 median_n_drop=2^23.0 inputs=2^31.7 exact=2 cum_inputs=2^36.1 cum_exact=39 bic_skipped=0
+15,patience,[16 e720d553 15 6a14dacd 15],0.1413520195,no improvement in 6 iterations

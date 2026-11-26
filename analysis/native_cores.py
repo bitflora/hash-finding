@@ -3,7 +3,7 @@ template other than 16/15/15 from scratch, instead of transplanting cores that
 were tuned at 16/15/15. Python only builds specs and reads mixlab output; every
 score comes from the harness (CLAUDE.md).
 
-Stages (state in results/native_cores/<template>/, e.g. 15_15_15):
+Stages (state in results/native_cores/<template>/, e.g. 15_15_15, or results/<--dir>):
 
   python analysis/native_cores.py gen      --template 15/15/15 [--pairs 20000] [--seed 1]
       Candidate core pairs (m0 low 16 bits, m1 low 16 bits), deduplicated after
@@ -50,7 +50,9 @@ def opt(name, default):
 
 
 TEMPLATE = tuple(int(x) for x in opt("--template", "15/15/15").split("/"))
-D = ROOT / "results" / "native_cores" / "_".join(map(str, TEMPLATE))
+# --dir NAME puts the state in results/NAME instead (e.g. the F39 sweep at
+# 16/15/15, where "native" cores just means cores never scored before).
+D = ROOT / "results" / (opt("--dir", None) or Path("native_cores") / "_".join(map(str, TEMPLATE)))
 
 
 def spec(m0, m1, t=TEMPLATE):

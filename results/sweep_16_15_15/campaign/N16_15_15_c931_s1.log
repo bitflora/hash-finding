@@ -1,0 +1,24 @@
+[     1s] 0,start,[16 dcda6933 15 f1d5b5a5 15],0.3568047436,sd=0.000e0
+[     1s] 1,improved,[16 dcda6933 15 f1c5b1a5 15],0.2806944960,k=96 worse=42 rejected=0 unraced=53 median_n_drop=2^21.0 inputs=2^28.3 exact=1 cum_inputs=2^28.3 cum_exact=1 bic_skipped=0
+[     1s] 2,improved,[16 dcda2b33 15 f1c5b1a5 15],0.2502722958,k=96 worse=59 rejected=0 unraced=36 median_n_drop=2^22.0 inputs=2^30.8 exact=1 cum_inputs=2^31.0 cum_exact=2 bic_skipped=0
+[     1s] 3,improved,[16 dcda2b33 15 f1c5b5a5 15],0.2222492637,k=96 worse=58 rejected=0 unraced=37 median_n_drop=2^22.0 inputs=2^30.8 exact=1 cum_inputs=2^31.9 cum_exact=3 bic_skipped=0
+[     1s] 4,improved,[16 dcda2b33 15 f1c5b5a7 15],0.1818039297,k=96 worse=61 rejected=0 unraced=34 median_n_drop=2^22.0 inputs=2^30.0 exact=1 cum_inputs=2^32.2 cum_exact=4 bic_skipped=0
+[     2s] 5,improved,[16 dc522b33 15 f1c5b5a7 15],0.1693722946,k=96 worse=75 rejected=0 unraced=20 median_n_drop=2^24.0 inputs=2^32.0 exact=1 cum_inputs=2^33.1 cum_exact=5 bic_skipped=0
+[     2s] 6,improved,[16 dc522b33 15 b1c5b5a7 15],0.1686126806,k=96 worse=82 rejected=0 unraced=13 median_n_drop=2^23.0 inputs=2^32.5 exact=1 cum_inputs=2^33.9 cum_exact=6 bic_skipped=0
+[     2s] 7,improved,[16 de512b33 15 b1c5b5a7 15],0.1646358804,k=96 worse=81 rejected=0 unraced=14 median_n_drop=2^24.0 inputs=2^32.7 exact=1 cum_inputs=2^34.4 cum_exact=7 bic_skipped=0
+[     3s] 8,improved,[16 de412b33 15 b1c5b5a7 15],0.1491404113,k=96 worse=80 rejected=0 unraced=15 median_n_drop=2^24.0 inputs=2^32.0 exact=1 cum_inputs=2^34.6 cum_exact=8 bic_skipped=0
+[     3s] 9,improved,[16 de412ab3 15 b1c5b5a7 15],0.1266437807,k=96 worse=49 rejected=0 unraced=46 median_n_drop=2^23.0 inputs=2^30.2 exact=1 cum_inputs=2^34.7 cum_exact=9 bic_skipped=0
+[     3s] 10,improved,[16 df412ab3 15 b1c5b5a7 15],0.1204824725,k=96 worse=74 rejected=0 unraced=21 median_n_drop=2^24.0 inputs=2^32.9 exact=1 cum_inputs=2^35.1 cum_exact=10 bic_skipped=0
+[     4s] 11,improved,[16 dfc12ab3 15 b1c5b5a7 15],0.1201811307,k=96 worse=84 rejected=0 unraced=11 median_n_drop=2^24.0 inputs=2^32.6 exact=1 cum_inputs=2^35.3 cum_exact=11 bic_skipped=0
+[     5s] 12,iter,[16 dfc12ab3 15 b1c5b5a7 15],0.1201811307,k=96 worse=83 rejected=13 unraced=0 median_n_drop=2^24.0 inputs=2^32.7 exact=13 cum_inputs=2^35.5 cum_exact=24 bic_skipped=0
+[     6s] 13,improved,[16 5f412ab3 15 b1c5b5a7 15],0.1192831889,k=96 worse=86 rejected=0 unraced=9 median_n_drop=2^24.0 inputs=2^32.4 exact=1 cum_inputs=2^35.7 cum_exact=25 bic_skipped=0
+[     8s] 14,iter,[16 5f412ab3 15 b1c5b5a7 15],0.1192831889,k=96 worse=83 rejected=13 unraced=0 median_n_drop=2^24.0 inputs=2^32.8 exact=13 cum_inputs=2^35.9 cum_exact=38 bic_skipped=0
+[     8s] 15,improved,[16 1f412ab3 15 b1c5b5a7 15],0.1167870970,k=96 worse=91 rejected=0 unraced=4 median_n_drop=2^23.0 inputs=2^31.6 exact=1 cum_inputs=2^35.9 cum_exact=39 bic_skipped=0
+[     9s] 16,iter,[16 1f412ab3 15 b1c5b5a7 15],0.1167870970,k=96 worse=84 rejected=12 unraced=0 median_n_drop=2^24.0 inputs=2^32.8 exact=12 cum_inputs=2^36.1 cum_exact=51 bic_skipped=0
+[    10s] 17,iter,[16 1f412ab3 15 b1c5b5a7 15],0.1167870970,k=96 worse=94 rejected=2 unraced=0 median_n_drop=2^23.0 inputs=2^31.4 exact=2 cum_inputs=2^36.2 cum_exact=53 bic_skipped=0
+[    10s] 18,iter,[16 1f412ab3 15 b1c5b5a7 15],0.1167870970,k=96 worse=93 rejected=3 unraced=0 median_n_drop=2^24.0 inputs=2^31.8 exact=3 cum_inputs=2^36.2 cum_exact=56 bic_skipped=0
+[    11s] 19,iter,[16 1f412ab3 15 b1c5b5a7 15],0.1167870970,k=96 worse=94 rejected=2 unraced=0 median_n_drop=2^24.0 inputs=2^32.1 exact=2 cum_inputs=2^36.3 cum_exact=58 bic_skipped=0
+[    11s] 20,iter,[16 1f412ab3 15 b1c5b5a7 15],0.1167870970,k=96 worse=92 rejected=4 unraced=0 median_n_drop=2^23.0 inputs=2^31.8 exact=4 cum_inputs=2^36.4 cum_exact=62 bic_skipped=0
+[    12s] 21,iter,[16 1f412ab3 15 b1c5b5a7 15],0.1167870970,k=96 worse=93 rejected=3 unraced=0 median_n_drop=2^24.0 inputs=2^31.9 exact=3 cum_inputs=2^36.4 cum_exact=65 bic_skipped=0
+[    12s] 22,patience,[16 1f412ab3 15 b1c5b5a7 15],0.1167870970,no improvement in 6 iterations
+best [16 1f412ab3 15 b1c5b5a7 15]  score 0.1167870970

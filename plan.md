@@ -697,3 +697,14 @@ outputs goes to the `64bit` branch.
 - No new best: F30 stays at 0.09873. The bytes act almost additively
   (residuals under 8e-4), so F30 is the joint optimum under that model.
 - Next: bits 16-23, or validation of F30 (PractRand, hash-prospector -e).
+
+## 2026-11-26: random-core sweep at 16/15/15 (F43) and radius-3 check (F44)
+On the new hardware a race costs ~12 s. A sweep of 1,005 one-seed races
+from never-seen low-16-bit cores (201,628 pairs screened) found 6 new
+sub-0.10704 mixers, best `[16 e63f2ab3 15 7291c9a9 15]` = 0.10394, no new
+best; winners drift back to m0 cores near 2aab and m1 cores near 35xx, and
+start bias does not predict race outcome (Spearman 0.07). The current best
+(F30) is a radius-3 local optimum (52,601 neighbours). Next candidates:
+multi-seed races from the sweep's best and most distinct winners
+(e63f2ab3/7291c9a9, 354b/52e7), and the memetic loop seeded with them.
+

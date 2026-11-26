@@ -1672,6 +1672,95 @@ reach a forced template anyway.
 
 No mixers were scored, so there are no new sub-0.10704 mixers.
 
+### F43. A 1,005-race sweep from unseen cores at 16/15/15: 6 new sub-0.10704 mixers (best 0.10394), and races drift back to the known basin (exact winners; one race per start)
+
+2026-11-25, on the new hardware (F38). Do good 16/15/15 mixers exist
+outside the lineage that produced the current best? `native_cores.py` with
+`--template 16/15/15 --dir sweep_16_15_15` (state in
+`results/sweep_16_15_15/`):
+
+- **Stage 1:** 200,000 random odd core pairs (low 16 bits of m0, m1) and
+  1,598 F27 arithmetic pairs, all absent from `explored32.csv` after sign
+  folding, plus the 30 best known pairs as controls; 2 random high halves
+  each, sampled at 2^22 (403,256 specs, 39 min, gen seed 7).
+- **Stage 2:** top 2,000 pairs by stage-1 mean plus all controls, 8 fresh
+  high halves each (16,208 specs, 2 min).
+- **Exact:** best extension of the top 1,000 new pairs and the top 5
+  controls (1,005 specs, 108 s).
+- **Races:** one race from each (`--fix-shifts`, 25 iterations, patience 6,
+  96 neighbours, seed 1): 1,005 races, 3.6 h.
+
+**Screen.** Known cores still lead stage 2 (ranks 1-5 and 20 of the top
+40). The best new pair, `5353/4add`, is 6th.
+
+**Races.**
+
+| quantile | 1% | 5% | 10% | 25% | 50% | 75% |
+|---|---|---|---|---|---|---|
+| exact bias of winner | 0.11205 | 0.11897 | 0.12424 | 0.13238 | 0.14236 | 0.15420 |
+
+8 winners are below 0.11, 24 below 0.115. The 5 control races: best
+0.10893, median 0.11562.
+
+| bias | winner | m0 / m1 core (folded) | known before? | BIC worst \|corr\| (2^20, 3 seeds) |
+|---|---|---|---|---|
+| **0.10394** | `[16 e63f2ab3 15 7291c9a9 15]` | 2ab3 / 3657 | m0 core yes (best 0.1117), m1 no | 0.627 |
+| 0.10672 | `[16 9340cab5 15 a2b9ad19 15]` | 354b / 52e7 | neither | 0.667 |
+| 0.10683 | `[16 1f00d54d 15 22b5cb29 15]` | 2ab3 / 34d7 | both halves, not as a pair | 0.667 |
+| 0.10706 | `[16 c73f2acb 15 d672b635 15]` | 2acb / 49cb | m0 yes, m1 no | |
+| 0.10863 | `[16 d83cd54b 15 e9c6b4e5 15]` | 2ab5 / 4b1b | neither | |
+
+The 0.10683 winner was reached twice, from two different starts.
+
+- **Races do not stay where they start.** 968 of 1,005 races changed a
+  low-16-bit core, so a start's "new core" is not the winner's. Winners
+  drift toward m0 cores near the alternating pattern 2aab/2aad (224 of
+  1,005 winners within 3 bits, against 154 starts; 45 of the top 100) and
+  m1 cores near 34xx-36xx, the region the current best lives in
+  (m1 core 3597).
+- **The start's exact bias does not predict the race result.** Spearman
+  between start bias and winner bias is 0.07 over 1,005 races. Starts
+  ranged 0.149-0.35; the best winner came from a start at 0.319. So the
+  screen picks plausible starts, but race luck dominates which ones end
+  low. Many short races from diverse starts beat a few chosen ones.
+- **No new best.** The best winner, 0.10394, would have ranked among the
+  F22-F23 crossover children; it is 5% above the current best (0.09873).
+  The one winner with both core halves new (354b/52e7, 0.10672) is the
+  most distinct new family.
+- **Limits.** One seed per start; each "family" is one race; BIC only for
+  the top 3 (none has an exact pair, as F37 predicts for 16/15/15).
+
+**Sub-0.10704 mixers: 6 new**: the 3 winners above (`below_10704.csv`) and
+3 earlier incumbents of the 0.10394 race (`[16 a63f2ab3 15 7291c9a9 15]`
+0.10519, `8e3f2ab3`/`7291c9a9` 0.10601, `8e3f2ab3`/`f291c9a9` 0.10623).
+With F44, rerunning `collect_explored32.py` gives `explored32.csv` 18,416
+specs (was 5,349; most of the growth is the sweep's race incumbents), 591
+of them below 0.10704 (was 553).
+
+### F44. The current best is a radius-3 local optimum (exact near misses; racing for the rest)
+
+2026-11-26. F30's `[16 4b0332d3 15 549a3597 15]` (0.09873) had never had a
+radius-2 check. `gen_radius2_cands.py` now takes a radius argument; radius 3
+under TheIronBorn's move set (flip bit 1-31 of m0 or m1, shift Â±1, moves
+may repeat) gives 52,601 neighbours. Each was raced against the centre
+(`mixlab race --candidates`, z = 3, cap 2^28; 12 chunks, 2 min in all;
+`results/radius3_4b03/run.sh`).
+
+- **None is better.** 52,292 were dropped as worse by racing; 309 reached
+  the cap without being shown worse, and all 309 were then scored exactly
+  (`exact.csv`, 34 s): none beats the centre.
+- **The closest neighbours are top-bit flips**, which F30-F32 had already
+  swept: `[16 4b0332d3 15 d49a3597 15]` 0.09906 (m1 bit 31),
+  F29's `cb0332d3` 0.09908, and both together 0.09937. 104 of the 309 are
+  below 0.10704.
+- So the current best is a local optimum out to radius 3 under this move
+  set. This rests on F13's validated racing drop rate for the 52,292
+  sampled verdicts; the 309 near misses are exact. Threat #3 now applies
+  only to radius â‰¥ 4 or other move sets.
+
+**Sub-0.10704 mixers: 32 new**, all radius-3 neighbours of F30
+(0.09906-0.10703).
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the
@@ -1689,7 +1778,8 @@ No mixers were scored, so there are no new sub-0.10704 mixers.
    "Local optimum" claims (the record, d303) are relative to this move set
    and to a random subset of about 1,000 moves. *(2026-11-21, F20: the
    record's full radius-2 neighbourhood under single-bit flips and ±1 shifts
-   is now checked exhaustively; none is better.)*
+   is now checked exhaustively; none is better. 2026-11-26, F44: the current
+   best's radius-3 neighbourhood (52,601 configs) is checked; none is better.)*
 4. **Novelty of F9**: searched all hash-prospector issues and the web
    (2026-11-20; see F9); forks and private code are not covered.
 5. **Bias is not overall quality.** hash-prospector issue #28 notes the

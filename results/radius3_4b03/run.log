@@ -1,0 +1,13 @@
+[2026-11-25 23:57:36] chunk 0: accepted: none  inputs=2^36.36  exact evals=30  [9s]
+[2026-11-25 23:57:46] chunk 1: accepted: none  inputs=2^36.33  exact evals=26  [9s]
+[2026-11-25 23:57:56] chunk 2: accepted: none  inputs=2^36.34  exact evals=29  [9s]
+[2026-11-25 23:58:05] chunk 3: accepted: none  inputs=2^36.33  exact evals=26  [8s]
+[2026-11-25 23:58:16] chunk 4: accepted: none  inputs=2^36.35  exact evals=27  [9s]
+[2026-11-25 23:58:25] chunk 5: accepted: none  inputs=2^36.34  exact evals=25  [8s]
+[2026-11-25 23:58:34] chunk 6: accepted: none  inputs=2^36.34  exact evals=23  [8s]
+[2026-11-25 23:58:43] chunk 7: accepted: none  inputs=2^36.30  exact evals=22  [8s]
+[2026-11-25 23:58:52] chunk 8: accepted: none  inputs=2^36.35  exact evals=24  [8s]
+[2026-11-25 23:59:00] chunk 9: accepted: none  inputs=2^36.34  exact evals=22  [8s]
+[2026-11-25 23:59:11] chunk 10: accepted: none  inputs=2^36.34  exact evals=28  [9s]
+[2026-11-25 23:59:20] chunk 11: accepted: none  inputs=2^36.35  exact evals=27  [8s]
+[2026-11-25 23:59:21] done

@@ -1,0 +1,13 @@
+[     0s] 0,start,[16 c930d4bd 15 29049ac3 15],0.3098574015,sd=0.000e0
+[     1s] 1,improved,[16 c930d4ad 15 29049ac3 15],0.2307752085,k=96 worse=53 rejected=0 unraced=42 median_n_drop=2^20.0 inputs=2^28.1 exact=1 cum_inputs=2^28.1 cum_exact=1 bic_skipped=0
+[     1s] 2,improved,[16 c930d4ad 15 29049ad3 15],0.1906658828,k=96 worse=57 rejected=0 unraced=38 median_n_drop=2^22.0 inputs=2^29.8 exact=1 cum_inputs=2^30.2 cum_exact=2 bic_skipped=0
+[     1s] 3,improved,[16 c920d4ad 15 29049ad3 15],0.1740584852,k=96 worse=74 rejected=0 unraced=21 median_n_drop=2^23.0 inputs=2^32.7 exact=1 cum_inputs=2^33.0 cum_exact=3 bic_skipped=0
+[     1s] 4,improved,[16 d920d4ad 15 29049ad3 15],0.1726471386,k=96 worse=88 rejected=0 unraced=7 median_n_drop=2^22.0 inputs=2^32.2 exact=1 cum_inputs=2^33.6 cum_exact=4 bic_skipped=0
+[     3s] 5,iter,[16 d920d4ad 15 29049ad3 15],0.1726471386,k=96 worse=88 rejected=8 unraced=0 median_n_drop=2^23.0 inputs=2^32.3 exact=8 cum_inputs=2^34.1 cum_exact=12 bic_skipped=0
+[     3s] 6,iter,[16 d920d4ad 15 29049ad3 15],0.1726471386,k=96 worse=91 rejected=5 unraced=0 median_n_drop=2^22.0 inputs=2^31.8 exact=5 cum_inputs=2^34.4 cum_exact=17 bic_skipped=0
+[     4s] 7,iter,[16 d920d4ad 15 29049ad3 15],0.1726471386,k=96 worse=93 rejected=3 unraced=0 median_n_drop=2^22.0 inputs=2^31.3 exact=3 cum_inputs=2^34.5 cum_exact=20 bic_skipped=0
+[     4s] 8,iter,[16 d920d4ad 15 29049ad3 15],0.1726471386,k=96 worse=93 rejected=3 unraced=0 median_n_drop=2^23.0 inputs=2^31.7 exact=3 cum_inputs=2^34.7 cum_exact=23 bic_skipped=0
+[     5s] 9,iter,[16 d920d4ad 15 29049ad3 15],0.1726471386,k=96 worse=91 rejected=5 unraced=0 median_n_drop=2^22.0 inputs=2^31.7 exact=5 cum_inputs=2^34.9 cum_exact=28 bic_skipped=0
+[     5s] 10,iter,[16 d920d4ad 15 29049ad3 15],0.1726471386,k=96 worse=93 rejected=3 unraced=0 median_n_drop=2^22.0 inputs=2^31.4 exact=3 cum_inputs=2^35.0 cum_exact=31 bic_skipped=0
+[     5s] 11,patience,[16 d920d4ad 15 29049ad3 15],0.1726471386,no improvement in 6 iterations
+best [16 d920d4ad 15 29049ad3 15]  score 0.1726471386

@@ -1,0 +1,11 @@
+{
+ "id": "N16_15_15_c257_s1",
+ "campaign": "T16_15_15",
+ "args": "--fix-shifts",
+ "start": "[16 0f02d4d9 15 c2b9ae37 15]",
+ "best": "[16 1302d553 15 cb91ad37 15]",
+ "bias": 0.1161406733,
+ "parts": [],
+ "start_bias": 0.249097609,
+ "seconds": 15
+}
