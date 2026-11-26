@@ -130,3 +130,83 @@ python analysis/triple32_extended.py shift_polish
 
 The commands use the original campaign and upper-bit follow-up leaderboards
 above as inputs.
+
+## Correlated output flips
+
+The [BIC screen](bit_independence/bic.csv) used `2^18` samples per mixer for
+all 269 candidates below published `triple32`, all 26 alternate schedule
+leaders, and `triple32` itself. Follow-up used five seeds of `2^20` samples
+for the top eight winners, all alternate leaders, and the controls.
+
+| Mixer | Worst absolute single-bit pair correlation across five seeds |
+| --- | ---: |
+| Three-round record | 0.0037–0.0041 |
+| Published `triple32` | 0.0040–0.0046 |
+| Best alternate schedule, `16/12/16/16` | 0.0044–0.0062 |
+| Two-round record | 0.6020–0.6033 |
+| TheIronBorn's two-round reference | 0.3335–0.3348 |
+| `lowbias32` | 1.0000 |
+
+For the three-round record, the worst single-bit pairs changed across
+seeds and RMS z was 0.994–1.001. Eight alternate schedule leaders had
+an exactly confirmed single-bit pair with absolute correlation above 0.01.
+The strongest checked pair was **+0.03497750063882869** at input bit 31
+and output bits 1 and 17 for
+`[15 fc54c453 13 28213789 15 669f96eb 16]`.
+
+Flipping record input bits **14 and 31 together** gives exact correlation
+**+1** for output bits **4 and 18** and **−1** for bits **5 and 19**. This
+is the same shift-forced relation as in published `triple32`. The best
+alternate schedule also has exact pairs. Flipping bits **15 and 31
+together** gives **+1** for outputs **0 and 16** and **−1** for **3 and 19**.
+The [joint counts](bit_independence/exact_pairs.csv) cover all `2^31`
+unordered input pairs for each checked XOR mask.
+
+The [F41 prefix scan](bit_independence/two_bit_parities.csv) found fixed
+output parities for at least one two-bit mask in 22 of the 27 schedules.
+Nineteen schedules have a weight-two witness under that rule.
+
+```sh
+cd harness
+cargo build --release --locked --target-dir target-triple32 --bin mixlab --example flip_pair
+cd ..
+python analysis/triple32_bic.py
+python analysis/triple32_bic.py confirm-alternates
+python analysis/triple32_bic.py exact-pairs
+```
+
+## Beam searches
+
+The record beam used width 12 on `17/11/15/14`. The alternate search
+used a separate width-4 beam for each of the 26 published alternatives.
+Both ran three generations starting from the best exact scores available
+for their schedules. Each generation kept the best half of each beam by
+exact bias and reserved the other half for the strongest newly scored
+offspring. Candidate generation used multiplier flips, high-bit exchanges,
+and two-multiplier mutations. Direct exact scoring of some high-bit
+mutations supplemented the two sampled screening stages.
+
+The [record beam](beam_record/beam.csv) added 672 exact scores. Thirteen
+beat published `triple32`. The strongest new candidate,
+`[17 1d5ad4bb 11 ac4c1b51 15 2c848bab 14]`, scored
+**0.02050919663017419**. The record remained at **0.02024134502581794**.
+
+The [alternate beams](beam_alternate/leaders.csv) added 1,248 exact scores
+and improved 17 of the 26 schedule leaders. The best was
+`[16 a16f7153 12 3bcd8663 15 3d06b66b 16]` at
+**0.02089775797941365**, a 0.91% reduction from the previous best
+alternate. CPU and GPU exact scores agreed.
+
+Among the schedules with no two-bit witness under the F41 prefix rule,
+the best was `[15 a6cd1933 14 ebda1d59 16 7a37445d 16]` at
+**0.02158100600695843**. Its worst sampled single-bit pair correlation was
+0.0042 across five seeds. The best alternate's was 0.0087.
+The alternate's recurring pair, input bit 8 to outputs 2 and 18, had
+exact correlation **+0.006765909199493909**.
+[Beam BIC measurements](beam_bic/bic.csv) · [Exact joint counts](beam_bic/exact_pairs.csv)
+
+```sh
+python analysis/triple32_beams.py record
+python analysis/triple32_beams.py alternate
+python analysis/triple32_beams.py bic
+```
