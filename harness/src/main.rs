@@ -19,6 +19,8 @@ USAGE:
   mixlab exact  --bits B --list FILE [--inverse] [--out F.csv]  # batch exact bias, one spec per line (- = stdin);
                                                                # --inverse scores f^-1 (bits <= 24); CSV spec,bias,max_abs
   mixlab bic    --bits B --spec SPEC [--samples p16] [--seeds 1,2,3]   # sampled BIC, one line per seed
+  mixlab forced --bits B [--shifts S0/S1/S2]  # shift-forced exact output pairs (F37); no --shifts: every
+                                               # template with s2 <= B/2, CSV template,pairs
   mixlab sweep  --bits B [--rounds R] (--exhaustive | --random N) [--seed S] --out FILE.csv
   mixlab search --bits B [--rounds R] [--start SPEC] [--iters N] [--neighbors K]
                 [--levels 16,18,20] [--final-samples LOG2] [--seed S] --out FILE.csv
@@ -296,6 +298,7 @@ fn main() {
         }
         "exact" => exact_list_cmd(&a),
         "surrogate" => surrogate_cmd(&a),
+        "forced" => forced_cmd(&a),
         "scale" => scale_cmd(&a),
         "paired" => paired_cmd(&a),
         "design" => design_cmd(&a),
@@ -1004,5 +1007,36 @@ mod tests {
         let negative: Vec<f64> = estimates.into_iter().filter(|v| *v < 0.0).collect();
         assert!(negative.len() >= 2);
         assert!(negative.windows(2).any(|p| p[0] != p[1]));
+    }
+}
+
+/// `mixlab forced`: exact output pairs that the shifts alone force (F37).
+fn forced_cmd(a: &Args) {
+    use mixlab::forced::forced_pairs;
+    let bits = a.num("bits", 32) as u32;
+    if let Some(t) = a.get("shifts") {
+        let s: Vec<u32> = t
+            .split('/')
+            .map(|v| v.parse().unwrap_or_else(|_| die(&format!("bad shift {v}"))))
+            .collect();
+        if s.len() != 3 || s.iter().any(|&v| v == 0 || v >= bits) {
+            die("--shifts needs S0/S1/S2, each in 1..bits");
+        }
+        let pairs = forced_pairs(bits, s[0], s[1], s[2]);
+        if pairs.is_empty() {
+            println!("{t}: no forced pair");
+        }
+        for p in pairs {
+            println!("{t}: input {} -> out {},{} corr {:+}", p.input, p.out_lo, p.out_hi, p.sign);
+        }
+    } else {
+        println!("template,pairs");
+        for s0 in 1..bits {
+            for s1 in 1..bits {
+                for s2 in 1..=bits / 2 {
+                    println!("{s0}/{s1}/{s2},{}", forced_pairs(bits, s0, s1, s2).len());
+                }
+            }
+        }
     }
 }

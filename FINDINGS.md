@@ -261,7 +261,8 @@ final shift set to 14, 15, 16 and 17. BIC at 2^16 samples, seeds 1–3.
   input bit s1 and the outputs are {0, s2}, exactly the two-bit parity set F3
   predicts. Avalanche bias cannot detect this.
 - **s2 = 15:** max |z| is 86–211, except fmix32's multipliers, which give a second
-  exact pair: input 15 → outputs (2, 17). F3 does not explain that pair.
+  exact pair: input 15 → outputs (2, 17). F3 does not explain that pair;
+  F37 does (a shift-forced pair at 16/13/15).
 - **s2 = 14:** max |z| is 33–89 for all 7. For the record, s2 = 13 gives 25.6 and
   s2 = 12 gives 7.8 (ideal ≈ 4.6).
 - **The bias metric pulls the wrong way.** lowbias32 scores 0.1735 at s2 = 16 but
@@ -1413,7 +1414,7 @@ always (k, k+s2); the flipped input bit is s0+s1+2 or s1+2 (for
 example 14/15/15: input 31; 16/13/15: input 15). Clean s2 = 15 templates
 include 16/15/15, 15/15/15, 17/15/15, 16/14/15, 15/16/15 and 16/16/15.
 Sampled at 2^16 with one seed, so "exact" here means |corr| printed as
-1.0000; the mechanism is not derived.
+1.0000. F37 derives the mechanism and confirms all 144 templates.
 
 **(b) Bit importance at two more templates** (`bit_sensitivity.py --base`,
 `results/bit_sensitivity_15_15_15/`, `results/bit_sensitivity_16_14_15/`;
@@ -1492,6 +1493,82 @@ stage 2 on 322 pairs, 45 exact finalists, 26 races; about 1.3 h).
 
 **No new sub-0.10704 mixers** (best 0.14373). `explored32.csv` now has
 4,793 specs (was 4,513), still 553 below 0.10704.
+
+### F37. The shift-forced exact pairs follow a closed-form rule (solid: derived, exhaustive at 8-12 bits, matches all 144 F35 templates)
+
+2026-11-25. Derives F35(a)'s observation, and with it F11's s2 = 16 pair and
+the second fmix32 pair F11 left unexplained. Code: `harness/src/forced.rs`
+(`forced_pairs`, `exact_pairs_exhaustive`), `mixlab forced`, tests in
+`harness/tests/forced_pairs.rs`.
+
+**Mechanism.** Odd multiplication keeps the lowest bit of an XOR
+difference: if a and b first differ at bit t, then m·a and m·b agree below
+t and differ at t. Flip input bit i of `[s0 m0 s1 m1 s2]` at width n:
+1. v = x ^ (x >> s0) first differs at a = i − s0 (if i ≥ s0) or a = i.
+2. w = m0·v first differs at a too.
+3. z = w ^ (w >> s1) mixes w_k with w_{k+s1}. If a ≥ s1 + j, z is unchanged
+   below bit j. Bit j is also unchanged if a > s1 + j, and always flips if
+   a = s1 + j.
+4. y = m1·z inherits this, so y_j never flips or always flips.
+5. The final xorshift gives out_k = y_k for k ≥ n − s2, and
+   out_j = y_j ^ y_{j+s2}. So for j ≥ n − 2·s2,
+   Δout_j ^ Δout_{j+s2} = Δy_j is constant.
+
+So input bit i forces the output pair (j, j+s2) for every odd multiplier
+pair when max(0, n − 2·s2) ≤ j < n − s2 and s1 + j ≤ a(i) < s1 + j + s2.
+The correlation is −1 when a = s1 + j and +1 when a > s1 + j. The upper
+bound only excludes cases where both output flips are constant; it never
+binds at 32 bits with s2 ≥ 8.
+
+**At 32 bits** (s2 from 8 to 16) this reduces to: a template is clean iff
+
+    s0 + s1 ≥ 2·s2   and   s0 − s1 ≤ 32 − 2·s2
+
+checked against `mixlab forced` on all 8,649 such templates. Otherwise the
+worst pair is (32 − 2·s2, 32 − s2), triggered by input s1 + 32 − 2·s2 (when
+that is < s0) or s0 + s1 + 32 − 2·s2 (when < 32).
+- s2 = 15: clean iff s0 + s1 ≥ 30 and s0 ≤ s1 + 2. At s1 = 15 only
+  s0 ∈ {15, 16, 17} are clean, which is exactly F34's split: 14/15/15 and
+  18/15/15 carry the pair, 15/15/15 and 17/15/15 do not. 16/14/15 sits on
+  both boundaries (30 and 2).
+- s2 = 16: the pair is (0, 16) with trigger s1 or s0 + s1, which is F3/F11.
+  It is clean only when s0 + s1 ≥ 32 and s0 ≤ s1 (for example 16/16/16).
+- F11's unexplained second pair, fmix32's multipliers at 16/13/15 with
+  input 15 → (2, 17), is this rule: a = 15 = s1 + 2.
+- Of the 14,415 32-bit templates with s2 ≤ 15, 3,815 are forced.
+
+**Checks.**
+- The rule matches F35(a) on all 144 templates: the 31 templates where
+  every draw had an exact pair are exactly the forced ones. The 5
+  templates where only some draws had one are multiplier-specific, not
+  shift-forced.
+- Exhaustively at 8, 10 and 12 bits, for every template with s2 ≤ n/2 and
+  12 random multiplier pairs each (1,327 templates): every predicted
+  relation holds for every input. Every predicted pair is a real
+  correlation in some draw. Every pair exact in all 12 draws is predicted,
+  so at these widths no other multiplier-independent exact pair exists.
+- At 32 bits, the predicted relations hold on 20,000 random inputs for 4
+  multiplier pairs at each of 6 forced templates.
+
+**Limits.**
+- With fewer draws (4), the s2 = n/2 templates at small widths show extra
+  pairs that hold for many but not all multipliers. Output bits 0 and 1 of
+  a product are linear in the input bits, so a pair through out_0 or out_1
+  can be exact whenever, say, bit 1 of m1 is 0. These are
+  multiplier-dependent and only reachable at s2 = n/2, which F11 already
+  excludes.
+- The rule covers 2-round xmx only.
+
+**Consequence for search.** The exact-pair check no longer needs sampling.
+Any template search should drop forced templates up front with
+`mixlab forced` (s0 + s1 ≥ 2·s2 and s0 − s1 ≤ 32 − 2·s2 at 32 bits). The
+clean region is a band around s0 ≈ s1, and it widens as s2 drops: at
+s2 = 14 it allows s0 − s1 up to 4 with s0 + s1 ≥ 28. Plan A searched only
+s2 ≥ 12 and ranked those templates by bias, so this finding does not
+change its conclusion. It does show which templates carry the defect
+regardless of multipliers.
+
+No mixers were scored, so there are no new sub-0.10704 mixers.
 
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs

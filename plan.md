@@ -546,6 +546,9 @@ search at 15/15/15 races no better than transplanted cores (best 0.12521).
 F36 ran that search at 16/14/15: native cores screen better there, but the
 best race (0.14373) is still 0.039 behind 16/15/15. Plan A closes with
 16/15/15 as the template to keep searching.
+F37 derives the forced pairs:
+at 32 bits a template is clean iff s0 + s1 >= 2*s2 and s0 - s1 <= 32 - 2*s2
+(`mixlab forced`).
 
 ### Plan A: other shift templates for 2-round 32-bit xmx
 **Why.** Of the ~1,500 exactly scored configs in `results/explored32.csv`,
