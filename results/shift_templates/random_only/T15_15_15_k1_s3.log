@@ -1,0 +1,24 @@
+[     0s] 0,start,[15 4579db2d 15 6ab8cdab 15],0.4884499793,sd=0.000e0
+[     0s] 1,improved,[15 4579db2d 15 2ab8edab 15],0.4173896759,k=96 worse=17 rejected=0 unraced=78 median_n_drop=2^18.0 inputs=2^26.4 exact=1 cum_inputs=2^26.4 cum_exact=1 bic_skipped=0
+[     1s] 2,improved,[15 4579db2d 15 2abcecaf 15],0.2919897272,k=96 worse=38 rejected=0 unraced=57 median_n_drop=2^20.0 inputs=2^27.3 exact=1 cum_inputs=2^27.9 cum_exact=2 bic_skipped=0
+[     1s] 3,improved,[15 4179d32d 15 2abcecaf 15],0.2543392841,k=96 worse=63 rejected=0 unraced=32 median_n_drop=2^21.0 inputs=2^29.6 exact=1 cum_inputs=2^30.0 cum_exact=3 bic_skipped=0
+[     1s] 4,improved,[15 41795325 15 2abcecaf 15],0.2416380240,k=96 worse=79 rejected=0 unraced=16 median_n_drop=2^22.0 inputs=2^31.9 exact=1 cum_inputs=2^32.2 cum_exact=4 bic_skipped=0
+[     1s] 5,improved,[15 41795325 15 2aececaf 15],0.2280744818,k=96 worse=83 rejected=0 unraced=12 median_n_drop=2^23.0 inputs=2^32.4 exact=1 cum_inputs=2^33.3 cum_exact=5 bic_skipped=0
+[     2s] 6,improved,[15 41795325 15 2aece4af 15],0.2081759428,k=96 worse=76 rejected=0 unraced=19 median_n_drop=2^22.0 inputs=2^31.8 exact=1 cum_inputs=2^33.7 cum_exact=6 bic_skipped=0
+[     2s] 7,improved,[15 45795365 15 2aece4af 15],0.1948524672,k=96 worse=72 rejected=0 unraced=23 median_n_drop=2^22.0 inputs=2^32.2 exact=1 cum_inputs=2^34.2 cum_exact=7 bic_skipped=0
+[     2s] 8,improved,[15 45795365 15 2aece4ad 15],0.1864066439,k=96 worse=83 rejected=0 unraced=12 median_n_drop=2^24.0 inputs=2^32.8 exact=1 cum_inputs=2^34.6 cum_exact=8 bic_skipped=0
+[     3s] 9,improved,[15 49795365 15 2aece4ad 15],0.1728951669,k=96 worse=61 rejected=0 unraced=34 median_n_drop=2^23.0 inputs=2^31.6 exact=1 cum_inputs=2^34.8 cum_exact=9 bic_skipped=0
+[     3s] 10,improved,[15 49795365 15 8aece4ad 15],0.1721756718,k=96 worse=79 rejected=0 unraced=16 median_n_drop=2^23.0 inputs=2^32.7 exact=1 cum_inputs=2^35.1 cum_exact=10 bic_skipped=0
+[     3s] 11,improved,[15 08795365 15 8aece4ad 15],0.1712078480,k=96 worse=85 rejected=0 unraced=10 median_n_drop=2^23.0 inputs=2^32.4 exact=1 cum_inputs=2^35.3 cum_exact=11 bic_skipped=0
+[     4s] 12,improved,[15 08795365 15 caece4ad 15],0.1694918323,k=96 worse=82 rejected=1 unraced=12 median_n_drop=2^23.0 inputs=2^32.5 exact=2 cum_inputs=2^35.5 cum_exact=13 bic_skipped=0
+[     4s] 13,improved,[15 18795365 15 caece4ad 15],0.1684023678,k=96 worse=83 rejected=0 unraced=12 median_n_drop=2^23.0 inputs=2^32.4 exact=1 cum_inputs=2^35.7 cum_exact=14 bic_skipped=0
+[     4s] 14,improved,[15 18f95365 15 caece4ad 15],0.1614965973,k=96 worse=81 rejected=0 unraced=14 median_n_drop=2^23.0 inputs=2^32.6 exact=1 cum_inputs=2^35.8 cum_exact=15 bic_skipped=0
+[     5s] 15,improved,[15 18f95365 15 4aece4ad 15],0.1592471498,k=96 worse=88 rejected=0 unraced=7 median_n_drop=2^24.0 inputs=2^32.4 exact=1 cum_inputs=2^36.0 cum_exact=16 bic_skipped=0
+[     6s] 16,iter,[15 18f95365 15 4aece4ad 15],0.1592471498,k=96 worse=91 rejected=5 unraced=0 median_n_drop=2^23.0 inputs=2^32.2 exact=5 cum_inputs=2^36.1 cum_exact=21 bic_skipped=0
+[     6s] 17,iter,[15 18f95365 15 4aece4ad 15],0.1592471498,k=96 worse=90 rejected=6 unraced=0 median_n_drop=2^23.0 inputs=2^31.8 exact=6 cum_inputs=2^36.1 cum_exact=27 bic_skipped=0
+[     7s] 18,iter,[15 18f95365 15 4aece4ad 15],0.1592471498,k=96 worse=93 rejected=3 unraced=0 median_n_drop=2^23.0 inputs=2^31.3 exact=3 cum_inputs=2^36.2 cum_exact=30 bic_skipped=0
+[     7s] 19,iter,[15 18f95365 15 4aece4ad 15],0.1592471498,k=96 worse=94 rejected=2 unraced=0 median_n_drop=2^23.0 inputs=2^31.5 exact=2 cum_inputs=2^36.2 cum_exact=32 bic_skipped=0
+[     8s] 20,iter,[15 18f95365 15 4aece4ad 15],0.1592471498,k=96 worse=91 rejected=5 unraced=0 median_n_drop=2^23.0 inputs=2^31.4 exact=5 cum_inputs=2^36.3 cum_exact=37 bic_skipped=0
+[     8s] 21,iter,[15 18f95365 15 4aece4ad 15],0.1592471498,k=96 worse=93 rejected=3 unraced=0 median_n_drop=2^23.0 inputs=2^31.5 exact=3 cum_inputs=2^36.3 cum_exact=40 bic_skipped=0
+[     8s] 22,patience,[15 18f95365 15 4aece4ad 15],0.1592471498,no improvement in 6 iterations
+best [15 18f95365 15 4aece4ad 15]  score 0.1592471498

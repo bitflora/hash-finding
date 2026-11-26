@@ -546,7 +546,9 @@ search at 15/15/15 races no better than transplanted cores (best 0.12521).
 F36 ran that search at 16/14/15: native cores screen better there, but the
 best race (0.14373) is still 0.039 behind 16/15/15. Plan A closes with
 16/15/15 as the template to keep searching.
-F37 derives the forced pairs:
+F38 removed F34's one bias (the control's starts reused 16/15/15-tuned cores):
+from random starts only, 20 races each, 16/15/15 beats 15/15/15 by 0.023 in
+median (best 0.11561 vs 0.13663). F37 derives the forced pairs:
 at 32 bits a template is clean iff s0 + s1 >= 2*s2 and s0 - s1 <= 32 - 2*s2
 (`mixlab forced`). F39 extends the rule to any number of rounds and adds
 `mixlab race --clean-shifts`.

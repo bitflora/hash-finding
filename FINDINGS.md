@@ -1570,6 +1570,49 @@ regardless of multipliers.
 
 No mixers were scored, so there are no new sub-0.10704 mixers.
 
+### F38. Random starts only: 16/15/15 still beats 15/15/15, by more (exact winners; 20 races per template)
+
+2026-11-25. F34's control had a head start: two of each template's three
+starts reused low-16-bit cores tuned at 16/15/15. This removes it. Both
+templates race only from random odd multiplier pairs: each template's 10
+best random starts from F34's 2^22 screen, seeds 3 and 4 (new races; F34
+used 1 and 2), same settings (`--fix-shifts`, 25 iterations, patience 6,
+96 neighbours). `shift_templates.py jobs --templates 16/15/15,15/15/15
+--group random --per 10 --seeds 3,4` with
+`CAMPAIGN_DIR=results/shift_templates/random_only`; everything is in that
+directory.
+
+| template | races | best | Q1 | median | Q3 | worst | best spec |
+|---|---|---|---|---|---|---|---|
+| 16/15/15 | 20 | **0.11561** | 0.12978 | 0.13983 | 0.14988 | 0.16909 | `[16 280f366d 15 aa364ae7 15]` |
+| 15/15/15 | 20 | 0.13663 | 0.15342 | 0.16296 | 0.18239 | 0.20987 | `[15 761b52ad 15 152dcb27 15]` |
+
+- **The gap survives and widens.** The median gap is 0.023 (F34, with
+  cores: 0.013); the best-race gap is 0.021 (F34: 0.011). A 16/15/15 race
+  beats a 15/15/15 race in 87% of the 400 pairs (Mann-Whitney U = 348), and
+  a permutation test on the median gap gives p < 0.001 (20,000 shuffles).
+  9 of the 20 16/15/15 races beat the best 15/15/15 race.
+- **Tuned cores helped both templates, not just the control.** Without them
+  16/15/15's best drops by 0.011 (0.10471 â†’ 0.11561) and 15/15/15's by 0.021
+  (0.11566 â†’ 0.13663). This fits F35: the core follows s1, and 15/15/15
+  keeps s1 = 15, so 16/15/15 cores transfer there.
+- **BIC** (2^20, 5 seeds, best winner): 16/15/15 worst |corr| 0.426,
+  15/15/15 0.354; worst pair (2, 17) in both, no exact pair.
+- **Consistency check.** The best random start at 16/15/15 is the one F34
+  raced with seeds 1, 2 (0.11796, 0.13189); seeds 3, 4 give 0.13302 and
+  0.11561.
+- **Limits.** Two templates; one screen seed picks the starts; 2 seeds per
+  start. Same iteration budget for both templates. Races took 5-25 s
+  against F34's 50-175 s because this ran on new, much faster hardware
+  (all 40 races in 8 min); wall times before 2026-11-25 evening are not
+  comparable with later ones.
+
+F34's ranking stands, and the reason is not the control's head start:
+16/15/15 is the better template from random starts too.
+
+**No new sub-0.10704 mixers** (best 0.11561). `explored32.csv` now has
+5,349 specs (was 4,793), still 553 below 0.10704.
+
 ### F39. The forced-pair rule extends to any number of rounds, and races can now avoid forced templates (solid: exhaustive at 8-14 bits for 1-4 rounds)
 
 2026-11-25. Generalises F37. Code: `forced::forced_pairs_rounds`,

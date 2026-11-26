@@ -17,9 +17,14 @@ Steps (state lives in results/shift_templates/, override with SHIFT_DIR):
       Per-template statistics of the screen; writes templates_ranked.csv.
       Ranked by the 10th-percentile sampled ms over all starts, then best.
   python analysis/shift_templates.py jobs [--top 6] [--per 3] [--seeds 1,2] [--log2 22]
+                                          [--templates T,T,...] [--group random|core]
       A2: race jobs for the top templates plus the 16/15/15 control, all with
       --fix-shifts and the same campaign budget. Writes campaign/jobs.csv,
       interleaved round-robin so a paused campaign stays balanced.
+      --templates replaces the top-N choice with an explicit list; --group
+      restricts every template to one kind of start and takes its --per best
+      starts of that kind by the screen (F38: random starts only, so the
+      control gets no cores tuned at 16/15/15).
       Run with:  CAMPAIGN_DIR=results/shift_templates/campaign python analysis/campaign.py run [--hours H]
       (campaign.py's defaults: 25 iterations, patience 6, 96 neighbours).
   python analysis/shift_templates.py summary [--bic-seeds 1,2,3,4,5]
@@ -39,7 +44,10 @@ from statistics import median
 ROOT = Path(__file__).resolve().parent.parent
 # Absolute, because mixlab runs with cwd=harness/ and gets paths under D.
 D = Path(os.environ.get("SHIFT_DIR", ROOT / "results" / "shift_templates")).resolve()
-CAMP = D / "campaign"
+# CAMPAIGN_DIR (the variable campaign.py reads) selects another race campaign
+# over the same starts; its summary files then go into that directory.
+CAMP = Path(os.environ.get("CAMPAIGN_DIR", D / "campaign")).resolve()
+OUT = D if CAMP == (D / "campaign").resolve() else CAMP
 EXE = ".exe" if os.name == "nt" else ""
 MIXLAB = ROOT / "harness" / "target" / "release" / f"mixlab{EXE}"
 SCREEN = ROOT / "harness" / "target" / "release" / "examples" / f"screen_list{EXE}"
@@ -168,12 +176,19 @@ def jobs():
     top, per, lg = int(opt("--top", 6)), int(opt("--per", 3)), int(opt("--log2", 22))
     seeds = [int(s) for s in opt("--seeds", "1,2").split(",")]
     meta, ms, _ = load_screen(lg)
-    ranked = [r["template"] for r in csv.DictReader(open(D / "templates_ranked.csv", newline=""))]
-    ctl = tkey(CONTROL)
-    chosen = [t for t in ranked if t != ctl][:top] + [ctl]
+    group = opt("--group", None)
+    if "--templates" in sys.argv:
+        chosen = opt("--templates", "").split(",")
+    else:
+        ranked = [r["template"] for r in csv.DictReader(open(D / "templates_ranked.csv", newline=""))]
+        ctl = tkey(CONTROL)
+        chosen = [t for t in ranked if t != ctl][:top] + [ctl]
     plan = {}
     for t in chosen:
-        cand = sorted((s for s, r in meta.items() if r["template"] == t), key=lambda s: ms[s])
+        cand = sorted((s for s, r in meta.items() if r["template"] == t and group in (None, r["group"])),
+                      key=lambda s: ms[s])
+        if not cand:
+            sys.exit(f"no starts for template {t} (group {group})")
         # Best core start, best random start, then the best remaining starts
         # from distinct cores, so one template's races do not share a core.
         picks, used = [], set()
@@ -232,7 +247,7 @@ def below_threshold():
                 if b < KEEP_BELOW and (f[2] not in best or b < best[f[2]][0]):
                     best[f[2]] = (b, p.stem)
     rows = sorted((b, spec, job) for spec, (b, job) in best.items())
-    with open(D / "below_10704.csv", "w", newline="") as f:
+    with open(OUT / "below_10704.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["spec", "bias", "template", "job"])
         for b, spec, job in rows:
@@ -243,7 +258,7 @@ def below_threshold():
         s0, _, s1, _, s2 = parse(spec)
         per[f"{s0}/{s1}/{s2}"] += 1
     print()
-    print(f"{len(rows)} distinct mixers below {KEEP_BELOW} -> {D / 'below_10704.csv'}"
+    print(f"{len(rows)} distinct mixers below {KEEP_BELOW} -> {OUT / 'below_10704.csv'}"
           + ("" if not per else ": " + ", ".join(f"{t} {n}" for t, n in sorted(per.items(), key=lambda kv: -kv[1]))))
 
 
@@ -266,7 +281,7 @@ def summary():
                          bic_max_z=max(z for z, *_ in bic), bic_worst_abs_corr=max(abs(x[4]) for x in bic),
                          bic_worst_pairs=" ".join(f"{i}->{j},{k}" for i, j, k in locs)))
     rows.sort(key=lambda r: r["best"])
-    with open(D / "template_summary.csv", "w", newline="") as f:
+    with open(OUT / "template_summary.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         w.writeheader()
         w.writerows(rows)
