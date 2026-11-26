@@ -1,0 +1,11 @@
+{
+ "id": "any12_i7_s2",
+ "campaign": "any12",
+ "args": "--fix-shifts",
+ "start": "[16 4f8212fb 15 119a9497 15]",
+ "best": "[16 8dc0d2cb 15 079a9c97 15]",
+ "bias": 0.1550297612,
+ "parts": [],
+ "start_bias": 1.7481082081,
+ "seconds": 17
+}

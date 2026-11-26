@@ -1,0 +1,11 @@
+{
+ "id": "high16_i2_s2",
+ "campaign": "high16",
+ "args": "--fix-shifts",
+ "start": "[16 cd8f32d3 15 36643597 15]",
+ "best": "[16 55cf32d3 15 ad643593 15]",
+ "bias": 0.1209121554,
+ "parts": [],
+ "start_bias": 0.2866797219,
+ "seconds": 10
+}

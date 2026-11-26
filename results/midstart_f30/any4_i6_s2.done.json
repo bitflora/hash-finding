@@ -1,0 +1,11 @@
+{
+ "id": "any4_i6_s2",
+ "campaign": "any4",
+ "args": "--fix-shifts",
+ "start": "[16 4b0332d3 15 559e35b3 15]",
+ "best": "[16 b70332d3 15 a75a3597 15]",
+ "bias": 0.1134287475,
+ "parts": [],
+ "start_bias": 0.2613996251,
+ "seconds": 35
+}

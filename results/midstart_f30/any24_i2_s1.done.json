@@ -1,0 +1,11 @@
+{
+ "id": "any24_i2_s1",
+ "campaign": "any24",
+ "args": "--fix-shifts",
+ "start": "[16 959433a3 15 58cab0df 15]",
+ "best": "[16 150c332b 15 cacbb2db 15]",
+ "bias": 0.1548587858,
+ "parts": [],
+ "start_bias": 0.7623535543,
+ "seconds": 16
+}

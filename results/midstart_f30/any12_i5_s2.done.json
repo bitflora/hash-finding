@@ -1,0 +1,11 @@
+{
+ "id": "any12_i5_s2",
+ "campaign": "any12",
+ "args": "--fix-shifts",
+ "start": "[16 6a433295 15 5cb81c97 15]",
+ "best": "[16 e2133395 15 5cb0dc95 15]",
+ "bias": 0.1807773438,
+ "parts": [],
+ "start_bias": 0.483431539,
+ "seconds": 5
+}

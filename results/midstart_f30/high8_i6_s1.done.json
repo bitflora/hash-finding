@@ -1,0 +1,11 @@
+{
+ "id": "high8_i6_s1",
+ "campaign": "high8",
+ "args": "--fix-shifts",
+ "start": "[16 0b6532d3 15 543b3597 15]",
+ "best": "[16 9dfcb2d3 15 2d1a3597 15]",
+ "bias": 0.1062022308,
+ "parts": [],
+ "start_bias": 0.2558115849,
+ "seconds": 21
+}

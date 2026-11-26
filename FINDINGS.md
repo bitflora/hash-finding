@@ -1888,6 +1888,66 @@ floor.
 (a k = 2 high-bit probe). `explored32.csv` now has 21,806 specs, 824 below
 0.10704.
 
+### F48. Races from mid-distance mutants of F30: its basin is about 4 bits wide, and past 12 flips a start is no better than a random one (exact winners; 112 races)
+
+2026-11-26. Follow-up of F47: instead of sampling the gaps at random, race
+from them. `analysis/midstart_races.py` draws 8 starts per arm by flipping
+k random bits of F30 `[16 4b0332d3 15 549a3597 15]` (never bit 0): in
+bits 1-31 of both multipliers ("any", k = 4, 8, 12, 16, 24) or bits 16-31
+only ("high", k = 8, 16). Each start is raced with seeds 1 and 2 under
+F38's protocol (`--fix-shifts`, 25 iterations, patience 6, 96 neighbours,
+`campaign.py`); everything is in `results/midstart_f30/`. Core distances
+below count a multiplier and its negation as the same.
+
+| arm | races | start median | best winner | median | worst | sub-0.10704 | on F30's core | exactly F30 |
+|---|---:|---|---|---|---|---:|---:|---:|
+| any 4 | 16 | 0.370 | **0.09873** | 0.11358 | 0.13545 | 6 | 7 | 6 |
+| any 8 | 16 | 1.309 | 0.10306 | 0.11902 | 0.15007 | 3 | 2 | 0 |
+| any 12 | 16 | 0.841 | 0.10571 | 0.12427 | 0.18078 | 1 | 0 | 0 |
+| any 16 | 16 | 1.179 | 0.11208 | 0.13997 | 0.18546 | 0 | 0 | 0 |
+| any 24 | 16 | 1.223 | 0.11133 | 0.14124 | 0.16778 | 0 | 0 | 0 |
+| high 8 | 16 | 0.246 | **0.09873** | 0.10752 | 0.12334 | 8 | 8 | 1 |
+| high 16 | 16 | 0.353 | 0.10105 | 0.11754 | 0.14651 | 1 | 3 | 0 |
+| F38 random starts | 20 | | 0.11561 | 0.13983 | 0.16909 | 0 | | |
+
+- **The basin is narrow.** From 4 random flips, 6 of 16 races climb back
+  to F30 exactly; from 8 flips none do, and from 12 none even keep its
+  core. Winners end *further* from F30 than their starts (median all-64
+  distance 4 → 7, 8 → 12.5, 12 → 16, 16 → 19.5): racing does not pull
+  back toward the best, it settles in whatever basin is nearest.
+- **Past about 12 flips the head start is gone.** The any-16 and any-24
+  medians (0.1400, 0.1412) match F38's random starts (0.1398). The
+  any-16 and any-24 starts sit 6-10 and 9-12 core bits from F30.
+- **High-bit perturbations are recoverable, core ones are not.** Starts
+  with an intact core (high 8) give the best median (0.1075) and 8 sub-
+  0.10704 winners, but race back to F30 itself only once in 16. High 16
+  keeps 3 of 16 winners on the core. This repeats F47's asymmetry
+  under search.
+- **Nearby cores, none better.** Winners below 0.11 sit on 7 cores, all
+  within a few bits of F30's: 32d3/3597 (15), 4d2d/3597 (5; core bit 15
+  flipped, best `[16 4f0fb2d3 15 ad1a3597 15]` 0.10450), 4cd3/3597
+  (0.10532), 32d3/34d7 (`[16 e20332d3 15 84ca34d7 15]` 0.10571),
+  34cb/3597, 32cb/3593, 2d2d/4a69. No race found a new family below
+  0.10.
+- **Seeds disagree.** For 55 of 56 starts the two seeds end at different
+  winners, so a single race per start says little about the start.
+- **Limits.** One centre; 8 starts per arm; F38 is the only random-start
+  comparator at this budget. The first 14 races ran on a mixlab build
+  without GPU support (4-12 min each; identical counts), the rest on the
+  GPU (median 15 s), so wall times are not comparable within the run.
+  `any4_i6_s1` was interrupted and resumed (`campaign.py` continues from
+  the last incumbent with a fresh neighbour seed).
+
+**Reading.** Random restarts near F30 are only worth it within about 4-8
+flips, and then mostly re-find F30. The gaps between atlas clumps are
+neither hiding nor leading to good mixers. New families have to come
+from new cores (as F43/F45 did), not from perturbing the current best.
+
+**Sub-0.10704 mixers: 25 new** (all from race incumbents near F30's
+core; best `[16 8ffb32d3 15 d49a3597 15]` = 0.10093). `explored32.csv`
+now has 23,232 specs, 849 below 0.10704. `collect_explored32.py` labels
+these races as "Mid-distance races".
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the
