@@ -47,7 +47,7 @@ class Scorer:
                 for row in reader:
                     try:
                         self.cache[parse(row["spec"])] = float(row["bias"])
-                    except (ValueError, KeyError):
+                    except (ValueError, KeyError, TypeError):
                         pass
         self.prior = len(self.cache)
         if self.path.exists():
@@ -212,6 +212,19 @@ def main():
     s.add_argument("--seed", type=int, default=1)
     args = p.parse_args()
     args.run.mkdir(parents=True, exist_ok=True)
+    # One writer per run directory: two concurrent copies interleave exact.csv.
+    lock = args.run / "LOCK"
+    try:
+        lock.open("x").close()
+    except FileExistsError:
+        sys.exit(f"{lock} exists: another copy is running here (delete it if not)")
+    try:
+        run(args)
+    finally:
+        lock.unlink()
+
+
+def run(args):
     score = Scorer(args.run)
     print(f"cache: {score.prior} prior exact scores, {score.new} from this run", flush=True)
     log = Log(args.run)

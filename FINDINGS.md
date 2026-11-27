@@ -2208,7 +2208,7 @@ races reached 821 triples, and none came within 0.3 of it outside
 about 52 days on this machine. Covering shifts 5-11 (343 triples) would
 take about 5 days.
 
-### F50. Three rounds: exact-scored descent breaks 0.020 with `[18 111a45bb 10 e04c12d1 16 a2869b67 15]` = 0.01993962725769077 (exact, CPU and GPU agree)
+### F50. Three rounds: exact-scored descent breaks 0.020, reaching `[18 9d2ac69b 10 604c9af1 15 7b269b67 15]` = 0.019574101502643087 in round three (exact, CPU and GPU agree)
 
 An exact three-round score now costs ~0.13 s on the GPU, so
 `analysis/triple32_descent.py` searches with exact scores only. A step
@@ -2242,7 +2242,30 @@ both multipliers and at least one shift.
 - The shift grid only tuned transplanted multipliers; its ranking of
   schedules is weak evidence. Schedules with s1 = 13 (15/13/17/19,
   14/13/16/14, 17/13/13/16) reached ~0.0205 with four to seven steps.
-- Not checked yet: BIC and forced two-bit parities (F41) for the new record.
+- Not checked yet: BIC and forced two-bit parities (F41) for the round-two record (0.0199396).
+
+**Round three** (`analysis/queue_triple32_descent3.sh`) continued ILS
+from the three lineage leaders:
+
+| Start | Iterations | Below `triple32` | Best end |
+| --- | ---: | ---: | --- |
+| Round-two record 0.0199396 | 150 | 113 | `[18 9d2ac69b 10 604c9af1 15 7b269b67 15]` **0.0195741015** |
+| Restart lineage 0.0200770 | 80 | 34 | `[16 803ac233 11 ad96a959 15 c96cd969 14]` 0.0200480 |
+| Schedule-grid leader 15/13/17/19, 0.0205351 | 60 | 35 | `[17 88bb3153 13 238e8679 17 4da6b66b 17]` 0.0196619 |
+
+The descent runs (all three rounds) now hold 243,876 distinct exact scores, 3,227 of
+them below `triple32`. The record is 1.83% below round two and 6.29%
+below `triple32`. Its improvements came at iterations 44 (0.0199087) and
+55. The schedule-grid lineage is the surprise: from a transplant it
+dropped 4.25% in 60 iterations, through 15/13/17/17 to 17/13/17/17, and
+is within 0.45% of the record on an unrelated schedule and multipliers.
+So the shift schedule is far from settled, and 17/13/17/17 had the
+steepest descent of any lineage.
+
+The record run was accidentally executed twice in parallel with the same
+seed. Both copies produced identical descents (all 150 iterations), but
+their writes interleaved in `ils_record3/exact.csv`; 26 broken lines were
+dropped and duplicates merged. The driver now takes a per-run lock.
 
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs

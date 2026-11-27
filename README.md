@@ -9,9 +9,9 @@ Avalanche bias: **0.09873011186879989**
 
 
 ## Current best three-round 32-bit hash
-`[18 111a45bb 10 e04c12d1 16 a2869b67 15]`
+`[18 9d2ac69b 10 604c9af1 15 7b269b67 15]`
 
-Avalanche bias: **0.01993962725769077** 
+Avalanche bias: **0.019574101502643087**
 
 (FINDINGS F50; [campaign results](results/triple32_memetic/README.md))
 
