@@ -2208,6 +2208,42 @@ races reached 821 triples, and none came within 0.3 of it outside
 about 52 days on this machine. Covering shifts 5-11 (343 triples) would
 take about 5 days.
 
+### F50. Three rounds: exact-scored descent breaks 0.020 with `[18 111a45bb 10 e04c12d1 16 a2869b67 15]` = 0.01993962725769077 (exact, CPU and GPU agree)
+
+An exact three-round score now costs ~0.13 s on the GPU, so
+`analysis/triple32_descent.py` searches with exact scores only. A step
+flips one of bits 1-31 of a multiplier or moves one shift by one.
+Descent moves to the best improving neighbour in the first improving
+chunk of 34 shuffled neighbours. Iterated local search (ILS) kicks the
+incumbent with 3-6 random multiplier-bit flips, descends, and keeps the
+result if it is no worse. Results are in `results/triple32_memetic/descent/`.
+
+| Run | Descents | Below `triple32` | Best end |
+| --- | ---: | ---: | --- |
+| ILS from the old record (0.0202413) | 150 | 55 | `[17 895245bb 10 a04c13d1 15 cac49ba3 14]` 0.0201755990 |
+| ILS from that | 150 | 72 | `[18 111a45bb 10 e04c12d1 16 a2869b67 15]` **0.0199396273** |
+| Random restarts on 17/11/15/14 (best of 32 random starts each) | 30 | 10 | `[17 6c32c163 11 2f92edc9 15 ea50d969 14]` 0.0202651 |
+| ILS from that restart | 80 | 33 | `[17 a03ac133 11 ad92e95d 15 994cd969 14]` 0.0200770 |
+| Shift grid 13..19 x 2 donors (4,802 specs), multiplier descent of the top 20 | 20 | 8 | `[15 b16b5153 13 3bcf8663 17 5506b66b 19]` 0.0205351 |
+
+The runs added 143,690 exact scores; 1,237 distinct configurations
+beat published `triple32` (0.0208886). The new record is 1.49% below
+the old record and 4.54% below `triple32`. Its path went through
+17/10/15/14 and 18/10/15/14 to 18/10/16/15; every improvement moved
+both multipliers and at least one shift.
+
+**Reading.**
+- The old record was a local optimum only at radius two. ILS kicks of
+  3-6 bits kept finding better basins; improvements arrived at
+  iterations 140, 142, 20 and 128, so neither ILS run had converged.
+- Good basins are not confined to the `triple32` lineage. A restart
+  from random multipliers reached 0.02027 in six steps, and its ILS
+  reached 0.02008, also below the old record.
+- The shift grid only tuned transplanted multipliers; its ranking of
+  schedules is weak evidence. Schedules with s1 = 13 (15/13/17/19,
+  14/13/16/14, 17/13/13/16) reached ~0.0205 with four to seven steps.
+- Not checked yet: BIC and forced two-bit parities (F41) for the new record.
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the

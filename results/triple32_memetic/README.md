@@ -210,3 +210,17 @@ python analysis/triple32_beams.py record
 python analysis/triple32_beams.py alternate
 python analysis/triple32_beams.py bic
 ```
+
+## Exact-scored descent (new record)
+
+With exact scores at ~0.13 s each on the GPU, `analysis/triple32_descent.py`
+searches without sampling: iterated local search with 3-6-bit kicks, random
+restarts, and a shift-schedule grid. Two rounds of ILS from the record led to
+`[18 111a45bb 10 e04c12d1 16 a2869b67 15]` at **0.01993962725769077**
+(CPU and GPU agree), 1.49% below the previous record. See FINDINGS F50 and
+the [descent runs](descent).
+
+```sh
+bash analysis/queue_triple32_descent.sh    # round one
+bash analysis/queue_triple32_descent2.sh   # round two, from round one's leaders
+```

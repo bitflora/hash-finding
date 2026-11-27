@@ -5,8 +5,8 @@ Avalanche bias: **0.09873011186879989**
 
 Spec format: `x ^= x >> 16; x *= 0x4b0332d3; x ^= x >> 15; x *= 0x549a3597; x ^= x >> 15`.
 
-**Current best three-round hash:** `[17 ad5ad4bb 11 ac4c1b51 15 b9848bab 14]`
-Exact avalanche bias: **0.02024134502581794** ([campaign results](results/triple32_memetic/README.md))
+**Current best three-round hash:** `[18 111a45bb 10 e04c12d1 16 a2869b67 15]`
+Exact avalanche bias: **0.01993962725769077** (FINDINGS F50; [campaign results](results/triple32_memetic/README.md))
 
 This is a scratchpad for finding better integer hash functions, currently
 targeting lowbias32(). At the time of this writing, well over 100 new functions
