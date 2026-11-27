@@ -1,12 +1,48 @@
-# Intro
+# Best Hashes
 
-**Current best two-round hash:** `[16 4b0332d3 15 549a3597 15]`
+## Current best two-round 32-bit hash
+`[16 4b0332d3 15 549a3597 15]`
+
+`x ^= x >> 16; x *= 0x4b0332d3; x ^= x >> 15; x *= 0x549a3597; x ^= x >> 15`.
+
 Avalanche bias: **0.09873011186879989**
 
-Spec format: `x ^= x >> 16; x *= 0x4b0332d3; x ^= x >> 15; x *= 0x549a3597; x ^= x >> 15`.
 
-**Current best three-round hash:** `[18 111a45bb 10 e04c12d1 16 a2869b67 15]`
-Exact avalanche bias: **0.01993962725769077** (FINDINGS F50; [campaign results](results/triple32_memetic/README.md))
+## Current best three-round 32-bit hash
+`[18 111a45bb 10 e04c12d1 16 a2869b67 15]`
+
+Avalanche bias: **0.01993962725769077** 
+
+(FINDINGS F50; [campaign results](results/triple32_memetic/README.md))
+
+
+## Current best 16-bit hash
+
+TheIronBorn's record for 8/7/9 is undefeated and will forever be undefeated. This project searched that space exhaustively.
+
+`[8 a3d3 7 4b2d 9]`
+
+`x ^= x>>8; x *= a3d3; x ^= x>>7; x *= 4b2d; x ^= x>>9`
+
+Avalance bias: **7.25294**
+
+If there is a better mixer for 16 bits, it is outside of these triples, which were also searched exhaustively:
+- 8/7/9
+- 8/7/7
+- 6/7/9
+- 7/7/8
+- 9/7/7
+- 9/6/8
+- 7/7/7
+- 7/7/9
+- 9/7/9
+- 8/7/8
+- 9/7/8
+- 8/6/8
+- 7/6/8
+
+
+# Intro
 
 This is a scratchpad for finding better integer hash functions, currently
 targeting lowbias32(). At the time of this writing, well over 100 new functions
@@ -28,6 +64,8 @@ avalanche bias, with additional statistical yardsticks.
 - `harness/` — Rust evaluation and search tool (`mixlab`); see `harness/README.md`
 - `results/`, `analysis/` — raw results and analysis scripts
   (`results/REVIEW_STATUS.md` tracks the status of saved experiments)
+- [PractRand comparison](results/practrand32/README.md) — structured-counter tests
+  of the leading 32-bit mixers and published references
 - `viz/` — `explorer.html`, an interactive browser for the explored 32-bit
   mixers (`explored32.json`)
 
