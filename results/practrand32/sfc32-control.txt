@@ -1,0 +1,18 @@
+RNG_test.exe using PractRand version 0.96
+RNG = sfc32, seed = 0x1
+test set = core, folding = standard (32 bit)
+
+rng=sfc32, seed=0x1
+length= 512 megabytes (2^29 bytes), time= 3.7 seconds
+  no anomalies in 167 test result(s)
+
+rng=sfc32, seed=0x1
+length= 1 gigabyte (2^30 bytes), time= 5.9 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  [Low8/32]DC6-9x1Bytes-1           R=  +6.0  p =  3.3e-3   unusual          
+  ...and 177 test result(s) without anomalies
+
+rng=sfc32, seed=0x1
+length= 2 gigabytes (2^31 bytes), time= 10.2 seconds
+  no anomalies in 189 test result(s)
+

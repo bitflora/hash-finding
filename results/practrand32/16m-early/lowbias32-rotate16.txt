@@ -1,0 +1,40 @@
+RNG_test.exe using PractRand version 0.96
+RNG = RNG_stdin32, seed = unknown
+test set = core, folding = standard (32 bit)
+
+rng=RNG_stdin32, seed=unknown
+length= 1 megabyte (2^20 bytes), time= 3.1 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R= +19.3  p =  2.1e-15    FAIL !         
+  Gap-16:B                          R=  +7.0  p =  1.8e-5   mildly suspicious
+  ...and 78 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 2 megabytes (2^21 bytes), time= 4.9 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R= +31.9  p =  4.1e-25    FAIL !!        
+  Gap-16:B                          R= +15.0  p =  5.2e-11   VERY SUSPICIOUS 
+  ...and 88 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 4 megabytes (2^22 bytes), time= 7.0 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R= +41.6  p =  4.5e-33    FAIL !!!       
+  Gap-16:B                          R= +29.1  p =  4.0e-22    FAIL !!        
+  ...and 97 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 8 megabytes (2^23 bytes), time= 9.5 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R= +62.2  p =  8.1e-53    FAIL !!!!      
+  Gap-16:B                          R= +50.4  p =  6.5e-41    FAIL !!!       
+  ...and 105 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 16 megabytes (2^24 bytes), time= 11.4 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R= +87.7  p =  1.1e-68    FAIL !!!!      
+  Gap-16:B                          R= +91.3  p =  3.0e-82    FAIL !!!!      
+  [Low1/32]FPF/16:all               R=  +5.3  p =  3.6e-4   unusual          
+  ...and 113 test result(s) without anomalies
+

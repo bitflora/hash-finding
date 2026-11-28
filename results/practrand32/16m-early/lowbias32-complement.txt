@@ -1,0 +1,39 @@
+RNG_test.exe using PractRand version 0.96
+RNG = RNG_stdin32, seed = unknown
+test set = core, folding = standard (32 bit)
+
+rng=RNG_stdin32, seed=unknown
+length= 1 megabyte (2^20 bytes), time= 1.4 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R= +37.7  p =  2.2e-30    FAIL !!!       
+  Gap-16:B                          R= +20.7  p =  6.7e-16    FAIL !         
+  ...and 78 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 2 megabytes (2^21 bytes), time= 1.8 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R= +53.7  p =  1.8e-42    FAIL !!!       
+  Gap-16:B                          R= +37.5  p =  4.3e-27    FAIL !!        
+  ...and 88 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 4 megabytes (2^22 bytes), time= 2.2 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R= +72.0  p =  1.6e-57    FAIL !!!!      
+  Gap-16:B                          R= +80.6  p =  5.4e-61    FAIL !!!!      
+  ...and 97 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 8 megabytes (2^23 bytes), time= 2.6 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R=+100.4  p =  1.0e-85    FAIL !!!!      
+  Gap-16:B                          R=+114.7  p =  4.0e-93    FAIL !!!!!     
+  ...and 105 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 16 megabytes (2^24 bytes), time= 3.0 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R=+131.4  p =  3.5e-103   FAIL !!!!!     
+  Gap-16:B                          R=+175.2  p =  4.0e-158   FAIL !!!!!     
+  ...and 114 test result(s) without anomalies
+

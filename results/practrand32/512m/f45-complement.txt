@@ -1,0 +1,116 @@
+RNG_test.exe using PractRand version 0.96
+RNG = RNG_stdin32, seed = unknown
+test set = core, folding = standard (32 bit)
+
+rng=RNG_stdin32, seed=unknown
+length= 16 megabytes (2^24 bytes), time= 1.7 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R=+118.8  p =  3.3e-93    FAIL !!!!!     
+  Gap-16:B                          R=+147.6  p =  3.4e-133   FAIL !!!!!     
+  ...and 114 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 32 megabytes (2^25 bytes), time= 2.1 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R=+168.1  p =  2.0e-137   FAIL !!!!!     
+  Gap-16:B                          R=+218.0  p =  2.5e-179   FAIL !!!!!!    
+  [Low8/32]Gap-16:B                 R=  +7.5  p =  4.2e-6   suspicious       
+  [Low8/32]FPF/16:(6,14-6)          R=  +7.6  p =  7.9e-6   unusual          
+  [Low8/32]FPF/16:all               R=  +5.2  p =  2.6e-4   unusual          
+  ...and 120 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 64 megabytes (2^26 bytes), time= 2.6 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R=+217.8  p =  5.6e-190   FAIL !!!!!!    
+  Gap-16:B                          R=+295.6  p =  4.6e-263   FAIL !!!!!!    
+  Gap-16:C                          R=  -9.5  p~=  7.0e-4   unusual          
+  [Low8/32]Gap-16:A                 R=  +5.2  p =  1.1e-3   unusual          
+  [Low8/32]Gap-16:B                 R=  +6.6  p =  1.0e-5   suspicious       
+  [Low8/32]FPF/16:(6,14-5)          R= +10.1  p =  3.0e-8   suspicious       
+  [Low8/32]FPF/16:(7,14-6)          R= +23.5  p =  5.2e-18    FAIL !         
+  [Low8/32]FPF/16:(9,14-8)          R= +19.7  p =  3.2e-14    FAIL           
+  [Low8/32]FPF/16:all               R= +16.1  p =  1.3e-14    FAIL           
+  [Low8/32]FPF/16:cross             R=  +6.4  p =  1.5e-5   mildly suspicious
+  ...and 125 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 128 megabytes (2^27 bytes), time= 3.5 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R=+293.9  p =  4.4e-250   FAIL !!!!!!    
+  Gap-16:B                          R=+393.5  p =  4.7e-315   FAIL !!!!!!    
+  Gap-16:C                          R= -13.6  p~=  3.9e-5   mildly suspicious
+  [Low8/32]Gap-16:A                 R=  +5.8  p =  3.0e-4   unusual          
+  [Low8/32]Gap-16:B                 R=  +5.2  p =  2.9e-4   unusual          
+  [Low8/32]FPF/16:(0,14-0)          R= +23.8  p =  1.5e-21    FAIL !!        
+  [Low8/32]FPF/16:(1,14-1)          R= +17.0  p =  8.2e-15    FAIL           
+  [Low8/32]FPF/16:(2,14-2)          R= +14.6  p =  1.6e-12   VERY SUSPICIOUS 
+  [Low8/32]FPF/16:(3,14-2)          R= +23.1  p =  5.2e-20    FAIL !         
+  [Low8/32]FPF/16:(4,14-3)          R= +17.9  p =  1.7e-15    FAIL           
+  [Low8/32]FPF/16:(5,14-4)          R= +18.9  p =  2.3e-15    FAIL           
+  [Low8/32]FPF/16:(6,14-5)          R= +17.8  p =  1.2e-14    FAIL           
+  [Low8/32]FPF/16:(7,14-5)          R= +35.1  p =  6.1e-29    FAIL !!        
+  [Low8/32]FPF/16:(8,14-6)          R=  +7.8  p =  5.4e-6   unusual          
+  [Low8/32]FPF/16:(9,14-7)          R= +24.4  p =  3.1e-19    FAIL !         
+  [Low8/32]FPF/16:(11,14-8)         R= +11.7  p =  1.9e-8   suspicious       
+  [Low8/32]FPF/16:all               R= +53.3  p =  1.7e-49    FAIL !!!!      
+  [Low8/32]FPF/16:cross             R= +11.7  p =  9.6e-10   VERY SUSPICIOUS 
+  [Low1/32]BCFN(2+4,13-7U)          R= +13.8  p =  9.2e-5   unusual          
+  [Low1/32]BCFN(2+5,13-8U)          R= +23.6  p =  5.5e-7   suspicious       
+  ...and 126 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 256 megabytes (2^28 bytes), time= 4.5 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R=+449.2  p =  1.8e-357   FAIL !!!!!!!   
+  Gap-16:B                          R=+618.7  p =  4.8e-502   FAIL !!!!!!!   
+  Gap-16:C                          R= -20.1  p~=  4.4e-7   very suspicious  
+  FPF/16:all                        R=  +5.2  p =  2.3e-4   unusual          
+  [Low8/32]Gap-16:B                 R=  +5.8  p =  6.1e-5   mildly suspicious
+  [Low8/32]FPF/16:(0,14-0)          R= +46.6  p =  1.0e-42    FAIL !!!       
+  [Low8/32]FPF/16:(1,14-0)          R= +63.4  p =  2.7e-58    FAIL !!!!      
+  [Low8/32]FPF/16:(2,14-1)          R= +49.4  p =  1.6e-43    FAIL !!!       
+  [Low8/32]FPF/16:(3,14-2)          R= +45.7  p =  9.0e-40    FAIL !!!       
+  [Low8/32]FPF/16:(4,14-2)          R= +23.1  p =  5.5e-20    FAIL !         
+  [Low8/32]FPF/16:(5,14-3)          R= +26.0  p =  1.6e-22    FAIL !!        
+  [Low8/32]FPF/16:(6,14-4)          R= +27.8  p =  1.1e-22    FAIL !!        
+  [Low8/32]FPF/16:(7,14-5)          R= +61.7  p =  5.5e-51    FAIL !!!!      
+  [Low8/32]FPF/16:(8,14-5)          R= +10.9  p =  6.9e-9   very suspicious  
+  [Low8/32]FPF/16:(9,14-6)          R= +33.5  p =  1.1e-25    FAIL !!        
+  [Low8/32]FPF/16:(11,14-8)         R= +22.6  p =  2.8e-16    FAIL           
+  [Low8/32]FPF/16:(12,14-8)         R= +10.7  p =  1.0e-7   mildly suspicious
+  [Low8/32]FPF/16:(13,14-9)         R= +12.9  p =  2.0e-8   suspicious       
+  [Low8/32]FPF/16:all               R=+119.9  p =  5.5e-112   FAIL !!!!!     
+  [Low8/32]FPF/16:cross             R= +27.1  p =  3.7e-24    FAIL !!        
+  [Low1/32]BCFN(2+4,13-6U)          R= +22.7  p =  3.2e-8   very suspicious  
+  [Low1/32]BCFN(2+5,13-7U)          R= +42.4  p =  2.8e-13    FAIL           
+  ...and 134 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 512 megabytes (2^29 bytes), time= 5.9 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R=+647.2  p =  2.7e-539   FAIL !!!!!!!   
+  Gap-16:B                          R=+810.7  p =  1.1e-719   FAIL !!!!!!!   
+  Gap-16:C                          R= -28.3  p~=  1.5e-9    VERY SUSPICIOUS 
+  [Low8/32]Gap-16:A                 R=  +8.5  p =  9.1e-7   very suspicious  
+  [Low8/32]Gap-16:B                 R= +10.1  p =  3.8e-8   very suspicious  
+  [Low8/32]FPF/16:(0,14-0)          R= +91.5  p =  2.9e-84    FAIL !!!!      
+  [Low8/32]FPF/16:(1,14-0)          R=+129.7  p =  1.3e-119   FAIL !!!!!     
+  [Low8/32]FPF/16:(2,14-0)          R= +69.5  p =  5.8e-64    FAIL !!!!      
+  [Low8/32]FPF/16:(3,14-1)          R= +64.4  p =  8.9e-57    FAIL !!!!      
+  [Low8/32]FPF/16:(4,14-2)          R= +50.4  p =  7.1e-44    FAIL !!!       
+  [Low8/32]FPF/16:(5,14-2)          R= +38.5  p =  2.0e-33    FAIL !!!       
+  [Low8/32]FPF/16:(6,14-3)          R= +39.0  p =  5.7e-34    FAIL !!!       
+  [Low8/32]FPF/16:(7,14-4)          R= +82.2  p =  4.1e-67    FAIL !!!!      
+  [Low8/32]FPF/16:(8,14-5)          R= +21.9  p =  4.7e-18    FAIL !         
+  [Low8/32]FPF/16:(9,14-5)          R= +44.9  p =  4.2e-37    FAIL !!!       
+  [Low8/32]FPF/16:(10,14-6)         R= +13.3  p =  3.5e-10  very suspicious  
+  [Low8/32]FPF/16:(11,14-7)         R= +31.6  p =  5.2e-25    FAIL !!        
+  [Low8/32]FPF/16:(12,14-8)         R= +17.2  p =  2.1e-12   VERY SUSPICIOUS 
+  [Low8/32]FPF/16:(13,14-8)         R= +17.6  p =  1.0e-12   VERY SUSPICIOUS 
+  [Low8/32]FPF/16:all               R=+210.7  p =  2.9e-197   FAIL !!!!!!    
+  [Low8/32]FPF/16:cross             R= +55.2  p =  8.9e-47    FAIL !!!       
+  [Low1/32]BCFN(2+4,13-6U)          R= +27.6  p =  7.1e-10   VERY SUSPICIOUS 
+  [Low1/32]BCFN(2+5,13-6U)          R= +37.3  p =  3.1e-13    FAIL           
+  ...and 144 test result(s) without anomalies
+

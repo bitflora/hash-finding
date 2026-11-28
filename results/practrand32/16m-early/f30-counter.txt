@@ -1,0 +1,44 @@
+RNG_test.exe using PractRand version 0.96
+RNG = RNG_stdin32, seed = unknown
+test set = core, folding = standard (32 bit)
+
+rng=RNG_stdin32, seed=unknown
+length= 1 megabyte (2^20 bytes), time= 2.1 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R= +47.8  p =  1.5e-38    FAIL !!!       
+  Gap-16:B                          R= +25.4  p =  1.7e-19    FAIL !         
+  ...and 78 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 2 megabytes (2^21 bytes), time= 2.7 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R= +77.7  p =  1.3e-61    FAIL !!!!      
+  Gap-16:B                          R= +52.4  p =  1.0e-37    FAIL !!!       
+  ...and 88 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 4 megabytes (2^22 bytes), time= 3.7 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R= +93.8  p =  4.7e-75    FAIL !!!!      
+  Gap-16:B                          R=+105.6  p =  7.2e-80    FAIL !!!!      
+  BRank(12):score:512(12)           R=+174.4  p~=  1          FAIL !!!!!!!!  
+  ...and 96 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 8 megabytes (2^23 bytes), time= 4.4 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R=+128.1  p =  1.5e-109   FAIL !!!!!     
+  Gap-16:B                          R=+157.1  p =  1.6e-127   FAIL !!!!!     
+  BRank(12):score:512(12)           R=+174.4  p~=  1          FAIL !!!!!!!!  
+  [Low1/32]BCFN(2+0,13-8U)          R= +13.3  p =  2.5e-4   unusual          
+  ...and 103 test result(s) without anomalies
+
+rng=RNG_stdin32, seed=unknown
+length= 16 megabytes (2^24 bytes), time= 6.0 seconds
+  Test Name                         Raw       Processed     Evaluation       
+  Gap-16:A                          R=+165.0  p =  1.3e-129   FAIL !!!!!     
+  Gap-16:B                          R=+218.7  p =  1.9e-197   FAIL !!!!!!    
+  BRank(12):score:768(13)           R=+171.6  p~=  1          FAIL !!!!!!!!  
+  [Low1/32]BCFN(2+0,13-8U)          R= +17.6  p =  1.9e-5   mildly suspicious
+  ...and 112 test result(s) without anomalies
+
