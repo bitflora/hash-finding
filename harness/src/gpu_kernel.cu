@@ -280,3 +280,146 @@ SAMPLED(1, false, sampled_r1_mask)
 SAMPLED(2, false, sampled_r2_mask)
 SAMPLED(3, false, sampled_r3_mask)
 SAMPLED(4, false, sampled_r4_mask)
+
+// ---- exact, pair-symmetric (full 32-bit domain only) --------------------------------
+//
+// d_j(x) = f(x) ^ f(x ^ 2^j) is the same for x and its partner x ^ 2^j, so
+// over the full domain each pair needs counting once, then doubling. Thread
+// layout: x0 = base + t * PAIR_PER_THREAD with base a multiple of 2^15 and
+// launches of whole warps, so
+//   x bits 0..3    the G inputs of a Harley-Seal block: the partner's f is
+//                  already in registers;
+//   x bits 4..9    the block loop (PAIR_NB = 64 blocks): skip blocks with bit j
+//                  set, uniformly across the warp;
+//   x bits 10..14  the lane: the partner's f is one shuffle away;
+//   x bits 15..31  uniform per warp: skip when bit j is set.
+// Free bits (registers, shuffle) count every input, so each pair twice; the
+// others count each pair once and double at the flush. Counts equal
+// exact_body's over the full domain bit for bit (tests/gpu.rs).
+// blockIdx.y picks a group of PAIR_JB input bits.
+
+#define PAIR_JB 11
+#define PAIR_NB 64
+#define PAIR_P 7        // planes for weight-16 carries (counts up to PAIR_NB)
+#define PAIR_LANE0 10   // 4 + log2(PAIR_NB)
+#define PAIR_PER_THREAD (G * PAIR_NB)
+
+template <int R, int JG>
+__device__ __forceinline__ void count_pair(const u32* s, const u32* m, u64 x0, u32* acc) {
+    u32 low[PAIR_JB][4];
+    u32 pl[PAIR_JB][PAIR_P];
+#pragma unroll
+    for (int jj = 0; jj < PAIR_JB; jj++) {
+#pragma unroll
+        for (int q = 0; q < 4; q++) low[jj][q] = 0;
+#pragma unroll
+        for (int q = 0; q < PAIR_P; q++) pl[jj][q] = 0;
+    }
+    const u32 s0 = s[0];
+    for (int b = 0; b < PAIR_NB; b++) {
+        u32 ys[G], h0[G];
+#pragma unroll
+        for (int g = 0; g < G; g++) {
+            const u32 x = (u32)(x0 + b * G + g);
+            const u32 y = x ^ (x >> s0);
+            ys[g] = y;
+            h0[g] = tail<R, true>(y, ~0u, s, m);
+        }
+#pragma unroll
+        for (int jj = 0; jj < PAIR_JB; jj++) {
+            const int j = JG * PAIR_JB + jj;
+            if (j >= 32) continue;
+            const bool reg = j < 4, lane = j >= PAIR_LANE0 && j < PAIR_LANE0 + 5;
+            u32 d[G];
+            if (reg) {
+#pragma unroll
+                for (int g = 0; g < G; g++) d[g] = h0[g] ^ h0[g ^ (1 << (j & 3))];
+            } else if (lane) {
+#pragma unroll
+                for (int g = 0; g < G; g++) d[g] = h0[g] ^ __shfl_xor_sync(0xffffffffu, h0[g], 1u << ((j - PAIR_LANE0) & 31));
+            } else {
+                if (j < PAIR_LANE0 ? ((b >> ((j - 4) & 31)) & 1) : ((x0 >> j) & 1)) continue;
+                const u32 e = (1u << j) ^ ((1u << j) >> s0);
+#pragma unroll
+                for (int g = 0; g < G; g++) d[g] = h0[g] ^ tail<R, true>(ys[g] ^ e, ~0u, s, m);
+            }
+            u32 ones = low[jj][0], twos = low[jj][1], fours = low[jj][2], eights = low[jj][3];
+            u32 ta, tb, fa, fb, ea, eb, c;
+            CSA(ta, ones, ones, d[0], d[1]);
+            CSA(tb, ones, ones, d[2], d[3]);
+            CSA(fa, twos, twos, ta, tb);
+            CSA(ta, ones, ones, d[4], d[5]);
+            CSA(tb, ones, ones, d[6], d[7]);
+            CSA(fb, twos, twos, ta, tb);
+            CSA(ea, fours, fours, fa, fb);
+            CSA(ta, ones, ones, d[8], d[9]);
+            CSA(tb, ones, ones, d[10], d[11]);
+            CSA(fa, twos, twos, ta, tb);
+            CSA(ta, ones, ones, d[12], d[13]);
+            CSA(tb, ones, ones, d[14], d[15]);
+            CSA(fb, twos, twos, ta, tb);
+            CSA(eb, fours, fours, fa, fb);
+            CSA(c, eights, eights, ea, eb);
+            low[jj][0] = ones;
+            low[jj][1] = twos;
+            low[jj][2] = fours;
+            low[jj][3] = eights;
+#pragma unroll
+            for (int q = 0; q < PAIR_P; q++) {
+                u32 tt = pl[jj][q] & c;
+                pl[jj][q] ^= c;
+                c = tt;
+            }
+        }
+    }
+#pragma unroll
+    for (int jj = 0; jj < PAIR_JB; jj++) {
+        const int j = JG * PAIR_JB + jj;
+        if (j >= 32) continue;
+        const int dbl = (j < 4 || (j >= PAIR_LANE0 && j < PAIR_LANE0 + 5)) ? 0 : 1;
+        for (u32 k = 0; k < 32; k++) {
+            u32 n = 0;
+#pragma unroll
+            for (int q = 0; q < 4; q++) n += ((low[jj][q] >> k) & 1u) << q;
+#pragma unroll
+            for (int q = 0; q < PAIR_P; q++) n += ((pl[jj][q] >> k) & 1u) << (q + 4);
+            if (n) atomicAdd(&acc[jj * 32 + k], n << dbl);
+        }
+    }
+}
+
+template <int R>
+__device__ void exact_pair_body(u64 base, u64 end, u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 m0, u32 m1,
+                                u32 m2, u32 m3, u64* out) {
+    const u32 s[5] = {s0, s1, s2, s3, s4};
+    const u32 m[4] = {m0, m1, m2, m3};
+    __shared__ u32 acc[PAIR_JB * 32];
+    for (u32 i = threadIdx.x; i < PAIR_JB * 32; i += blockDim.x) acc[i] = 0;
+    __syncthreads();
+    const u64 t = (u64)blockIdx.x * blockDim.x + threadIdx.x;
+    const u64 x0 = base + t * PAIR_PER_THREAD;
+    if (x0 < end) {
+        switch (blockIdx.y) {
+            case 0: count_pair<R, 0>(s, m, x0, acc); break;
+            case 1: count_pair<R, 1>(s, m, x0, acc); break;
+            default: count_pair<R, 2>(s, m, x0, acc); break;
+        }
+    }
+    __syncthreads();
+    for (u32 i = threadIdx.x; i < PAIR_JB * 32; i += blockDim.x) {
+        const u32 j = blockIdx.y * PAIR_JB + i / 32, k = i % 32;
+        if (j < 32 && acc[i]) atomicAdd(&out[j * 32 + k], (u64)acc[i]);
+    }
+}
+
+#define EXACT_PAIR(R, NAME)                                                     \
+    extern "C" __global__ void __launch_bounds__(256, 1)                        \
+        NAME(u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 m0, u32 m1, u32 m2,   \
+             u32 m3, u64* out, u64 base, u64 end) {                             \
+        exact_pair_body<R>(base, end, s0, s1, s2, s3, s4, m0, m1, m2, m3, out); \
+    }
+
+EXACT_PAIR(1, exact_pair_r1)
+EXACT_PAIR(2, exact_pair_r2)
+EXACT_PAIR(3, exact_pair_r3)
+EXACT_PAIR(4, exact_pair_r4)

@@ -49,6 +49,32 @@ fn gpu_scores_current_best_exactly() {
     assert_eq!(c.score(), 0.09873011186879989);
 }
 
+/// The pair-symmetric full-domain kernel (each pair (x, x ^ 2^j) counted once
+/// and doubled) gives exactly the counts of the plain kernel, for random
+/// configs of every round count and for extreme shifts.
+#[test]
+fn gpu_pair_kernel_matches_unpaired() {
+    let g = gpu();
+    let mut rng = Xoshiro256::new(34);
+    let mut xs: Vec<Xmx> = (1..=4).flat_map(|r| [random_config(32, r, &mut rng), random_config(32, r, &mut rng)]).collect();
+    for spec in ["1 9e3779b9 31", "31 9e3779b9 1 85ebca6b 16", "18 9d2ac69b 10 604c9af1 15 7b269b67 15", "3 2c1b3c6d 29 297a2d39 5 21f0aaad 27"] {
+        xs.push(Xmx::parse(32, spec).unwrap());
+    }
+    for x in &xs {
+        let a = g.exact_xmx_unpaired(x).unwrap();
+        let b = g.exact_xmx(x).unwrap();
+        assert_eq!(a.n, b.n, "{x}");
+        assert_eq!(a.bins, b.bins, "{x}");
+    }
+}
+
+#[test]
+fn gpu_scores_three_round_record_exactly() {
+    // CPU-verified 2026-11-27 (FINDINGS F50)
+    let x = Xmx::parse(32, "18 9d2ac69b 10 604c9af1 15 7b269b67 15").unwrap();
+    assert_eq!(gpu().exact_xmx(&x).unwrap().score(), 0.019574101502643087);
+}
+
 #[test]
 fn gpu_sampling_matches_cpu_inputs_and_counts() {
     let g = gpu();

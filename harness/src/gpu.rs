@@ -21,11 +21,17 @@ const BLOCK: u32 = 256;
 /// launches, keeping each well under the Windows display-driver watchdog
 /// (TDR, ~2 s).
 const LAUNCH_INPUTS: u64 = 1 << 26;
+/// Pair-symmetric kernels (exact_pair_r*, full 32-bit domain only): inputs
+/// per thread, input bits per thread, and the base alignment they assume.
+const PAIR_PER_THREAD: u64 = 1024;
+const PAIR_JB: u32 = 11;
 
 pub struct Gpu {
     stream: Arc<CudaStream>,
     /// [rounds-1][full as usize]
     exact: Vec<[CudaFunction; 2]>,
+    /// [rounds-1], bits = 32 over all 2^32 inputs
+    pair: Vec<CudaFunction>,
     sampled: Vec<[CudaFunction; 2]>,
     prep: CudaFunction,
     name: String,
@@ -86,12 +92,14 @@ impl Gpu {
         let f = |name: String| module.load_function(&name).map_err(err("load function"));
         let mut exact = Vec::new();
         let mut sampled = Vec::new();
+        let mut pair = Vec::new();
         for r in 1..=4 {
             exact.push([f(format!("exact_r{r}_mask"))?, f(format!("exact_r{r}_full"))?]);
+            pair.push(f(format!("exact_pair_r{r}"))?);
             sampled.push([f(format!("sampled_r{r}_mask"))?, f(format!("sampled_r{r}_full"))?]);
         }
         let prep = f("sample_prep".into())?;
-        Ok(Gpu { stream: ctx.default_stream(), exact, sampled, prep, name })
+        Ok(Gpu { stream: ctx.default_stream(), exact, pair, sampled, prep, name })
     }
 
     pub fn name(&self) -> &str {
@@ -99,8 +107,47 @@ impl Gpu {
     }
 
     /// Exact counts over all 2^bits inputs (8 <= bits <= 32, 1..=4 rounds).
+    /// At 32 bits this counts each input pair (x, x ^ 2^j) once and doubles
+    /// (exact_pair_r*, ~1.85x faster); the counts are identical.
     pub fn exact_xmx(&self, x: &Xmx) -> Result<Counts, String> {
+        if x.bits == 32 {
+            return self.exact_pair(x);
+        }
         self.counts_range(x, 0, 1u64 << x.bits)
+    }
+
+    /// `exact_xmx` without the pair-symmetric kernel (for cross-checks).
+    pub fn exact_xmx_unpaired(&self, x: &Xmx) -> Result<Counts, String> {
+        self.counts_range(x, 0, 1u64 << x.bits)
+    }
+
+    fn exact_pair(&self, x: &Xmx) -> Result<Counts, String> {
+        check(x)?;
+        let p = params(x);
+        let f = &self.pair[x.rounds() - 1];
+        let mut out = self.stream.alloc_zeros::<u64>(32 * 32).map_err(err("alloc"))?;
+        let hi = 1u64 << 32;
+        let mut base = 0u64;
+        while base < hi {
+            // base stays a multiple of LAUNCH_INPUTS (>= 2^15) and every launch
+            // has whole blocks of BLOCK threads, as the kernel assumes
+            let end = hi.min(base + LAUNCH_INPUTS);
+            let threads = (end - base) / PAIR_PER_THREAD;
+            let cfg = LaunchConfig {
+                grid_dim: (threads.div_ceil(BLOCK as u64) as u32, 32u32.div_ceil(PAIR_JB), 1),
+                block_dim: (BLOCK, 1, 1),
+                shared_mem_bytes: 0,
+            };
+            let mut b = self.stream.launch_builder(f);
+            for v in &p[1..] {
+                b.arg(v);
+            }
+            b.arg(&mut out).arg(&base).arg(&end);
+            unsafe { b.launch(cfg) }.map_err(err("launch"))?;
+            base = end;
+        }
+        let bins = self.stream.clone_dtoh(&out).map_err(err("copy"))?;
+        Ok(Counts { bits: 32, n: hi, bins })
     }
 
     /// Exact counts over inputs [lo, hi); lo and hi must be multiples of 256.
