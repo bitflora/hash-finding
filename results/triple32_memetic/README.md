@@ -229,3 +229,7 @@ Round three (`bash analysis/queue_triple32_descent3.sh`) reached
 `[18 9d2ac69b 10 604c9af1 15 7b269b67 15]` at **0.019574101502643087**
 (CPU and GPU agree). A lineage started from the shift grid reached
 `[17 88bb3153 13 238e8679 17 4da6b66b 17]` at 0.0196619 on an unrelated schedule.
+
+Round four (`bash analysis/queue_triple32_descent4.sh`) moved the record to
+the 17/13/17/17 lineage: `[17 88bb3153 13 238e8679 17 7da6b66b 17]` at
+**0.019134091125396723** (CPU and GPU agree).

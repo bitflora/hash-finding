@@ -2208,7 +2208,7 @@ races reached 821 triples, and none came within 0.3 of it outside
 about 52 days on this machine. Covering shifts 5-11 (343 triples) would
 take about 5 days.
 
-### F50. Three rounds: exact-scored descent breaks 0.020, reaching `[18 9d2ac69b 10 604c9af1 15 7b269b67 15]` = 0.019574101502643087 in round three (exact, CPU and GPU agree)
+### F50. Three rounds: exact-scored descent breaks 0.020, reaching `[17 88bb3153 13 238e8679 17 7da6b66b 17]` = 0.019134091125396723 in round four (exact, CPU and GPU agree)
 
 An exact three-round score now costs ~0.13 s on the GPU, so
 `analysis/triple32_descent.py` searches with exact scores only. A step
@@ -2266,6 +2266,24 @@ The record run was accidentally executed twice in parallel with the same
 seed. Both copies produced identical descents (all 150 iterations), but
 their writes interleaved in `ils_record3/exact.csv`; 26 broken lines were
 dropped and duplicates merged. The driver now takes a per-run lock.
+
+**Round four** (`analysis/queue_triple32_descent4.sh`), on the faster
+scoring path (`mixlab exact --stream` and the pair-symmetric GPU kernel,
+0.052 s per exact score):
+
+| Start | Iterations | Below `triple32` | Best end |
+| --- | ---: | ---: | --- |
+| Round-three record 0.0195741 | 150 | 107 | `[18 1daac69b 10 404c9af9 15 f122bb27 15]` 0.0194893 |
+| 17/13/17/17 lineage 0.0196619 | 150 | 102 | `[17 88bb3153 13 238e8679 17 7da6b66b 17]` **0.0191341** |
+
+The 17/13/17/17 lineage overtook the 18/10/15/14 one. Its new record is
+2.25% below round three and 8.40% below `triple32`, and it came at
+iteration 120. It differs from that run's start only in bits 28 and 29
+of the third multiplier, so it is a two-step neighbour that the one-step
+descents had not tried. Round five therefore scores both leaders'
+two-step neighbourhoods exhaustively (`triple32_descent.py radius2`)
+before more ILS. The descent runs now hold 340,045 distinct exact scores,
+5,460 of them below `triple32`.
 
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs

@@ -5,6 +5,8 @@ Modes:
   restarts   random odd multipliers on a fixed schedule, each descended
   ils        iterated local search: kick the incumbent with K random bit flips,
              descend, keep the result if it is no worse
+  radius2    score every configuration one or two steps away, then descend
+             the best few
   schedules  score shift schedules with transplanted multipliers, then descend
              the best ones
 
@@ -27,7 +29,7 @@ from triple32_memetic import DATA, MULTIPLIERS, SHIFTS, fmt, neighbors, parse, r
 
 ROOT = Path(__file__).resolve().parents[1]
 BINARY = ROOT / "harness" / "target-triple32" / "release" / "mixlab"
-RECORD = "[17 ad5ad4bb 11 ac4c1b51 15 b9848bab 14]"
+RECORD = "[17 88bb3153 13 238e8679 17 7da6b66b 17]"
 
 
 class Scorer:
@@ -155,6 +157,9 @@ def restarts(args, score, log):
 
 
 def ils(args, score, log):
+    # Resumable: the path depends only on the seed and on exact scores, so a
+    # rerun replays logged iterations from the cache without logging them again.
+    done = done_labels(log, "ils")
     rng = random.Random(args.seed)
     inc = parse(args.start)
     inc_b = score([inc])[inc]
@@ -166,10 +171,36 @@ def ils(args, score, log):
             kicked = replace(kicked, i, kicked[i] ^ (1 << rng.randrange(1, 32)))
         kb = score([kicked])[kicked]
         end, eb, steps = descend(score, kicked, rng, mults_only=args.fix_shifts)
-        log("ils", f"{args.seed}.{it}.k{k}", kicked, kb, end, eb, steps)
+        label = f"{args.seed}.{it}.k{k}"
+        if label not in done:
+            log("ils", label, kicked, kb, end, eb, steps)
         if eb <= inc_b:
             inc, inc_b = end, eb
             print(f"  incumbent {fmt(inc)} {inc_b:.10f}", flush=True)
+
+
+def radius2(args, score, log):
+    """Score every configuration one or two steps from START exactly, then
+    descend from the best few."""
+    center = parse(args.start)
+    one = set(neighbors(center))
+    two = {n2 for n in one for n2 in neighbors(n)} - one - {center}
+    hood = [center] + sorted(one) + sorted(two)
+    print(f"radius two: {len(one)} one-step, {len(two)} two-step", flush=True)
+    s = score(hood)
+    with (score.run / "neighborhood.csv").open("w", newline="") as stream:
+        w = csv.writer(stream)
+        w.writerow(("spec", "distance", "bias"))
+        for c in sorted(hood, key=s.get):
+            w.writerow((fmt(c), 0 if c == center else 1 if c in one else 2, s[c]))
+    rng = random.Random(args.seed)
+    done = done_labels(log, "radius2")
+    for i, c in enumerate(sorted(hood, key=s.get)[:args.top]):
+        label = f"{fmt(center)}#{i}"
+        if label in done:
+            continue
+        end, eb, steps = descend(score, c, rng)
+        log("radius2", label, c, s[c], end, eb, steps)
 
 
 def schedules(args, score, log):
@@ -222,6 +253,10 @@ def main():
     i.add_argument("--kick-max", type=int, default=6)
     i.add_argument("--seed", type=int, default=1)
     i.add_argument("--fix-shifts", action="store_true")
+    q = sub.add_parser("radius2")
+    q.add_argument("--start", default=RECORD)
+    q.add_argument("--top", type=int, default=5)
+    q.add_argument("--seed", type=int, default=1)
     s = sub.add_parser("schedules")
     s.add_argument("--range", default="13..19")
     s.add_argument("--donors", nargs="+", default=[RECORD])
@@ -246,7 +281,7 @@ def run(args):
     print(f"cache: {score.prior} prior exact scores, {score.new} from this run", flush=True)
     log = Log(args.run)
     try:
-        {"restarts": restarts, "ils": ils, "schedules": schedules}[args.mode](args, score, log)
+        {"restarts": restarts, "ils": ils, "radius2": radius2, "schedules": schedules}[args.mode](args, score, log)
     finally:
         score.close()
     print(f"done; {score.new} exact scores in this run", flush=True)
