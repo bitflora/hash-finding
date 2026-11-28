@@ -1,7 +1,10 @@
 //! Time an exact-count kernel variant against the production GPU kernel.
 //!
 //! `gpu_bench KERNEL.cu SPEC [--log2 L] [--reps N] [--name exact_r3_full]
-//!   [--per-thread 256] [--jb 8] [--block 256] [--launch-log2 26] [--ptx OUT.ptx]`
+//!   [--per-thread 256] [--jb 8] [--block 256] [--launch-log2 26] [--ptx OUT.ptx] [--pair]`
+//!
+//! `--pair`: the variant has the pair-kernel signature `(s0..s4, m0..m3, out,
+//! base, end)` (no bits or mask) and must be run over the full 2^32 domain.
 //!
 //! The variant must export a kernel with the production signature
 //! `(bits, mask, s0..s4, m0..m3, u64* out, base, end)`. Its counts over
@@ -27,6 +30,7 @@ fn main() {
     let launch = 1u64 << arg(&args, "--launch-log2", 26);
     let name = args.iter().position(|a| a == "--name").map_or("exact_r3_full".to_string(), |i| args[i + 1].clone());
     let bits = x.bits;
+    let pair = args.iter().any(|a| a == "--pair");
     let (lo, hi) = (0u64, 1u64 << lg);
 
     // Production reference (and its timing).
@@ -35,7 +39,8 @@ fn main() {
     let mut want = None;
     for _ in 0..reps {
         let t = Instant::now();
-        let c = g.counts_range(&x, lo, hi).unwrap();
+        // the production path: the pair kernel over the full 32-bit domain
+        let c = if lo == 0 && hi == 1 << 32 { g.exact_xmx(&x).unwrap() } else { g.counts_range(&x, lo, hi).unwrap() };
         t_ref = t_ref.min(t.elapsed().as_secs_f64());
         want = Some(c.bins);
     }
@@ -76,8 +81,10 @@ fn main() {
                 shared_mem_bytes: 0,
             };
             let mut l = stream.launch_builder(&f);
-            l.arg(&bits);
-            for v in &p {
+            if !pair {
+                l.arg(&bits).arg(&p[0]);
+            }
+            for v in &p[1..] {
                 l.arg(v);
             }
             l.arg(&mut out).arg(&base).arg(&end);

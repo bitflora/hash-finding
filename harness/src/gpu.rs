@@ -22,9 +22,13 @@ const BLOCK: u32 = 256;
 /// (TDR, ~2 s).
 const LAUNCH_INPUTS: u64 = 1 << 26;
 /// Pair-symmetric kernels (exact_pair_r*, full 32-bit domain only): inputs
-/// per thread, input bits per thread, and the base alignment they assume.
-const PAIR_PER_THREAD: u64 = 1024;
+/// per thread, input bits per thread, threads per block (whole warps), and
+/// inputs per launch (a multiple of 2^17, as the kernel's lane layout needs;
+/// ~13 ms per launch on the RTX 5080, far inside the watchdog).
+const PAIR_PER_THREAD: u64 = 4096;
 const PAIR_JB: u32 = 11;
+const PAIR_BLOCK: u32 = 128;
+const PAIR_LAUNCH: u64 = 1 << 30;
 
 pub struct Gpu {
     stream: Arc<CudaStream>,
@@ -108,7 +112,7 @@ impl Gpu {
 
     /// Exact counts over all 2^bits inputs (8 <= bits <= 32, 1..=4 rounds).
     /// At 32 bits this counts each input pair (x, x ^ 2^j) once and doubles
-    /// (exact_pair_r*, ~1.85x faster); the counts are identical.
+    /// (exact_pair_r*, ~2.4x faster than the plain kernel); the counts are identical.
     pub fn exact_xmx(&self, x: &Xmx) -> Result<Counts, String> {
         if x.bits == 32 {
             return self.exact_pair(x);
@@ -129,13 +133,13 @@ impl Gpu {
         let hi = 1u64 << 32;
         let mut base = 0u64;
         while base < hi {
-            // base stays a multiple of LAUNCH_INPUTS (>= 2^15) and every launch
-            // has whole blocks of BLOCK threads, as the kernel assumes
-            let end = hi.min(base + LAUNCH_INPUTS);
+            // base stays a multiple of PAIR_LAUNCH and every launch has whole
+            // blocks of PAIR_BLOCK threads, as the kernel assumes
+            let end = hi.min(base + PAIR_LAUNCH);
             let threads = (end - base) / PAIR_PER_THREAD;
             let cfg = LaunchConfig {
-                grid_dim: (threads.div_ceil(BLOCK as u64) as u32, 32u32.div_ceil(PAIR_JB), 1),
-                block_dim: (BLOCK, 1, 1),
+                grid_dim: (threads.div_ceil(PAIR_BLOCK as u64) as u32, 32u32.div_ceil(PAIR_JB), 1),
+                block_dim: (PAIR_BLOCK, 1, 1),
                 shared_mem_bytes: 0,
             };
             let mut b = self.stream.launch_builder(f);

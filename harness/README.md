@@ -273,12 +273,14 @@ equal the CPU's.
 Full-domain 32-bit exact scores use a pair-symmetric kernel (`exact_pair_r*`).
 Flipping input bit j gives the same output difference from x and from
 x ^ 2^j, so each pair is counted once and doubled. The partner's output is
-already in registers for bits 0-3 and one warp shuffle away for bits 10-14.
+already in registers for bits 0-3 and one warp shuffle away for bits 12-16.
 For the other bits, inputs with bit j set are skipped, and the skip is
 uniform across each warp. Partial ranges (`counts_range`) keep the plain
 kernel, and the tests check that both give identical counts. On the RTX 5080
-the pair kernel scores in 0.068 s (3 rounds) or 0.059 s (2 rounds), against
-0.126 s and 0.106 s for the plain kernel (1.85x).
+the pair kernel scores in 0.052 s (3 rounds) or 0.044 s (2 rounds), against
+0.126 s and 0.106 s for the plain kernel (2.4x). Knock-out timings of the
+3-round kernel (2026-11-27) put about 40% of its time in counting, 30% in the
+flipped-input mixer evaluations and 9% in the unflipped ones.
 `cargo run --release --example gpu_bench KERNEL.cu SPEC` times a kernel variant
 against production and fails unless its counts match bit for bit.
 
