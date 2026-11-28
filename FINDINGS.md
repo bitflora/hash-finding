@@ -2285,6 +2285,18 @@ two-step neighbourhoods exhaustively (`triple32_descent.py radius2`)
 before more ILS. The descent runs now hold 340,045 distinct exact scores,
 5,460 of them below `triple32`.
 
+**Round five** (`analysis/queue_triple32_descent5.sh`) found nothing
+better. Both leaders are strict minima of their two-step neighbourhoods:
+each of the 5,155 configurations within two steps scores worse. Around
+the record, the best one-step neighbour, bit 30 cleared in the third
+multiplier, scores 0.0193624, and the best two-step neighbour scores
+0.0193823. Around `[18 1daac69b 10 404c9af9 15 f122bb27 15]` those are
+0.0196130 and 0.0197298. Then 150 ILS iterations from each leader
+(kicks of 3–6 bit flips) gave 97 and 99 ends below `triple32`, none
+better than its start. These two basins look exhausted at this kick
+size. The descent runs now hold 447,106 distinct exact scores, 7,674 of
+them below `triple32`.
+
 ## 3. Threats to validity (please check)
 1. **Single runs.** The racing-versus-old comparison (F8) and the family runs
    (F9) are one seed each. The search improvements are exact values, but the

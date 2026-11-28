@@ -233,3 +233,8 @@ Round three (`bash analysis/queue_triple32_descent3.sh`) reached
 Round four (`bash analysis/queue_triple32_descent4.sh`) moved the record to
 the 17/13/17/17 lineage: `[17 88bb3153 13 238e8679 17 7da6b66b 17]` at
 **0.019134091125396723** (CPU and GPU agree).
+
+Round five (`bash analysis/queue_triple32_descent5.sh`) scored both leaders'
+full two-step neighbourhoods (`radius2_*5/neighborhood.csv`) and ran 150 ILS
+iterations from each (`ils_*5`). Nothing beat either start; both are strict
+radius-two minima.
