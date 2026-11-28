@@ -55,16 +55,33 @@ class Scorer:
                 for row in csv.DictReader(stream):
                     self.cache[parse(row["spec"])] = float(row["bias"])
         self.new = len(self.cache) - self.prior
+        # One long-running exact worker keeps CUDA initialised between batches.
+        self.worker = subprocess.Popen(
+            [str(BINARY), "exact", "--gpu", "--bits", "32", "--stream"],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1,
+        )
+        if self.worker.stdout.readline().strip() != "spec,bias,max_abs":
+            raise RuntimeError("mixlab exact --stream did not start")
+
+    def close(self):
+        self.worker.stdin.close()
+        self.worker.wait()
 
     def __call__(self, candidates):
         todo = [c for c in dict.fromkeys(candidates) if c not in self.cache]
         if todo:
-            out = subprocess.run(
-                [str(BINARY), "exact", "--gpu", "--bits", "32", "--list", "-"],
-                input="".join(fmt(c) + "\n" for c in todo),
-                text=True, check=True, capture_output=True,
-            ).stdout.splitlines()
-            rows = list(csv.DictReader(out))
+            rows = []
+            # Small slices so neither pipe fills while the other side waits.
+            for i in range(0, len(todo), 64):
+                part = todo[i:i + 64]
+                self.worker.stdin.write("".join(fmt(c) + "\n" for c in part))
+                self.worker.stdin.flush()
+                for _ in part:
+                    line = self.worker.stdout.readline()
+                    if not line:
+                        raise RuntimeError("mixlab exact --stream worker stopped")
+                    spec, bias, max_abs = line.strip().rsplit(",", 2)
+                    rows.append({"spec": spec, "bias": bias, "max_abs": max_abs})
             fresh = not self.path.exists()
             with self.path.open("a", newline="") as stream:
                 w = csv.writer(stream)
@@ -228,7 +245,10 @@ def run(args):
     score = Scorer(args.run)
     print(f"cache: {score.prior} prior exact scores, {score.new} from this run", flush=True)
     log = Log(args.run)
-    {"restarts": restarts, "ils": ils, "schedules": schedules}[args.mode](args, score, log)
+    try:
+        {"restarts": restarts, "ils": ils, "schedules": schedules}[args.mode](args, score, log)
+    finally:
+        score.close()
     print(f"done; {score.new} exact scores in this run", flush=True)
 
 

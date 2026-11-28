@@ -96,6 +96,17 @@ mixlab forced --bits 32                    # CSV template,pairs for every templa
 
 `p<k>` means 2^k.
 
+### Exact-scoring worker
+
+```
+mixlab exact --bits 32 --stream   # one spec per stdin line, one flushed CSV line (spec,bias,max_abs) back
+```
+
+The worker prints the CSV header, then answers each spec as it arrives. A
+driver keeps one worker for a whole search, so CUDA initialisation and the
+NVRTC kernel compile (~3 s per process) happen once. `analysis/triple32_descent.py`
+uses it; at three rounds, starting a process per batch cost more than the scoring.
+
 ## Metrics
 
 - **bias**: hash-prospector's score, `1000·sqrt(mean_jk diff²)`, where

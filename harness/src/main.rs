@@ -17,6 +17,7 @@ USAGE:
   mixlab refs   [--samples N] [--exact32] [--seed S] [--extra]
   mixlab eval   (--name REF | --bits B --spec \"[s m s m s]\") [--exact] [--samples N] [--seed S] [--extra]
   mixlab exact  --bits B --list FILE [--inverse] [--out F.csv]  # batch exact bias, one spec per line (- = stdin);
+  mixlab exact  --bits B --stream [--inverse]                  # worker: one spec per stdin line, one flushed CSV line back
                                                                # --inverse scores f^-1 (bits <= 24); CSV spec,bias,max_abs
   mixlab exhaust --bits B --shifts S0/S1/S2 --max-score X [--m0 LO:HI] --out F.csv
                 # every 2-round [S0 m0 S1 m1 S2] at 9..=16 bits with exact bias <= X (fast16, pruned); CSV spec,bias
@@ -397,6 +398,36 @@ fn exact_list_cmd(a: &Args) {
     let inverse = a.has("inverse");
     if inverse && bits > 24 {
         die("--inverse needs --bits <= 24");
+    }
+    let score = |x: &Xmx| {
+        if inverse {
+            mixlab::search::exact_inverse_score_serial(x)
+        } else if !mixlab::exact::exact_on_gpu(x) && (3..=32).contains(&x.bits) {
+            // one config at a time, so use every CPU thread on it
+            let c = mixlab::exact::exact_xmx(x, true);
+            (c.score(), c.max_abs())
+        } else {
+            mixlab::search::exact_score_serial(x)
+        }
+    };
+    if a.has("stream") {
+        // Long-running worker: one spec per stdin line, one flushed CSV line
+        // back per spec, so a driver keeps CUDA initialised across batches.
+        let mut w = std::io::stdout().lock();
+        writeln!(w, "spec,bias,max_abs").unwrap();
+        w.flush().unwrap();
+        for line in std::io::stdin().lock().lines() {
+            let line = line.expect("read stdin");
+            let t = line.trim();
+            if t.is_empty() || t.starts_with('#') || t == "spec" {
+                continue;
+            }
+            let x = Xmx::parse(bits, t).unwrap_or_else(|e| die(&format!("stdin: {e}")));
+            let (s, m) = score(&x);
+            writeln!(w, "{x},{s},{m}").unwrap();
+            w.flush().unwrap();
+        }
+        return;
     }
     let path = a.get("list").unwrap_or_else(|| die("need --list FILE (or - for stdin)"));
     let input: Box<dyn Read> = if path == "-" {
